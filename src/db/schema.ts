@@ -102,7 +102,7 @@ export const habilitaciones = pgTable("habilitaciones", {
 
 export const ventas = pgTable("ventas", {
   id:             text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  revendedorId:   text("revendedor_id").notNull().references(() => revendedores.id),
+  revendedorId:   text("revendedor_id").references(() => revendedores.id),  // null si no hay revendedor
   productoId:     text("producto_id").notNull().references(() => productos.id),
   clienteNombre:  text("cliente_nombre").notNull(),
   clienteEmail:   text("cliente_email"),
@@ -126,6 +126,7 @@ export const cuotas = pgTable("cuotas", {
   periodoMes:     integer("periodo_mes").notNull(),     // mes del año: 1-12
   periodoAnio:    integer("periodo_anio").notNull(),
   status:         cuotaStatusEnum("status").notNull().default("pendiente"),
+  pagoExternoId:  text("pago_externo_id").unique(),    // ID del pago en el producto digital (idempotencia)
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),
   generadoEn:     timestamp("generado_en"),  // cuando el cliente pagó
   facturadoEn:    timestamp("facturado_en"),
