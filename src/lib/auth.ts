@@ -1,23 +1,21 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: DrizzleAdapter(db),
   session: { strategy: "jwt" },
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    // Sobreescribimos Credentials con la lógica real de DB
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        email:    { label: "Email",      type: "email"    },
         password: { label: "Contraseña", type: "password" },
       },
       async authorize(credentials) {
@@ -34,17 +32,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.role = (user as { role?: string }).role;
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) session.user.role = token.role as string;
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login",
-  },
 });
