@@ -2,7 +2,7 @@
 set -euo pipefail
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
-HEALTH_URL="https://glob.ar/health"
+HEALTH_URL="https://glob.ar/api/health"
 
 echo "==> Pulling latest changes..."
 git fetch origin main
