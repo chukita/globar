@@ -54,6 +54,10 @@ services:
     environment:
       PORT: '3000'
       AUTH_TRUST_HOST: 'true'
+      # Next.js self-hosted no respeta X-Forwarded-Host/Proto de Caddy para construir
+      # el redirect_uri de OAuth: sin esto, NextAuth arma https://localhost:3000/... y
+      # Google lo rechaza (redirect_uri_mismatch).
+      AUTH_URL: 'https://${PUBLIC_HOST}'
     volumes:
       - uploads:/app/uploads
     depends_on:
