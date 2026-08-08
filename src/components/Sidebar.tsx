@@ -18,7 +18,7 @@ interface SidebarProps {
   resellerInitials?: string;
 }
 
-export function Sidebar({ resellerName = "Martina Quiroga", resellerInitials = "MQ" }: SidebarProps) {
+export function Sidebar({ resellerName = "Revendedor", resellerInitials = "RV" }: SidebarProps) {
   const pathname = usePathname();
 
   return (

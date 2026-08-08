@@ -1,0 +1,1 @@
+ALTER TABLE "habilitaciones" ADD CONSTRAINT "habilitaciones_revendedor_id_producto_id_unique" UNIQUE("revendedor_id","producto_id");

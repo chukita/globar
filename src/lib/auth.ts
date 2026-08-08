@@ -7,6 +7,7 @@ import { users, accounts, sessions, verificationTokens } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { ensureRevendedor } from "./revendedor";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -17,6 +18,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     verificationTokensTable: verificationTokens,
   }),
   session: { strategy: "jwt" },
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user }) {
+      if (user?.id && (user as { role?: string }).role === "revendedor") {
+        await ensureRevendedor(user.id, user.name, user.email!);
+      }
+      return true;
+    },
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,

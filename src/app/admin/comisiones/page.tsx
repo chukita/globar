@@ -1,5 +1,8 @@
-import { MOCK_CUOTAS } from "@/lib/mock-admin";
+import { getTodasLasComisiones } from "@/lib/admin-data";
+import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
+
+export const dynamic = "force-dynamic";
 
 const STATUS_MAP = {
   pendiente:  { label: "Pendiente",  bg: "#F7F8FA",  fg: "#9AA3B2",  border: "#E9ECEF" },
@@ -8,19 +11,10 @@ const STATUS_MAP = {
   pagada:     { label: "Pagada",     bg: "#E7F5EE",  fg: "#0B6B47",  border: "#9BD3B6" },
 } as const;
 
-type CuotaStatus = keyof typeof STATUS_MAP;
+const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-const FILTERS: { key: CuotaStatus | "todas"; label: string }[] = [
-  { key: "todas",     label: "Todas"     },
-  { key: "generada",  label: "Generadas" },
-  { key: "facturada", label: "Facturadas"},
-  { key: "pagada",    label: "Pagadas"   },
-  { key: "pendiente", label: "Pendientes"},
-];
-
-export default function AdminComisionesPage() {
-  // En producción esto vendría con searchParams para filtrar
-  const cuotas = MOCK_CUOTAS;
+export default async function AdminComisionesPage() {
+  const [cuotas, config] = await Promise.all([getTodasLasComisiones(), getConfiguracion()]);
 
   const totales = {
     generadas:  cuotas.filter(c => c.status === "generada").length,
@@ -36,12 +30,8 @@ export default function AdminComisionesPage() {
           <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Comisiones</h1>
           <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">Estado de todas las cuotas de comisión por revendedor.</p>
         </div>
-        <button className="font-semibold text-sm bg-white border border-[#DCE0E5] rounded-[10px] px-4 py-2.5 cursor-pointer">
-          Exportar CSV
-        </button>
       </div>
 
-      {/* Status summary */}
       <div className="grid grid-cols-4 gap-4 mt-6">
         {[
           { label: "Generadas",  value: totales.generadas,  color: "#0B5A8F", bg: "#E1EFF8" },
@@ -63,30 +53,34 @@ export default function AdminComisionesPage() {
           <span>Revendedor</span>
           <span>Cliente</span>
           <span>Producto</span>
-          <span>Mes</span>
+          <span>Período</span>
           <span>Monto</span>
           <span className="text-right">Estado</span>
         </div>
-        {cuotas.map((c) => {
-          const s = STATUS_MAP[c.status as CuotaStatus];
-          return (
-            <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[13.5px]"
-              style={{ display: "grid", gridTemplateColumns: ".8fr 1fr 1.2fr 1fr .7fr .7fr .9fr" }}>
-              <span className="text-[#9AA3B2]">{c.cuota} / 6</span>
-              <span className="font-medium text-[#0C2A45]">{c.revendedor}</span>
-              <span className="text-[#5B6577]">{c.cliente}</span>
-              <span>{c.producto}</span>
-              <span className="text-[#5B6577]">{c.mes}</span>
-              <span className="font-bold">{fmtARS(c.monto)}</span>
-              <span className="text-right">
-                <span className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block border"
-                  style={{ background: s.bg, color: s.fg, borderColor: s.border }}>
-                  {s.label}
+        {cuotas.length === 0 ? (
+          <div className="px-6 py-10 text-center text-[14px] text-[#9AA3B2]">Todavía no hay comisiones generadas.</div>
+        ) : (
+          cuotas.map((c) => {
+            const s = STATUS_MAP[c.status];
+            return (
+              <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[13.5px]"
+                style={{ display: "grid", gridTemplateColumns: ".8fr 1fr 1.2fr 1fr .7fr .7fr .9fr" }}>
+                <span className="text-[#9AA3B2]">{c.numeroCuota} / {config.comisionMeses}</span>
+                <span className="font-medium text-[#0C2A45]">{c.revendedor}</span>
+                <span className="text-[#5B6577]">{c.cliente}</span>
+                <span>{c.producto}</span>
+                <span className="text-[#5B6577]">{MESES[c.periodoMes - 1]} {c.periodoAnio}</span>
+                <span className="font-bold">{fmtARS(Number(c.monto))}</span>
+                <span className="text-right">
+                  <span className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block border"
+                    style={{ background: s.bg, color: s.fg, borderColor: s.border }}>
+                    {s.label}
+                  </span>
                 </span>
-              </span>
-            </div>
-          );
-        })}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

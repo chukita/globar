@@ -9,6 +9,7 @@ import {
   pgEnum,
   primaryKey,
   check,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -98,7 +99,7 @@ export const habilitaciones = pgTable("habilitaciones", {
   revendedorId:  text("revendedor_id").notNull().references(() => revendedores.id, { onDelete: "cascade" }),
   productoId:    text("producto_id").notNull().references(() => productos.id, { onDelete: "cascade" }),
   habilitadoEn:  timestamp("habilitado_en").defaultNow().notNull(),
-});
+}, (t) => [unique().on(t.revendedorId, t.productoId)]);
 
 // ─── Ventas ───────────────────────────────────────────────────────────────────
 
