@@ -41,5 +41,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
+    // Login de superadmin: solo contraseña, sin usuario — separado de los
+    // revendedores (que se loguean con Google o email+password ligados a una
+    // fila en `users`). La clave vive hasheada en SUPERADMIN_PASSWORD_HASH.
+    Credentials({
+      id: "superadmin",
+      name: "Superadmin",
+      credentials: {
+        password: { label: "Contraseña", type: "password" },
+      },
+      async authorize(credentials) {
+        const hash = process.env.SUPERADMIN_PASSWORD_HASH;
+        if (!hash || !credentials?.password) return null;
+        const ok = await bcrypt.compare(credentials.password as string, hash);
+        if (!ok) return null;
+        return { id: "superadmin", email: "superadmin@glob.ar", name: "Superadmin", role: "superadmin" };
+      },
+    }),
   ],
 });

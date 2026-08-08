@@ -18,6 +18,15 @@ export const authConfig: NextAuthConfig = {
       // La verificación real está en auth.ts — acá solo declaramos el provider
       authorize: () => null,
     }),
+    Credentials({
+      id: "superadmin",
+      name: "Superadmin",
+      credentials: {
+        password: { label: "Contraseña", type: "password" },
+      },
+      // La verificación real está en auth.ts — acá solo declaramos el provider
+      authorize: () => null,
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {

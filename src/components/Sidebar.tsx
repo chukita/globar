@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
+import { logoutAction } from "@/lib/actions";
 
 const NAV = [
   { href: "/panel/productos",    label: "Mis productos" },
@@ -54,10 +55,24 @@ export function Sidebar({ resellerName = "Martina Quiroga", resellerInitials = "
         <div className="w-9 h-9 rounded-full bg-[#0E6BA8] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
           {resellerInitials}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-semibold text-white truncate">{resellerName}</div>
           <div className="text-[11.5px] text-[#8595A8]">Revendedora</div>
         </div>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            title="Cerrar sesión"
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer border-0"
+            style={{ background: "rgba(255,255,255,.06)", color: "#9DA7B5" }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        </form>
       </div>
     </div>
   );

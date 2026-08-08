@@ -13,9 +13,17 @@ export default auth((req) => {
 
   console.log(`[middleware] ${pathname} | loggedIn=${isLoggedIn} | role=${role}`);
 
+  if (pathname === "/admin/login") {
+    if (isLoggedIn && role === "superadmin") {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      const dest = pathname.startsWith("/admin") ? "/admin/login" : "/login";
+      return NextResponse.redirect(new URL(dest, req.url));
     }
     if (pathname.startsWith("/admin") && role !== "superadmin") {
       return NextResponse.redirect(new URL("/panel/comisiones", req.url));
