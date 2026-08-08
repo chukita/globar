@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { ventas, cuotas, revendedores, productos } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getConfiguracion } from "@/lib/configuracion";
 
 /**
  * Payload esperado de los productos digitales (agendaonline, nume, etc.)
@@ -27,9 +28,6 @@ interface PagoPayload {
   periodoAnio:       number;
   codigoRevendedor?: string;
 }
-
-const MAX_CUOTAS = 6;
-const COMISION_PCT = 0.5; // 50% del abono mensual por cuota
 
 export async function POST(req: NextRequest) {
   // ── Autenticación ─────────────────────────────────────────────────────────
@@ -137,24 +135,27 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // ── Reglas de negocio vigentes (configurables desde /admin/configuracion) ──
+  const { comisionMonto, comisionMeses } = await getConfiguracion();
+
   // ── Contar cuotas ya generadas para esta venta ────────────────────────────
   const cuotasExistentes = await db
     .select({ numeroCuota: cuotas.numeroCuota })
     .from(cuotas)
     .where(eq(cuotas.ventaId, venta.id));
 
-  if (cuotasExistentes.length >= MAX_CUOTAS) {
+  if (cuotasExistentes.length >= comisionMeses) {
     return NextResponse.json({
       ok: true,
       ventaId: venta.id,
       comision: false,
-      mensaje: `Venta ya completó las ${MAX_CUOTAS} cuotas de comisión`,
+      mensaje: `Venta ya completó las ${comisionMeses} cuotas de comisión`,
     });
   }
 
   // ── Crear la cuota de comisión ────────────────────────────────────────────
   const numeroCuota = cuotasExistentes.length + 1;
-  const montoCuota  = Math.round(montoAbonado * COMISION_PCT);
+  const montoCuota  = Number(comisionMonto);
 
   const [nuevaCuota] = await db
     .insert(cuotas)
@@ -179,6 +180,6 @@ export async function POST(req: NextRequest) {
     numeroCuota,
     montoCuota,
     revendedor:  revendedor.codigoVentas,
-    mensaje:     `Cuota ${numeroCuota}/${MAX_CUOTAS} generada para ${revendedor.codigoVentas}`,
+    mensaje:     `Cuota ${numeroCuota}/${comisionMeses} generada para ${revendedor.codigoVentas}`,
   });
 }
