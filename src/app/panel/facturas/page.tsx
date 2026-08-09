@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function FacturasRevendedorPage() {
   const session = await auth();
-  const revendedor = await ensureRevendedor(session!.user!.id!, session!.user!.name, session!.user!.email!);
+  const revendedor = await ensureRevendedor(session!.user!.id!);
   const [cuotas, facturas, config] = await Promise.all([
     getCuotasFacturables(revendedor.id),
     getFacturasDelRevendedor(revendedor.id),

@@ -22,7 +22,7 @@ const SALE_STATUS = {
 
 export default async function ComisionesPage() {
   const session = await auth();
-  const revendedor = await ensureRevendedor(session!.user!.id!, session!.user!.name, session!.user!.email!);
+  const revendedor = await ensureRevendedor(session!.user!.id!);
   const [comisiones, ventas, stats, config] = await Promise.all([
     getComisionesDelRevendedor(revendedor.id),
     getVentasDelRevendedor(revendedor.id),

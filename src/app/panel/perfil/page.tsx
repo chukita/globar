@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PerfilPage() {
   const session = await auth();
-  const revendedor = await ensureRevendedor(session!.user!.id!, session!.user!.name, session!.user!.email!);
+  const revendedor = await ensureRevendedor(session!.user!.id!);
   const stats = await getRevendedorStats(revendedor.id);
   const productosActivos = await db.select().from(productos).where(eq(productos.status, "activo"));
 

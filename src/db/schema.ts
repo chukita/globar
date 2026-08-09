@@ -73,7 +73,7 @@ export const verificationTokens = pgTable("verification_tokens", {
 export const revendedores = pgTable("revendedores", {
   id:           text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId:       text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
-  codigoVentas: text("codigo_ventas").notNull().unique(),  // ej: GLOBMQ-7K2
+  codigoVentas: text("codigo_ventas").notNull().unique(),  // secuencial (revendedor_codigo_seq), ej: "600"
   zona:         text("zona"),
   activo:       boolean("activo").notNull().default(true),
   creadoEn:     timestamp("creado_en").defaultNow().notNull(),

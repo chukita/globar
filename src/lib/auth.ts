@@ -22,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user }) {
       if (user?.id && (user as { role?: string }).role === "revendedor") {
-        await ensureRevendedor(user.id, user.name, user.email!);
+        await ensureRevendedor(user.id);
       }
       return true;
     },

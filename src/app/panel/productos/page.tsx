@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ProductosPage() {
   const session = await auth();
-  const revendedor = await ensureRevendedor(session!.user!.id!, session!.user!.name, session!.user!.email!);
+  const revendedor = await ensureRevendedor(session!.user!.id!);
   const [productos, config] = await Promise.all([
     getProductosConHabilitacion(revendedor.id),
     getConfiguracion(),

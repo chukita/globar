@@ -1,40 +1,27 @@
 import { db } from "@/db";
 import { revendedores } from "@/db/schema";
-import { eq } from "drizzle-orm";
-
-const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusión
-
-function randomSuffix(len = 4) {
-  return Array.from({ length: len }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
-}
-
-function baseCode(name: string | null | undefined, email: string) {
-  const source = (name || email.split("@")[0]).replace(/[^a-zA-Z]/g, "").toUpperCase();
-  return "GLOB" + (source.slice(0, 4) || "USER");
-}
+import { eq, sql } from "drizzle-orm";
 
 /** Devuelve la fila `revendedores` del usuario, creándola si es la primera vez que se loguea. */
-export async function ensureRevendedor(userId: string, name: string | null | undefined, email: string) {
+export async function ensureRevendedor(userId: string) {
   const [existing] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
   if (existing) return existing;
 
-  const base = baseCode(name, email);
-  for (let i = 0; i < 5; i++) {
-    // onConflictDoNothing (sin target) cubre tanto una colisión de código como una
-    // carrera con otro request concurrente que ya insertó la fila para este userId
-    // (userId también es unique) — en ambos casos el insert no-opea en vez de tirar.
-    const [created] = await db
-      .insert(revendedores)
-      .values({ userId, codigoVentas: `${base}-${randomSuffix()}` })
-      .onConflictDoNothing()
-      .returning();
-    if (created) return created;
+  // El código sale de una secuencia de Postgres (única por diseño, arranca en
+  // 600 — ver drizzle/0003_revendedor_codigo_seq.sql). onConflictDoNothing
+  // cubre únicamente la carrera con otro request concurrente que ya insertó
+  // la fila para este userId (userId también es unique); el código en sí
+  // nunca puede colisionar.
+  const [created] = await db
+    .insert(revendedores)
+    .values({ userId, codigoVentas: sql`nextval('revendedor_codigo_seq')::text` })
+    .onConflictDoNothing()
+    .returning();
+  if (created) return created;
 
-    const [race] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
-    if (race) return race;
-    // si no hay fila para este userId todavía, fue colisión de código — reintentar
-  }
-  throw new Error("No se pudo generar un código de ventas único");
+  const [race] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
+  if (race) return race;
+  throw new Error("No se pudo crear el revendedor");
 }
 
 export async function getRevendedorByUserId(userId: string) {
