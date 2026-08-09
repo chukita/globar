@@ -20,15 +20,19 @@ export async function ensureRevendedor(userId: string, name: string | null | und
 
   const base = baseCode(name, email);
   for (let i = 0; i < 5; i++) {
-    try {
-      const [created] = await db
-        .insert(revendedores)
-        .values({ userId, codigoVentas: `${base}-${randomSuffix()}` })
-        .returning();
-      return created;
-    } catch {
-      // colisión de código único (muy improbable) — reintentar con otro sufijo
-    }
+    // onConflictDoNothing (sin target) cubre tanto una colisión de código como una
+    // carrera con otro request concurrente que ya insertó la fila para este userId
+    // (userId también es unique) — en ambos casos el insert no-opea en vez de tirar.
+    const [created] = await db
+      .insert(revendedores)
+      .values({ userId, codigoVentas: `${base}-${randomSuffix()}` })
+      .onConflictDoNothing()
+      .returning();
+    if (created) return created;
+
+    const [race] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
+    if (race) return race;
+    // si no hay fila para este userId todavía, fue colisión de código — reintentar
   }
   throw new Error("No se pudo generar un código de ventas único");
 }
