@@ -7,6 +7,7 @@ interface PublicNavProps {
 
 export function PublicNav({ activeLink }: PublicNavProps) {
   return (
+    <div className="sticky top-0 z-50 bg-[#F7F8FA]/90 backdrop-blur-sm border-b border-[#E9ECEF]/60">
     <div className="flex items-center justify-between max-w-[1180px] mx-auto px-8 py-[22px]">
       <Link href="/">
         <Logo size="md" darkText />
@@ -32,6 +33,7 @@ export function PublicNav({ activeLink }: PublicNavProps) {
           Ingresar
         </Link>
       </div>
+    </div>
     </div>
   );
 }

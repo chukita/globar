@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -8,8 +7,6 @@ import {
   numeric,
   pgEnum,
   primaryKey,
-  check,
-  unique,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -71,21 +68,29 @@ export const verificationTokens = pgTable("verification_tokens", {
 // ─── Revendedores ─────────────────────────────────────────────────────────────
 
 export const revendedores = pgTable("revendedores", {
-  id:           text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId:       text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
-  codigoVentas: text("codigo_ventas").notNull().unique(),  // secuencial (revendedor_codigo_seq), ej: "600"
-  zona:         text("zona"),
-  activo:       boolean("activo").notNull().default(true),
-  creadoEn:     timestamp("creado_en").defaultNow().notNull(),
+  id:             text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:         text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  codigoVentas:   text("codigo_ventas").notNull().unique(),
+  zona:           text("zona"),
+  pais:           text("pais").default("Argentina"),
+  provincia:      text("provincia"),
+  localidad:      text("localidad"),
+  dni:            text("dni"),
+  fechaNacimiento: text("fecha_nacimiento"),   // ISO date string YYYY-MM-DD
+  puedeFacturar:  boolean("puede_facturar").notNull().default(false),
+  cbu:            text("cbu"),
+  activo:         boolean("activo").notNull().default(true),
+  creadoEn:       timestamp("creado_en").defaultNow().notNull(),
 });
 
 // ─── Productos ────────────────────────────────────────────────────────────────
 
 export const productos = pgTable("productos", {
   id:              text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  nombre:          text("nombre").notNull(),           // "agendaonline"
+  nombre:          text("nombre").notNull(),
   dominio:         text("dominio").notNull(),           // "agendaonline.com.ar"
-  tag:             text("tag").notNull(),               // "Turnos & reservas"
+  urlRegistro:     text("url_registro").notNull(),      // URL donde el cliente se registra
+  tag:             text("tag").notNull(),
   descripcion:     text("descripcion"),
   precioMensual:   numeric("precio_mensual", { precision: 12, scale: 2 }).notNull(),
   status:          productoStatusEnum("status").notNull().default("activo"),
@@ -99,7 +104,7 @@ export const habilitaciones = pgTable("habilitaciones", {
   revendedorId:  text("revendedor_id").notNull().references(() => revendedores.id, { onDelete: "cascade" }),
   productoId:    text("producto_id").notNull().references(() => productos.id, { onDelete: "cascade" }),
   habilitadoEn:  timestamp("habilitado_en").defaultNow().notNull(),
-}, (t) => [unique().on(t.revendedorId, t.productoId)]);
+});
 
 // ─── Ventas ───────────────────────────────────────────────────────────────────
 
@@ -156,14 +161,3 @@ export const cuotasFacturas = pgTable("cuotas_facturas", {
   cuotaId:    text("cuota_id").notNull().references(() => cuotas.id),
   facturaId:  text("factura_id").notNull().references(() => facturas.id),
 }, (t) => [primaryKey({ columns: [t.cuotaId, t.facturaId] })]);
-
-// ─── Configuración global ──────────────────────────────────────────────────────
-// Fila única (id fijo = 1) con las reglas de negocio editables desde el panel
-// de superadmin, para no tener que hardcodear/redeployar cada vez que cambian.
-
-export const configuracion = pgTable("configuracion", {
-  id:            integer("id").primaryKey().default(1),
-  comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
-  comisionMeses: integer("comision_meses").notNull().default(4),
-  actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
-}, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

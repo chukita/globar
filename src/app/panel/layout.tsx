@@ -1,22 +1,23 @@
-import { Sidebar } from "@/components/Sidebar";
 import { auth } from "@/lib/auth";
-
-function initialsOf(name: string | null | undefined, email: string | null | undefined) {
-  const source = name || email || "";
-  const parts = source.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return source.slice(0, 2).toUpperCase();
-}
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { Sidebar } from "@/components/Sidebar";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const name = session?.user?.name ?? session?.user?.email ?? "Revendedor";
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((w: string) => w[0]?.toUpperCase() ?? "")
+    .join("");
+
+  const role = session?.user?.role ?? undefined;
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar
-        resellerName={session?.user?.name ?? session?.user?.email ?? "Revendedor"}
-        resellerInitials={initialsOf(session?.user?.name, session?.user?.email)}
-      />
+      <Sidebar resellerName={name} resellerInitials={initials || "R"} role={role} />
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Logo } from "./Logo";
-import { logoutAction } from "@/lib/actions";
 
 const NAV = [
   { href: "/panel/productos",    label: "Mis productos" },
@@ -16,9 +16,10 @@ const NAV = [
 interface SidebarProps {
   resellerName?: string;
   resellerInitials?: string;
+  role?: string;
 }
 
-export function Sidebar({ resellerName = "Revendedor", resellerInitials = "RV" }: SidebarProps) {
+export function Sidebar({ resellerName = "Martina Quiroga", resellerInitials = "MQ", role }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -51,28 +52,39 @@ export function Sidebar({ resellerName = "Revendedor", resellerInitials = "RV" }
         })}
       </nav>
 
-      <div className="mt-auto flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,.04)" }}>
-        <div className="w-9 h-9 rounded-full bg-[#0E6BA8] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
-          {resellerInitials}
+      {role === "superadmin" && (
+        <Link
+          href="/admin"
+          className="mt-4 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition-colors no-underline"
+          style={{ background: "rgba(250,218,221,.10)", color: "#FADADD" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M7.5 1.5L9.5 5.5H13.5L10.5 8L11.5 12.5L7.5 10L3.5 12.5L4.5 8L1.5 5.5H5.5L7.5 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+          </svg>
+          Panel de administración
+        </Link>
+      )}
+
+      <div className="mt-auto flex flex-col gap-2">
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#8595A8] hover:text-[#C0CDD8] hover:bg-white/5 transition-colors border-0 bg-transparent cursor-pointer text-left"
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M5.5 13H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h2.5M10 10.5l3-3-3-3M13 7.5H6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Cerrar sesión
+        </button>
+
+        <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,.04)" }}>
+          <div className="w-9 h-9 rounded-full bg-[#0E6BA8] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+            {resellerInitials}
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13.5px] font-semibold text-white truncate">{resellerName}</div>
+            <div className="text-[11.5px] text-[#8595A8]">Revendedor</div>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-semibold text-white truncate">{resellerName}</div>
-          <div className="text-[11.5px] text-[#8595A8]">Revendedora</div>
-        </div>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            title="Cerrar sesión"
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer border-0"
-            style={{ background: "rgba(255,255,255,.06)", color: "#9DA7B5" }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
-        </form>
       </div>
     </div>
   );

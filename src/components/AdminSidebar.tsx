@@ -54,7 +54,18 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="mt-auto flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,.04)" }}>
+      <div className="mt-auto flex flex-col gap-2">
+        <Link
+          href="/panel/productos"
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#8595A8] hover:text-[#C0CDD8] hover:bg-white/5 transition-colors no-underline"
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M9.5 2H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5.5M9.5 2L13 5.5M9.5 2v3.5H13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Panel de revendedor
+        </Link>
+
+      <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,.04)" }}>
         <div className="w-9 h-9 rounded-full bg-[#FADADD] flex items-center justify-center font-bold text-[#9B4A57] text-sm flex-shrink-0">
           SA
         </div>
@@ -76,6 +87,7 @@ export function AdminSidebar() {
             </svg>
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

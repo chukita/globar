@@ -11,8 +11,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "seed:admin": "dotenv -e .env.local -- npx tsx scripts/seed-admin.ts",
-    "seed:productos": "dotenv -e .env.local -- npx tsx scripts/seed-productos.ts"
+    "seed:admin":     "npx tsx --env-file=.env.local scripts/seed-admin.ts",
+    "seed:productos": "npx tsx --env-file=.env.local scripts/seed-productos.ts",
+    "seed:ventas":    "npx tsx --env-file=.env.local scripts/seed-ventas.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.2",
