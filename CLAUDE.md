@@ -102,6 +102,8 @@ Pendiente más importante: **integrar agendaonline y nume** para que capturen `?
 ## Flujo de trabajo en equipo
 
 > **Temporal (desde 2026-08-07, hasta que Carlos diga lo contrario):** el sitio está en producción pero todavía sin clientes reales, así que por ahora los cambios se pushean directo a `main` (sin PR) y eso dispara el deploy automático a producción — no pedir confirmación para esto salvo que algo se vea riesgoso. Cuando esté todo más asentado, van a clonar producción a un ambiente de test para deployar ahí automáticamente en vez de production directo; cuando eso exista, retomar el flujo de PR de abajo (o el que corresponda al nuevo ambiente).
+>
+> **Desde 2026-08-09**: después de pushear a `main`, Carlos prueba él mismo que el deploy haya salido bien (entra al sitio, prueba el flujo). No hace falta quedarse verificando el deploy contra la VM (logs, contenedor recreado, etc.) salvo que él lo pida explícitamente — con confirmar que el push disparó el pipeline alcanza.
 
 Se trabaja con ramas por feature/fix, mergeadas a `main` vía Pull Request (no pushear directo a `main`).
 
