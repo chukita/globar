@@ -23,7 +23,7 @@ export default auth((req) => {
   }
 
   if (pathname === "/login" && isLoggedIn) {
-    const dest = role === "superadmin" ? "/admin" : "/panel/comisiones";
+    const dest = role === "superadmin" ? "/admin" : "/panel/productos";
     return NextResponse.redirect(new URL(dest, req.url));
   }
 

@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Email o contraseña incorrectos.");
     } else {
-      router.push("/panel/comisiones");
+      router.push("/panel/productos");
     }
   }
 
@@ -113,8 +113,8 @@ export default function LoginPage() {
 
         <p className="text-center text-[12.5px] text-[#9AA3B2] mt-5">
           ¿No tenés cuenta?{" "}
-          <a href="/revendedores" className="text-[#0E6BA8] font-semibold">
-            Conocé los requisitos
+          <a href="/registro" className="text-[#0E6BA8] font-semibold">
+            Registrate acá
           </a>
         </p>
       </div>

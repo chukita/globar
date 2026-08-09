@@ -68,21 +68,29 @@ export const verificationTokens = pgTable("verification_tokens", {
 // ─── Revendedores ─────────────────────────────────────────────────────────────
 
 export const revendedores = pgTable("revendedores", {
-  id:           text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId:       text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
-  codigoVentas: text("codigo_ventas").notNull().unique(),  // ej: GLOBMQ-7K2
-  zona:         text("zona"),
-  activo:       boolean("activo").notNull().default(true),
-  creadoEn:     timestamp("creado_en").defaultNow().notNull(),
+  id:             text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:         text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  codigoVentas:   text("codigo_ventas").notNull().unique(),
+  zona:           text("zona"),
+  pais:           text("pais").default("Argentina"),
+  provincia:      text("provincia"),
+  localidad:      text("localidad"),
+  dni:            text("dni"),
+  fechaNacimiento: text("fecha_nacimiento"),   // ISO date string YYYY-MM-DD
+  puedeFacturar:  boolean("puede_facturar").notNull().default(false),
+  cbu:            text("cbu"),
+  activo:         boolean("activo").notNull().default(true),
+  creadoEn:       timestamp("creado_en").defaultNow().notNull(),
 });
 
 // ─── Productos ────────────────────────────────────────────────────────────────
 
 export const productos = pgTable("productos", {
   id:              text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  nombre:          text("nombre").notNull(),           // "agendaonline"
+  nombre:          text("nombre").notNull(),
   dominio:         text("dominio").notNull(),           // "agendaonline.com.ar"
-  tag:             text("tag").notNull(),               // "Turnos & reservas"
+  urlRegistro:     text("url_registro").notNull(),      // URL donde el cliente se registra
+  tag:             text("tag").notNull(),
   descripcion:     text("descripcion"),
   precioMensual:   numeric("precio_mensual", { precision: 12, scale: 2 }).notNull(),
   status:          productoStatusEnum("status").notNull().default("activo"),

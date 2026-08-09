@@ -1,6 +1,8 @@
-export const COMMISSION_PER_MONTH = 7000;
-export const MONTHLY_PRICE = 9000;
-export const COMMISSION_PER_SALE = COMMISSION_PER_MONTH * 3; // 21000
+export const MONTHLY_PRICE        = 9000;
+export const COMMISSION_PCT        = 0.5;                              // 50% del precio mensual
+export const COMMISSION_PER_MONTH  = MONTHLY_PRICE * COMMISSION_PCT;  // $4.500
+export const MAX_CUOTAS            = 6;
+export const COMMISSION_PER_SALE   = COMMISSION_PER_MONTH * MAX_CUOTAS; // $27.000 total
 
 export function fmtARS(n: number): string {
   return "$" + Math.round(n).toLocaleString("es-AR");
@@ -51,7 +53,7 @@ export const STEPS = [
   {
     n: "03",
     title: "El cliente se suscribe, vos cobrás",
-    desc: "Cada suscripción se registra sola y cobrás tu comisión durante 3 meses consecutivos.",
+    desc: "Cada suscripción se registra sola y cobrás tu comisión en 6 cuotas mensuales mientras el cliente siga activo.",
     tint: "#E1EFF8",
     accent: "#0B5A8F",
   },
