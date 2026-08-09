@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -7,6 +8,8 @@ import {
   numeric,
   pgEnum,
   primaryKey,
+  check,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -104,7 +107,7 @@ export const habilitaciones = pgTable("habilitaciones", {
   revendedorId:  text("revendedor_id").notNull().references(() => revendedores.id, { onDelete: "cascade" }),
   productoId:    text("producto_id").notNull().references(() => productos.id, { onDelete: "cascade" }),
   habilitadoEn:  timestamp("habilitado_en").defaultNow().notNull(),
-});
+}, (t) => [unique().on(t.revendedorId, t.productoId)]);
 
 // ─── Ventas ───────────────────────────────────────────────────────────────────
 
@@ -161,3 +164,14 @@ export const cuotasFacturas = pgTable("cuotas_facturas", {
   cuotaId:    text("cuota_id").notNull().references(() => cuotas.id),
   facturaId:  text("factura_id").notNull().references(() => facturas.id),
 }, (t) => [primaryKey({ columns: [t.cuotaId, t.facturaId] })]);
+
+// ─── Configuración global ──────────────────────────────────────────────────────
+// Fila única (id fijo = 1) con las reglas de negocio editables desde el panel
+// de superadmin, para no tener que hardcodear/redeployar cada vez que cambian.
+
+export const configuracion = pgTable("configuracion", {
+  id:            integer("id").primaryKey().default(1),
+  comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
+  comisionMeses: integer("comision_meses").notNull().default(4),
+  actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
+}, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

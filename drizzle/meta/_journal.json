@@ -29,6 +29,13 @@
       "when": 1786302710122,
       "tag": "0003_revendedor_codigo_seq",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786304579661,
+      "tag": "0004_outgoing_blindfold",
+      "breakpoints": true
     }
   ]
 }
