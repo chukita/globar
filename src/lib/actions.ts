@@ -7,7 +7,9 @@ import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function logoutAction() {
-  await signOut({ redirectTo: "/login" });
+  const session = await auth();
+  const dest = session?.user?.role === "superadmin" ? "/admin/login" : "/login";
+  await signOut({ redirectTo: dest });
 }
 
 export async function updateZonaAction(formData: FormData) {
