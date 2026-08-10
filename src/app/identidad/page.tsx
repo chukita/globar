@@ -1,5 +1,5 @@
 import { Logo } from "@/components/Logo";
-import { PALETTE, PRODUCTS, MONTHLY_PRICE, COMMISSION_PER_MONTH, fmtARS } from "@/lib/constants";
+import { PALETTE, MONTHLY_PRICE, COMMISSION_PER_MONTH, fmtARS } from "@/lib/constants";
 
 export default function IdentidadPage() {
   return (

@@ -12,6 +12,10 @@ const PROVINCIAS = [
   "Santiago del Estero","Tierra del Fuego","Tucumán",
 ];
 
+// Calculado una sola vez al cargar el módulo (no en cada render: Date.now()
+// es impuro y React 19 rechaza llamarlo durante el render, incluso en useMemo).
+const MAX_FECHA_NACIMIENTO = new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10);
+
 export default function RegistroPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -29,18 +33,26 @@ export default function RegistroPage() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function handleProvinciaChange(value: string) {
+    setForm((f) => ({ ...f, provincia: value, localidad: "" }));
+    setLocalidades([]);
+  }
+
   useEffect(() => {
-    if (!form.provincia) { setLocalidades([]); return; }
+    if (!form.provincia) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- arranca el indicador de carga antes del fetch externo
     setLoadingLoc(true);
-    setForm((f) => ({ ...f, localidad: "" }));
     fetch(`https://apis.datos.gob.ar/georef/api/municipios?provincia=${encodeURIComponent(form.provincia)}&max=500&campos=nombre&orden=nombre`)
       .then((r) => r.json())
       .then((data) => {
+        if (cancelled) return;
         const nombres: string[] = [...new Set<string>((data.municipios ?? []).map((m: { nombre: string }) => m.nombre))];
         setLocalidades(nombres);
       })
-      .catch(() => setLocalidades([]))
-      .finally(() => setLoadingLoc(false));
+      .catch(() => { if (!cancelled) setLocalidades([]); })
+      .finally(() => { if (!cancelled) setLoadingLoc(false); });
+    return () => { cancelled = true; };
   }, [form.provincia]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -121,7 +133,7 @@ export default function RegistroPage() {
             {/* Provincia */}
             <div>
               <label className={labelClass}>Provincia</label>
-              <select value={form.provincia} onChange={(e) => set("provincia", e.target.value)}
+              <select value={form.provincia} onChange={(e) => handleProvinciaChange(e.target.value)}
                 required className={inputClass}>
                 <option value="">Seleccioná una provincia</option>
                 {PROVINCIAS.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -152,7 +164,7 @@ export default function RegistroPage() {
               <div>
                 <label className={labelClass}>Fecha de nacimiento</label>
                 <input type="date" value={form.fechaNacimiento} onChange={(e) => set("fechaNacimiento", e.target.value)}
-                  required max={new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10)}
+                  required max={MAX_FECHA_NACIMIENTO}
                   className={inputClass} />
               </div>
             </div>

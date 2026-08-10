@@ -13,6 +13,8 @@ const PRODUCT_COLORS: Record<string, { bg: string; text: string; tag: string }> 
 };
 const DEFAULT_COLOR = { bg: "#E9ECEF", text: "#5B6577", tag: "Producto digital" };
 
+export const dynamic = "force-dynamic";
+
 export default async function LandingPage() {
   const lista = await db
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, descripcion: productos.descripcion, precioMensual: productos.precioMensual })

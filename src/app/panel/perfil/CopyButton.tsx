@@ -13,7 +13,7 @@ export function CopyButton({ text, label, labelDone, className }: Props) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
-    try { navigator.clipboard?.writeText(text); } catch (_) {}
+    try { navigator.clipboard?.writeText(text); } catch { /* clipboard no disponible */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }

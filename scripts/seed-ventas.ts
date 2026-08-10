@@ -1,6 +1,5 @@
 import { db } from "../src/db";
-import { users, revendedores, productos, ventas, cuotas } from "../src/db/schema";
-import { eq } from "drizzle-orm";
+import { revendedores, productos, ventas, cuotas } from "../src/db/schema";
 
 const COMISION_PCT = 0.5;
 const MAX_CUOTAS   = 6;

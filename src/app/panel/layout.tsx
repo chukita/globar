@@ -1,7 +1,4 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { Sidebar } from "@/components/Sidebar";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {

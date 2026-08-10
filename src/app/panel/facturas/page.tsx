@@ -5,9 +5,6 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { FacturasClient } from "./FacturasClient";
 
-const fmtARS = (n: number) =>
-  new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
-
 export default async function FacturasPage() {
   const session = await auth();
   if (!session?.user?.email) redirect("/login");

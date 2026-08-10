@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { revendedores, cuotas, ventas, productos, users } from "@/db/schema";
-import { eq, and, inArray, sum } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 const fmtARS = (n: number) =>
@@ -141,7 +141,7 @@ export default async function ComisionesPage() {
               style={{ display: "grid", gridTemplateColumns: "1.1fr 1.2fr 1.2fr .9fr 1fr" }}>
               <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span className="text-right">Estado</span>
             </div>
-            {rows.map((r, i) => {
+            {rows.map((r) => {
               const s = STATUS_MAP[r.status];
               return (
                 <div key={r.cuotaId} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
