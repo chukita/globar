@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CopyButton } from "../perfil/CopyButton";
+import { getConfiguracion } from "@/lib/configuracion";
+import { fmtARS } from "@/lib/constants";
 
 export default async function ProductosPage() {
   const session = await auth();
@@ -17,6 +19,9 @@ export default async function ProductosPage() {
     .select()
     .from(productos)
     .where(eq(productos.status, "activo"));
+
+  const { comisionMonto, comisionMeses } = await getConfiguracion();
+  const comisionTexto = `${fmtARS(Number(comisionMonto))} × ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""}`;
 
   const codigo = rev?.codigoVentas ?? null;
 
@@ -36,7 +41,7 @@ export default async function ProductosPage() {
           {lista.map((p) => {
             const link = codigo ? `${p.urlRegistro}?vendedor=${codigo}` : p.urlRegistro;
             return (
-              <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} />
+              <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} comisionTexto={comisionTexto} />
             );
           })}
         </div>
@@ -56,10 +61,12 @@ function ProductCard({
   producto,
   link,
   tienecodigo,
+  comisionTexto,
 }: {
   producto: typeof import("@/db/schema").productos.$inferSelect;
   link: string;
   tienecodigo: boolean;
+  comisionTexto: string;
 }) {
   const inicial = producto.nombre[0].toLowerCase();
   const colors: Record<string, { bg: string; text: string; glow: string }> = {
@@ -93,7 +100,7 @@ function ProductCard({
         <div className="bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3.5 mb-4">
           <div className="text-[11.5px] text-[#9AA3B2] font-semibold mb-0.5">Comisión por venta</div>
           <div className="text-[13.5px] text-[#0C2A45] font-semibold">
-            50% del precio mensual × 6 cuotas
+            {comisionTexto}
           </div>
         </div>
 

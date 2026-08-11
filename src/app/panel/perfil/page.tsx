@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { CopyButton } from "./CopyButton";
 import { CbuForm } from "./CbuForm";
+import { getConfiguracion } from "@/lib/configuracion";
+import { fmtARS } from "@/lib/constants";
 
 export default async function PerfilPage() {
   const session = await auth();
@@ -17,6 +19,8 @@ export default async function PerfilPage() {
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, urlRegistro: productos.urlRegistro })
     .from(productos)
     .where(eq(productos.status, "activo"));
+
+  const { comisionMonto, comisionMeses } = await getConfiguracion();
 
   const codigo = rev?.codigoVentas ?? null;
 
@@ -85,7 +89,7 @@ export default async function PerfilPage() {
             </div>
           )}
           <p className="text-[12px] text-[#9AA3B2] leading-relaxed mt-4 mb-0">
-            Cada venta genera 6 cuotas de comisión (50% del precio mensual). Se acreditan mes a mes mientras el cliente mantenga la suscripción.
+            Cada venta genera {comisionMeses} cuotas de comisión de {fmtARS(Number(comisionMonto))} cada una. Se acreditan mes a mes mientras el cliente mantenga la suscripción.
           </p>
         </div>
       </div>

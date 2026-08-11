@@ -124,16 +124,16 @@ export const ventas = pgTable("ventas", {
 });
 
 // ─── Cuotas de comisión ───────────────────────────────────────────────────────
-// Se generan 6 cuotas por venta. Cada mes, si el cliente pagó, la cuota pasa
-// de "pendiente" a "generada". El revendedor factura y el admin paga.
+// La cantidad de cuotas por venta y el monto de cada una salen de la tabla
+// `configuracion` (no están hardcodeados acá). Cada mes, si el cliente pagó,
+// la cuota pasa de "pendiente" a "generada". El revendedor factura y el admin paga.
 
 export const cuotas = pgTable("cuotas", {
   id:             text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   ventaId:        text("venta_id").notNull().references(() => ventas.id, { onDelete: "cascade" }),
   revendedorId:   text("revendedor_id").notNull().references(() => revendedores.id),
-  numeroCuota:    integer("numero_cuota").notNull(),    // 1 a 6
-  // monto = 50% del precio mensual al momento de la venta
-  monto:          numeric("monto", { precision: 12, scale: 2 }).notNull(),
+  numeroCuota:    integer("numero_cuota").notNull(),    // 1 a comisionMeses
+  monto:          numeric("monto", { precision: 12, scale: 2 }).notNull(),  // comisionMonto vigente al momento de la venta
   periodoMes:     integer("periodo_mes").notNull(),     // mes del año: 1-12
   periodoAnio:    integer("periodo_anio").notNull(),
   status:         cuotaStatusEnum("status").notNull().default("pendiente"),

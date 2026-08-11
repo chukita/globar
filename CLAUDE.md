@@ -9,8 +9,8 @@ Panel de gestión de revendedores (superadmin, login, panel, revendedores) sobre
 glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonline** (agendaonline.com.ar) y **nume** (nume.com.ar).
 
 1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único** (ej. `GLOBMQ-7K2`, generado en `lib/revendedor.ts`).
-2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?ref={codigoVentas}` (armado en `/panel/perfil`).
-3. **Falta implementar en agendaonline y nume**: capturar ese `?ref=` en el registro/suscripción y, cuando el cliente paga, pegarle a `POST /api/webhooks/pago` de glob.ar (ver el JSDoc del payload en `src/app/api/webhooks/pago/route.ts`) con header `x-webhook-secret: $WEBHOOK_SECRET`. Hoy **ninguno de los dos repos tiene esto** — se auditó explícitamente y no hay ni captura de `?ref=` ni webhook saliente en ninguno de los dos.
+2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?vendedor={codigoVentas}` (armado en `/panel/perfil` y `/panel/productos`).
+3. **Falta implementar en agendaonline y nume**: capturar ese `?vendedor=` en el registro/suscripción y, cuando el cliente paga, pegarle a `POST /api/webhooks/pago` de glob.ar (ver el JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. Hoy **ninguno de los dos repos tiene esto** — se auditó explícitamente y no hay ni captura de `?vendedor=` ni webhook saliente en ninguno de los dos.
 4. Cuando ese webhook llega con un `codigoRevendedor` válido, glob.ar genera una cuota de comisión (monto y cantidad de meses configurables, ver abajo).
 5. El revendedor ve sus cuotas "generadas" en `/panel/facturas`, sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
 
@@ -97,7 +97,7 @@ Ya no queda contenido de ejemplo en el panel ni en el admin — todo consulta la
 - `/panel/capacitacion` — sigue siendo un placeholder; no hay un sistema real de capacitación/quiz.
 - `/identidad` — página de sistema de diseño, no debería estar indexada/linkeada en producción pero no es prioritario sacarla.
 
-Pendiente más importante: **integrar agendaonline y nume** para que capturen `?ref=` y llamen al webhook de pagos (ver "Modelo de negocio" arriba) — sin eso, el flujo de comisiones de glob.ar no tiene forma de dispararse solo todavía.
+Pendiente más importante: **integrar agendaonline y nume** para que capturen `?vendedor=` y llamen al webhook de pagos (ver "Modelo de negocio" arriba) — sin eso, el flujo de comisiones de glob.ar no tiene forma de dispararse solo todavía.
 
 ## Flujo de trabajo en equipo
 
