@@ -5,8 +5,8 @@ import { facturas, cuotas, cuotasFacturas, revendedores } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { UPLOAD_DIR } from "@/lib/uploads";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads");
 const MAX_FILE_MB = 5;
 
 export async function POST(req: NextRequest) {

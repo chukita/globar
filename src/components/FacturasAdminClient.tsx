@@ -129,7 +129,7 @@ function FacturaCard({ factura, confirmando, pagando, onConfirmar, onCancelar, o
               <span>·</span>
               <span>{factura.cuotas} cuota{factura.cuotas !== 1 ? "s" : ""}</span>
               <span>·</span>
-              <a href={factura.archivoUrl} target="_blank" rel="noreferrer" className="text-[#0E6BA8] font-medium flex items-center gap-1">
+              <a href={`/api/admin/facturas/${factura.id}/archivo`} target="_blank" rel="noreferrer" className="text-[#0E6BA8] font-medium flex items-center gap-1">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
                 </svg>
