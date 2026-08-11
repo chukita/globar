@@ -28,6 +28,11 @@ export default auth((req) => {
     if (pathname.startsWith("/admin") && role !== "superadmin") {
       return NextResponse.redirect(new URL("/panel/comisiones", req.url));
     }
+    // El superadmin no tiene fila en `users` (login solo por contraseña) —
+    // las páginas de /panel/* asumen que sí y rompen si intenta entrar ahí.
+    if (pathname.startsWith("/panel") && role === "superadmin") {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
   }
 
   if (pathname === "/login" && isLoggedIn) {
