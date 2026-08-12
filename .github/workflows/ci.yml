@@ -19,8 +19,12 @@ jobs:
           node-version: "22"
           cache: npm
 
+      # npm ci exige que el lockfile esté generado con una versión de npm
+      # compatible con la del runner (acá, npm 10.x vía node-version 22) —
+      # con npm local más nuevo (11.x) tira "Missing: ... from lock file"
+      # aunque el lockfile esté sano. npm install es más tolerante a eso.
       - name: Install
-        run: npm ci
+        run: npm install
 
       - name: Lint
         run: npm run lint

@@ -3,7 +3,8 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+# npm install en vez de npm ci: ver comentario en .github/workflows/ci.yml
+RUN npm install
 
 COPY . .
 
