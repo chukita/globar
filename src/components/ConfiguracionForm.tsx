@@ -5,12 +5,15 @@ import { useState } from "react";
 export function ConfiguracionForm({
   comisionMonto,
   comisionMeses,
+  diasLiquidacionMp,
 }: {
   comisionMonto: number;
   comisionMeses: number;
+  diasLiquidacionMp: number;
 }) {
   const [monto, setMonto] = useState(String(comisionMonto));
   const [meses, setMeses] = useState(String(comisionMeses));
+  const [diasLiquidacion, setDiasLiquidacion] = useState(String(diasLiquidacionMp));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -27,6 +30,7 @@ export function ConfiguracionForm({
       body: JSON.stringify({
         comisionMonto: Number(monto),
         comisionMeses: Number(meses),
+        diasLiquidacionMp: Number(diasLiquidacion),
       }),
     });
 
@@ -70,6 +74,26 @@ export function ConfiguracionForm({
             step="1"
             value={meses}
             onChange={(e) => setMeses(e.target.value)}
+            required
+            className="mt-1.5 w-full bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3 text-[15px] font-semibold text-[#0C2A45]"
+          />
+        </label>
+      </div>
+
+      <div className="mt-6 pt-5 border-t border-[#EEF0F2]">
+        <div className="text-[13px] text-[#9AA3B2] font-semibold uppercase tracking-[.05em]">Liquidación de Mercado Pago</div>
+        <p className="text-[13.5px] text-[#5B6577] mt-1.5 mb-3">
+          Días desde que el cliente paga hasta que esa plata queda disponible en tu cuenta. Antes de eso, la cuota
+          no aparece como facturable para el revendedor (no hay con qué pagarle todavía).
+        </p>
+        <label className="block max-w-[220px]">
+          <span className="text-[12.5px] text-[#5B6577] font-medium">Días de liquidación</span>
+          <input
+            type="number"
+            min={0}
+            step="1"
+            value={diasLiquidacion}
+            onChange={(e) => setDiasLiquidacion(e.target.value)}
             required
             className="mt-1.5 w-full bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3 text-[15px] font-semibold text-[#0C2A45]"
           />

@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, cuotas, ventas, productos, facturas, cuotasFacturas, users } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { revendedores, facturas, cuotasFacturas, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { FacturasClient } from "./FacturasClient";
+import { getCuotasFacturables } from "@/lib/panel-data";
 
 export default async function FacturasPage() {
   const session = await auth();
@@ -21,22 +22,10 @@ export default async function FacturasPage() {
     );
   }
 
-  // Cuotas generadas disponibles para facturar
-  const cuotasDisp = await db
-    .select({
-      id:           cuotas.id,
-      numeroCuota:  cuotas.numeroCuota,
-      monto:        cuotas.monto,
-      periodoMes:   cuotas.periodoMes,
-      periodoAnio:  cuotas.periodoAnio,
-      clienteNombre: ventas.clienteNombre,
-      productoNombre: productos.nombre,
-    })
-    .from(cuotas)
-    .innerJoin(ventas, eq(cuotas.ventaId, ventas.id))
-    .innerJoin(productos, eq(ventas.productoId, productos.id))
-    .where(and(eq(cuotas.revendedorId, rev.id), eq(cuotas.status, "generada")))
-    .orderBy(cuotas.periodoAnio, cuotas.periodoMes);
+  // Cuotas generadas y ya liquidadas por MP, disponibles para facturar
+  // (misma lógica que el panel de comisiones — ver getCuotasFacturables).
+  const cuotasDisp = (await getCuotasFacturables(rev.id))
+    .sort((a, b) => a.periodoAnio - b.periodoAnio || a.periodoMes - b.periodoMes);
 
   // Facturas enviadas
   const facturasList = await db
@@ -65,8 +54,8 @@ export default async function FacturasPage() {
 
   const cuotasSerializadas = cuotasDisp.map(c => ({
     id:       c.id,
-    producto: c.productoNombre,
-    cliente:  c.clienteNombre,
+    producto: c.producto,
+    cliente:  c.cliente,
     mes:      `${MES[c.periodoMes - 1]} ${c.periodoAnio}`,
     cuota:    c.numeroCuota,
     monto:    parseFloat(c.monto),

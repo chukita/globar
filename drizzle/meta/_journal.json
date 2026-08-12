@@ -36,6 +36,20 @@
       "when": 1786304579661,
       "tag": "0004_outgoing_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786505217182,
+      "tag": "0005_curious_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786505464611,
+      "tag": "0006_sudden_iron_lad",
+      "breakpoints": true
     }
   ]
 }

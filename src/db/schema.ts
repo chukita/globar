@@ -22,6 +22,7 @@ export const cuotaStatusEnum = pgEnum("cuota_status", [
   "generada",    // el cliente pagó → cuota disponible para facturar
   "facturada",   // el revendedor subió la factura
   "pagada",      // el superadmin realizó la transferencia
+  "anulada",     // el cliente ejerció derecho de arrepentimiento (baja + reembolso dentro de los 10 días) — solo si seguía "generada"
 ]);
 
 export const productoStatusEnum = pgEnum("producto_status", [
@@ -142,6 +143,7 @@ export const cuotas = pgTable("cuotas", {
   generadoEn:     timestamp("generado_en"),  // cuando el cliente pagó
   facturadoEn:    timestamp("facturado_en"),
   pagadoEn:       timestamp("pagado_en"),
+  anuladoEn:      timestamp("anulado_en"),  // derecho de arrepentimiento del cliente
 });
 
 // ─── Facturas ─────────────────────────────────────────────────────────────────
@@ -173,5 +175,10 @@ export const configuracion = pgTable("configuracion", {
   id:            integer("id").primaryKey().default(1),
   comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
+  // Días desde que se generó la cuota (= cuando el cliente pagó) hasta que
+  // Mercado Pago liquida esa plata a la cuenta real — recién ahí se le puede
+  // pagar la comisión al revendedor. Antes de eso la cuota no aparece como
+  // facturable aunque ya esté "generada".
+  diasLiquidacionMp: integer("dias_liquidacion_mp").notNull().default(35),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

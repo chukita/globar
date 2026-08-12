@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { cuotas, ventas, productos, habilitaciones, facturas } from "@/db/schema";
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { eq, and, inArray, lte, sql } from "drizzle-orm";
+import { getConfiguracion } from "./configuracion";
 
 export async function getRevendedorStats(revendedorId: string) {
   const [ventasCount] = await db
@@ -88,7 +89,16 @@ export async function getFacturasDelRevendedor(revendedorId: string) {
     .orderBy(sql`${facturas.subidaEn} desc`);
 }
 
+/**
+ * Cuotas que el revendedor ya puede facturar: "generada" (el cliente pagó)
+ * Y con al menos `diasLiquidacionMp` días desde ese pago — antes de eso
+ * Mercado Pago todavía no le liquidó esa plata al superadmin, así que no
+ * hay con qué pagarle la comisión todavía aunque la cuota ya exista.
+ */
 export async function getCuotasFacturables(revendedorId: string) {
+  const { diasLiquidacionMp } = await getConfiguracion();
+  const fechaCorte = new Date(Date.now() - diasLiquidacionMp * 24 * 60 * 60 * 1000);
+
   return db
     .select({
       id: cuotas.id,
@@ -102,5 +112,9 @@ export async function getCuotasFacturables(revendedorId: string) {
     .from(cuotas)
     .innerJoin(ventas, eq(cuotas.ventaId, ventas.id))
     .innerJoin(productos, eq(ventas.productoId, productos.id))
-    .where(and(eq(cuotas.revendedorId, revendedorId), eq(cuotas.status, "generada")));
+    .where(and(
+      eq(cuotas.revendedorId, revendedorId),
+      eq(cuotas.status, "generada"),
+      lte(cuotas.generadoEn, fechaCorte),
+    ));
 }

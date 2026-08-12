@@ -1,0 +1,1 @@
+ALTER TABLE "configuracion" ADD COLUMN "dias_liquidacion_mp" integer DEFAULT 35 NOT NULL;

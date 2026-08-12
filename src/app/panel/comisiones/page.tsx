@@ -14,6 +14,7 @@ const STATUS_MAP = {
   generada:   { label: "A facturar", bg: "#FFF3CD", fg: "#7A6020" },
   facturada:  { label: "Facturada",  bg: "#E1EFF8", fg: "#0B5A8F" },
   pagada:     { label: "Pagado",     bg: "#E7F5EE", fg: "#0B6B47" },
+  anulada:    { label: "Anulada",    bg: "#F1F3F5", fg: "#5B6577" },
 } as const;
 
 export default async function ComisionesPage() {
@@ -52,9 +53,9 @@ export default async function ComisionesPage() {
     .where(eq(cuotas.revendedorId, rev.id))
     .orderBy(cuotas.periodoAnio, cuotas.periodoMes, cuotas.numeroCuota);
 
-  // Totales
+  // Totales (una cuota "anulada" — cliente arrepentido y reembolsado — no cuenta ni como cobrada ni como pendiente)
   const cobrado = rows.filter(r => r.status === "pagada").reduce((a, r) => a + parseFloat(r.monto), 0);
-  const pendiente = rows.filter(r => r.status !== "pagada").reduce((a, r) => a + parseFloat(r.monto), 0);
+  const pendiente = rows.filter(r => r.status !== "pagada" && r.status !== "anulada").reduce((a, r) => a + parseFloat(r.monto), 0);
   const aFacturar = rows.filter(r => r.status === "generada").reduce((a, r) => a + parseFloat(r.monto), 0);
 
   // Próximo pago: cuotas generadas del mes más próximo
@@ -82,7 +83,7 @@ export default async function ComisionesPage() {
   const TOTALS = [
     { label: "Cobrado",          value: fmtARS(cobrado),    sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
     { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${generadas.length} cuotas listas para facturar`,                     accent: "#7A6020" },
-    { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada").length} cuotas programadas`, accent: "#9B4A57" },
+    { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada" && r.status !== "anulada").length} cuotas programadas`, accent: "#9B4A57" },
   ];
 
   const formatFecha = (d: Date) => d.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });

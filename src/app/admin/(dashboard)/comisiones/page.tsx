@@ -9,6 +9,7 @@ const STATUS_MAP = {
   generada:   { label: "Generada",   bg: "#E1EFF8",  fg: "#0B5A8F",  border: "#C6DDEF" },
   facturada:  { label: "Facturada",  bg: "#FFF3CD",  fg: "#856404",  border: "#FFD97D" },
   pagada:     { label: "Pagada",     bg: "#E7F5EE",  fg: "#0B6B47",  border: "#9BD3B6" },
+  anulada:    { label: "Anulada",    bg: "#FCE6E9",  fg: "#9B4A57",  border: "#E7A9B3" },
 } as const;
 
 const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -21,6 +22,7 @@ export default async function AdminComisionesPage() {
     facturadas: cuotas.filter(c => c.status === "facturada").length,
     pagadas:    cuotas.filter(c => c.status === "pagada").length,
     pendientes: cuotas.filter(c => c.status === "pendiente").length,
+    anuladas:   cuotas.filter(c => c.status === "anulada").length,
   };
 
   return (
@@ -32,12 +34,13 @@ export default async function AdminComisionesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mt-6">
+      <div className="grid grid-cols-5 gap-4 mt-6">
         {[
           { label: "Generadas",  value: totales.generadas,  color: "#0B5A8F", bg: "#E1EFF8" },
           { label: "Facturadas", value: totales.facturadas, color: "#856404", bg: "#FFF3CD" },
           { label: "Pagadas",    value: totales.pagadas,    color: "#0B6B47", bg: "#E7F5EE" },
           { label: "Pendientes", value: totales.pendientes, color: "#9AA3B2", bg: "#F7F8FA" },
+          { label: "Anuladas",   value: totales.anuladas,   color: "#9B4A57", bg: "#FCE6E9" },
         ].map(s => (
           <div key={s.label} className="border rounded-[14px] px-5 py-4" style={{ background: s.bg, borderColor: s.color + "33" }}>
             <div className="font-extrabold text-[28px]" style={{ color: s.color }}>{s.value}</div>

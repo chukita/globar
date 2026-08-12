@@ -10,13 +10,14 @@ glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonlin
 
 1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único** (ej. `GLOBMQ-7K2`, generado en `lib/revendedor.ts`).
 2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?vendedor={codigoVentas}` (armado en `/panel/perfil` y `/panel/productos`).
-3. **Falta implementar en agendaonline y nume**: capturar ese `?vendedor=` en el registro/suscripción y, cuando el cliente paga, pegarle a `POST /api/webhooks/pago` de glob.ar (ver el JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. Hoy **ninguno de los dos repos tiene esto** — se auditó explícitamente y no hay ni captura de `?vendedor=` ni webhook saliente en ninguno de los dos.
+3. Cuando el cliente se registra con ese link y paga, el producto le pega a `POST /api/webhooks/pago` (JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. **Implementado y en producción del lado de agendaonline** (repo `barber-turnos`, ver `server/src/globarReferral.ts` y la sección "Programa de revendedores" de su CLAUDE.md) desde el 12/08/2026. **nume todavía no lo tiene** — Cynthia está trabajando en ese repo, coordinar antes de tocarlo.
 4. Cuando ese webhook llega con un `codigoRevendedor` válido, glob.ar genera una cuota de comisión (monto y cantidad de meses configurables, ver abajo).
-5. El revendedor ve sus cuotas "generadas" en `/panel/facturas`, sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
+5. El revendedor ve sus cuotas "generadas" en `/panel/facturas` (solo las que ya tienen `diasLiquidacionMp` días desde que se generaron — antes de eso el producto todavía no le liquidó esa plata al superadmin, ver abajo), sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
+6. Si el cliente ejerce el derecho de arrepentimiento del lado del producto (baja + reembolso dentro de los 10 días de Ley 24.240) y esa cuota seguía en `generada`, el producto le pega a `POST /api/webhooks/pago/anular` con el mismo `pagoId` del pago original — glob.ar pasa la cuota a `anulada`. Si ya estaba `facturada`/`pagada` no se toca (queda para resolver a mano; en la práctica no debería pasar porque agendaonline no paga comisiones antes de que le liquiden la plata, ~35 días, muy por fuera de la ventana de 10 días — ver `server/src/globarReferral.ts` y `notifyGlobarRefundSafe` en el repo de agendaonline).
 
 ### Reglas de negocio configurables
 
-Monto por cuota y cantidad de cuotas **no están hardcodeadas** — viven en la tabla singleton `configuracion` (`id` fijo = 1, con `CHECK` constraint), editable desde `/admin/configuracion` (solo superadmin). Default: $5.000 × 4 meses. El webhook de pagos (`src/app/api/webhooks/pago/route.ts`) lee esto en cada request, no cachea.
+Monto por cuota, cantidad de cuotas, y días de liquidación de MP **no están hardcodeados** — viven en la tabla singleton `configuracion` (`id` fijo = 1, con `CHECK` constraint), editable desde `/admin/configuracion` (solo superadmin). Default: $5.000 × 4 meses, 35 días de liquidación. El webhook de pagos (`src/app/api/webhooks/pago/route.ts`) lee esto en cada request, no cachea.
 
 Un superadmin puede habilitar/deshabilitar productos por revendedor desde `/admin/revendedores` (tabla `habilitaciones`, constraint único `revendedor_id + producto_id`).
 
@@ -97,7 +98,7 @@ Ya no queda contenido de ejemplo en el panel ni en el admin — todo consulta la
 - `/panel/capacitacion` — sigue siendo un placeholder; no hay un sistema real de capacitación/quiz.
 - `/identidad` — página de sistema de diseño, no debería estar indexada/linkeada en producción pero no es prioritario sacarla.
 
-Pendiente más importante: **integrar agendaonline y nume** para que capturen `?vendedor=` y llamen al webhook de pagos (ver "Modelo de negocio" arriba) — sin eso, el flujo de comisiones de glob.ar no tiene forma de dispararse solo todavía.
+Pendiente: **integrar nume** para que capture `?vendedor=` y llame al webhook de pagos, igual que ya hace agendaonline (ver "Modelo de negocio" arriba). Coordinar con Cynthia, que está trabajando en ese repo.
 
 ## Flujo de trabajo en equipo
 

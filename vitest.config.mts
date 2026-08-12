@@ -15,6 +15,15 @@ export default defineConfig({
     env: {
       UPLOAD_DIR: path.join(os.tmpdir(), "globar-test-uploads"),
     },
+    // Cada archivo de test arranca su propia instancia de PGlite (Postgres
+    // en memoria vía WASM) y corre las migraciones desde cero en beforeAll.
+    // Con varios archivos en paralelo eso compite por CPU y se pasa del
+    // hookTimeout default (10s) — no es un test lento, es contención.
+    // fileParallelism:false corre los archivos secuenciales (más lento en
+    // total, pero cada uno con la máquina para él solo) y el timeout más
+    // alto da margen igual.
+    fileParallelism: false,
+    hookTimeout: 30_000,
   },
   resolve: {
     alias: [
