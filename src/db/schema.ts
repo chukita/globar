@@ -121,6 +121,12 @@ export const ventas = pgTable("ventas", {
   // precio al momento de la venta (puede cambiar en el futuro)
   precioMensual:  numeric("precio_mensual", { precision: 12, scale: 2 }).notNull(),
   vendidoEn:      timestamp("vendido_en").defaultNow().notNull(),
+  // Se actualiza en cada webhook de pago recibido para esta venta, incluso
+  // después de agotar las cuotas de comisión (el webhook sigue llegando
+  // igual todos los meses) — es la única señal real de si el cliente sigue
+  // pagando. Se deriva "activa" comparando contra esto, no hay ningún
+  // webhook de "se dio de baja" que lo actualice directamente.
+  ultimoPagoEn:   timestamp("ultimo_pago_en").defaultNow().notNull(),
   activa:         boolean("activa").notNull().default(true),
 });
 

@@ -1,15 +1,26 @@
 import Link from "next/link";
 import { getDashboardStats, getFacturasPendientesResumen, getUltimasVentas } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
+import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Función aparte para que `new Date()` no quede dentro del cuerpo del
+ * componente (react-hooks/purity) — mismo patrón que panel/clientes.
+ */
+function conEstadoSuscripcion<T extends { ultimoPagoEn: Date }>(rows: T[]) {
+  const ahora = new Date();
+  return rows.map((v) => ({ ...v, activa: esSuscripcionActiva(v.ultimoPagoEn, ahora) }));
+}
+
 export default async function AdminDashboard() {
-  const [stats, facturasPendientes, ultimasVentas] = await Promise.all([
+  const [stats, facturasPendientes, ultimasVentasRaw] = await Promise.all([
     getDashboardStats(),
     getFacturasPendientesResumen(),
     getUltimasVentas(),
   ]);
+  const ultimasVentas = conEstadoSuscripcion(ultimasVentasRaw);
 
   const statCards = [
     { label: "Ventas totales",       value: String(stats.ventasTotales),          accent: "#0C2A45", sub: "todos los productos" },

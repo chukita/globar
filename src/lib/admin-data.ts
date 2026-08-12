@@ -51,7 +51,7 @@ export async function getUltimasVentas(limit = 5) {
       producto: productos.nombre,
       revendedor: revendedores.codigoVentas,
       fecha: ventas.vendidoEn,
-      activa: ventas.activa,
+      ultimoPagoEn: ventas.ultimoPagoEn,
     })
     .from(ventas)
     .innerJoin(productos, eq(ventas.productoId, productos.id))
@@ -70,7 +70,7 @@ export async function getTodasLasVentas() {
       revendedor: revendedores.codigoVentas,
       fecha: ventas.vendidoEn,
       precioMensual: ventas.precioMensual,
-      activa: ventas.activa,
+      ultimoPagoEn: ventas.ultimoPagoEn,
     })
     .from(ventas)
     .innerJoin(productos, eq(ventas.productoId, productos.id))

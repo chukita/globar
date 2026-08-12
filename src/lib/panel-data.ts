@@ -46,10 +46,10 @@ export async function getComisionesDelRevendedor(revendedorId: string) {
 }
 
 /**
- * Clientes que le compraron a este revendedor. No incluye el estado real de
- * la suscripción (activa/cancelada) — glob.ar solo se entera de pagos vía
- * webhook, no hay ningún aviso del producto cuando el cliente cancela, así
- * que ese dato no existe acá todavía.
+ * Clientes que le compraron a este revendedor, con `ultimoPagoEn` para
+ * inferir si la suscripción sigue activa (ver estadoSuscripcion.ts) — no es
+ * el estado real (no hay webhook de baja), es el último pago que sabemos
+ * que llegó.
  */
 export async function getClientesDelRevendedor(revendedorId: string) {
   return db
@@ -59,6 +59,7 @@ export async function getClientesDelRevendedor(revendedorId: string) {
       clienteEmail: ventas.clienteEmail,
       producto: productos.nombre,
       vendidoEn: ventas.vendidoEn,
+      ultimoPagoEn: ventas.ultimoPagoEn,
     })
     .from(ventas)
     .innerJoin(productos, eq(ventas.productoId, productos.id))

@@ -1,10 +1,21 @@
 import { getTodasLasVentas } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
+import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Función aparte para que `new Date()` no quede dentro del cuerpo del
+ * componente (react-hooks/purity) — mismo patrón que panel/clientes.
+ */
+function conEstadoSuscripcion<T extends { ultimoPagoEn: Date }>(rows: T[]) {
+  const ahora = new Date();
+  return rows.map((v) => ({ ...v, activa: esSuscripcionActiva(v.ultimoPagoEn, ahora) }));
+}
+
 export default async function AdminVentasPage() {
-  const ventas = await getTodasLasVentas();
+  const ventasRaw = await getTodasLasVentas();
+  const ventas = conEstadoSuscripcion(ventasRaw);
 
   return (
     <div className="p-10">

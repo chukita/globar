@@ -125,6 +125,12 @@ export async function POST(req: NextRequest) {
     venta = nuevaVenta;
   }
 
+  // ── Registrar este pago como el más reciente de la venta ──────────────────
+  // Se actualiza siempre, incluso cuando después cortamos por comisionMeses
+  // (el webhook sigue llegando cada mes aunque ya no genere comisión) — es
+  // la única señal que tiene glob.ar de si el cliente sigue pagando.
+  await db.update(ventas).set({ ultimoPagoEn: new Date() }).where(eq(ventas.id, venta.id));
+
   // ── Si no hay revendedor, terminamos: pago registrado sin comisión ─────────
   if (!revendedor) {
     return NextResponse.json({

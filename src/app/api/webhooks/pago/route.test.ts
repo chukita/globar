@@ -214,4 +214,41 @@ describe("POST /api/webhooks/pago", () => {
     const cuotasCreadas = await db.select().from(schema.cuotas);
     expect(cuotasCreadas).toHaveLength(2);
   });
+
+  it("actualiza ultimoPagoEn en pagos sucesivos", async () => {
+    await seedProducto();
+    const rev = await seedRevendedor();
+    const payload = { ...basePayload, codigoRevendedor: rev.codigoVentas };
+
+    const res1 = await POST(pagoRequest({ ...payload, pagoId: "PAGO-1", periodoMes: 1 }));
+    const data1 = await res1.json();
+    const [ventaAntes] = await db.select().from(schema.ventas).where(eq(schema.ventas.id, data1.ventaId));
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    await POST(pagoRequest({ ...payload, pagoId: "PAGO-2", periodoMes: 2 }));
+    const [ventaDespues] = await db.select().from(schema.ventas).where(eq(schema.ventas.id, data1.ventaId));
+
+    expect(ventaDespues.ultimoPagoEn.getTime()).toBeGreaterThan(ventaAntes.ultimoPagoEn.getTime());
+  });
+
+  it("sigue actualizando ultimoPagoEn después de agotar el tope de comisionMeses (aunque ya no genere cuota)", async () => {
+    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 1, diasLiquidacionMp: 35 });
+    await seedProducto();
+    const rev = await seedRevendedor();
+    const payload = { ...basePayload, codigoRevendedor: rev.codigoVentas };
+
+    const res1 = await POST(pagoRequest({ ...payload, pagoId: "PAGO-1", periodoMes: 1 }));
+    const data1 = await res1.json();
+    const [ventaAntes] = await db.select().from(schema.ventas).where(eq(schema.ventas.id, data1.ventaId));
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    const res2 = await POST(pagoRequest({ ...payload, pagoId: "PAGO-2", periodoMes: 2 }));
+    const data2 = await res2.json();
+    expect(data2.comision).toBe(false); // ya se agotó el tope de 1 mes de comisión
+
+    const [ventaDespues] = await db.select().from(schema.ventas).where(eq(schema.ventas.id, data1.ventaId));
+    expect(ventaDespues.ultimoPagoEn.getTime()).toBeGreaterThan(ventaAntes.ultimoPagoEn.getTime());
+  });
 });
