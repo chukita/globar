@@ -91,9 +91,11 @@ export async function getFacturasDelRevendedor(revendedorId: string) {
 
 /**
  * Cuotas que el revendedor ya puede facturar: "generada" (el cliente pagó)
- * Y con al menos `diasLiquidacionMp` días desde ese pago — antes de eso
- * Mercado Pago todavía no le liquidó esa plata al superadmin, así que no
- * hay con qué pagarle la comisión todavía aunque la cuota ya exista.
+ * Y con al menos `diasLiquidacionMp` días desde ese pago — antes de eso el
+ * cliente todavía puede ejercer el derecho de arrepentimiento (10 días,
+ * Ley 24.240) y darse de baja con reembolso, así que la venta no está firme
+ * todavía. No implica que MP ya le haya liquidado esa plata al superadmin
+ * (eso tarda más) — si hace falta, la comisión se paga adelantada.
  */
 export async function getCuotasFacturables(revendedorId: string) {
   const { diasLiquidacionMp } = await getConfiguracion();

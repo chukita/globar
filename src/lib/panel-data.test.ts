@@ -61,8 +61,8 @@ async function seedCuotaGenerada(revendedorId: string, ventaId: string, generado
 describe("getCuotasFacturables", () => {
   it("no incluye una cuota generada hace menos de diasLiquidacionMp días", async () => {
     const { rev, venta } = await seedRevendedorConVenta();
-    const hace10Dias = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    await seedCuotaGenerada(rev.id, venta.id, hace10Dias);
+    const hace3Dias = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    await seedCuotaGenerada(rev.id, venta.id, hace3Dias);
 
     const disponibles = await getCuotasFacturables(rev.id);
     expect(disponibles).toHaveLength(0);
@@ -70,8 +70,8 @@ describe("getCuotasFacturables", () => {
 
   it("incluye una cuota generada hace más de diasLiquidacionMp días", async () => {
     const { rev, venta } = await seedRevendedorConVenta();
-    const hace40Dias = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
-    await seedCuotaGenerada(rev.id, venta.id, hace40Dias);
+    const hace15Dias = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+    await seedCuotaGenerada(rev.id, venta.id, hace15Dias);
 
     const disponibles = await getCuotasFacturables(rev.id);
     expect(disponibles).toHaveLength(1);

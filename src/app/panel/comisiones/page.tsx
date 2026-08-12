@@ -13,7 +13,7 @@ const MES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","
 const STATUS_MAP = {
   pendiente:  { label: "Pendiente",       bg: "#FCE6E9", fg: "#9B4A57" },
   generada:   { label: "A facturar",      bg: "#FFF3CD", fg: "#7A6020" },
-  liquidando: { label: "En liquidación",  bg: "#F1F3F5", fg: "#5B6577" }, // "generada" pero todavía no pasaron los días de liquidación de MP — no es un status real en DB, es solo para mostrar
+  liquidando: { label: "En liquidación",  bg: "#F1F3F5", fg: "#5B6577" }, // "generada" pero todavía dentro de la ventana de arrepentimiento — no es un status real en DB, es solo para mostrar
   facturada:  { label: "Facturada",       bg: "#E1EFF8", fg: "#0B5A8F" },
   pagada:     { label: "Pagado",          bg: "#E7F5EE", fg: "#0B6B47" },
   anulada:    { label: "Anulada",         bg: "#F1F3F5", fg: "#5B6577" },
@@ -26,9 +26,10 @@ type CuotaRow = {
 
 /**
  * "generada" se separa en dos según si ya pasaron los diasLiquidacionMp desde
- * que se generó — antes de eso el producto todavía no le liquidó esa plata al
- * superadmin, así que no está realmente "lista para facturar" aunque la
- * cuota ya exista (ver getCuotasFacturables en panel-data.ts, misma regla).
+ * que se generó — antes de eso el cliente todavía puede arrepentirse y pedir
+ * reembolso, así que la venta no está firme y no está realmente "lista para
+ * facturar" aunque la cuota ya exista (ver getCuotasFacturables en
+ * panel-data.ts, misma regla).
  *
  * Función aparte (no inline en el componente) para que el `Date.now()` no
  * quede dentro del cuerpo de ComisionesPage — la regla de pureza de
@@ -124,7 +125,7 @@ export default async function ComisionesPage() {
   const TOTALS = [
     { label: "Cobrado",          value: fmtARS(cobrado),    sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
     { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${facturablesAhora.length} cuotas listas para facturar`,                     accent: "#7A6020" },
-    { label: "En liquidación",   value: fmtARS(enLiquidacion.reduce((a, r) => a + parseFloat(r.monto), 0)), sub: `${enLiquidacion.length} cuotas, todavía no liquidadas por el medio de pago`, accent: "#5B6577" },
+    { label: "En liquidación",   value: fmtARS(enLiquidacion.reduce((a, r) => a + parseFloat(r.monto), 0)), sub: `${enLiquidacion.length} cuotas, todavía dentro de la ventana de arrepentimiento`, accent: "#5B6577" },
     { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada" && r.status !== "anulada").length} cuotas programadas`, accent: "#9B4A57" },
   ];
 

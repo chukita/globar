@@ -9,11 +9,14 @@ import { eq } from "drizzle-orm";
  * contratada la suscripción) y se le reembolsó automáticamente el pago.
  *
  * Solo anula la cuota si sigue en "generada" (todavía no facturada ni
- * pagada al revendedor) — es el caso normal, porque agendaonline no le paga
- * a nadie hasta que Mercado Pago le liquida el dinero a ellos, ~35 días
- * después, mucho más tarde que la ventana de 10 días. Si por algún motivo
- * el revendedor ya facturó o ya le pagaron esa cuota, no se toca
- * automáticamente — lo resuelve el superadmin a mano.
+ * pagada al revendedor) — es el caso esperado, porque `diasLiquidacionMp`
+ * (ver configuracion) está pensado para igualar la ventana de arrepentimiento
+ * de 10 días, así que una cuota recién se vuelve facturable cuando el
+ * cliente ya no puede arrepentirse. Puede haber un margen mínimo si ambas
+ * ventanas coinciden casi exactamente (o si el superadmin configuró menos
+ * días que eso) — por eso este chequeo sigue siendo necesario y no un caso
+ * puramente teórico. Si el revendedor ya facturó o ya le pagaron esa cuota,
+ * no se toca automáticamente — lo resuelve el superadmin a mano.
  *
  * {
  *   "pagoId": "agenda-<preapprovalId>-<año>-<mes>"  // el mismo id determinístico

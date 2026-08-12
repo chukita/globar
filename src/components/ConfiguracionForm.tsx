@@ -81,13 +81,16 @@ export function ConfiguracionForm({
       </div>
 
       <div className="mt-6 pt-5 border-t border-[#EEF0F2]">
-        <div className="text-[13px] text-[#9AA3B2] font-semibold uppercase tracking-[.05em]">Liquidación de Mercado Pago</div>
+        <div className="text-[13px] text-[#9AA3B2] font-semibold uppercase tracking-[.05em]">Ventana antes de facturar</div>
         <p className="text-[13.5px] text-[#5B6577] mt-1.5 mb-3">
-          Días desde que el cliente paga hasta que esa plata queda disponible en tu cuenta. Antes de eso, la cuota
-          no aparece como facturable para el revendedor (no hay con qué pagarle todavía).
+          Días desde que el cliente paga hasta que la cuota se considera firme y aparece como facturable para el
+          revendedor. No es cuánto tarda Mercado Pago en liquidarte esa plata (eso puede tardar bastante más) — es
+          la ventana de derecho de arrepentimiento: pasado ese plazo el cliente ya no puede darse de baja y pedir
+          reembolso. Si lo bajás por debajo de lo que tarda MP en liquidarte, vas a estar adelantando la comisión
+          de tu bolsillo.
         </p>
         <label className="block max-w-[220px]">
-          <span className="text-[12.5px] text-[#5B6577] font-medium">Días de liquidación</span>
+          <span className="text-[12.5px] text-[#5B6577] font-medium">Días de espera</span>
           <input
             type="number"
             min={0}

@@ -176,9 +176,14 @@ export const configuracion = pgTable("configuracion", {
   comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
   // Días desde que se generó la cuota (= cuando el cliente pagó) hasta que
-  // Mercado Pago liquida esa plata a la cuenta real — recién ahí se le puede
-  // pagar la comisión al revendedor. Antes de eso la cuota no aparece como
-  // facturable aunque ya esté "generada".
-  diasLiquidacionMp: integer("dias_liquidacion_mp").notNull().default(35),
+  // se la considera "firme" y se le puede pagar la comisión al revendedor.
+  // No es cuándo Mercado Pago liquida esa plata al superadmin (eso tarda
+  // ~35 días) — es la ventana de derecho de arrepentimiento (10 días,
+  // Ley 24.240): pasado ese plazo el cliente ya no puede darse de baja y
+  // pedir reembolso, así que la venta es segura aunque el superadmin todavía
+  // no haya cobrado. Si se paga la comisión antes de que MP liquide, el
+  // superadmin la adelanta de su bolsillo. Antes de esos días, la cuota no
+  // aparece como facturable aunque ya esté "generada".
+  diasLiquidacionMp: integer("dias_liquidacion_mp").notNull().default(10),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);
