@@ -121,7 +121,7 @@ export default async function PerfilPage() {
         <p className="text-[13.5px] text-[#5B6577] mb-5">
           Ingresá tu CBU para que podamos acreditar tus comisiones por transferencia bancaria.
         </p>
-        <CbuForm currentCbu={rev?.cbu ?? ""} />
+        <CbuForm currentCbu={rev?.cbuAlias ?? ""} />
       </div>
     </div>
   );

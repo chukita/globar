@@ -4,19 +4,16 @@ import { cuotas } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
- * Avisado por agendaonline/nume cuando un cliente ejerce el derecho de
- * arrepentimiento (Ley 24.240, baja + reembolso dentro de los 10 días de
- * contratada la suscripción) y se le reembolsó automáticamente el pago.
+ * Anula la cuota de comisión de un pago (por `pagoId`), para el caso de un
+ * reembolso por derecho de arrepentimiento. Hoy nadie llama esto
+ * automáticamente — el reembolso del lado de agendaonline es 100% manual
+ * (ver CLAUDE.md, "Derecho de arrepentimiento"), así que este endpoint queda
+ * disponible para invocarse a mano (o desde una futura herramienta) cuando
+ * haga falta.
  *
- * Solo anula la cuota si sigue en "generada" (todavía no facturada ni
- * pagada al revendedor) — es el caso esperado, porque `diasLiquidacionMp`
- * (ver configuracion) está pensado para igualar la ventana de arrepentimiento
- * de 10 días, así que una cuota recién se vuelve facturable cuando el
- * cliente ya no puede arrepentirse. Puede haber un margen mínimo si ambas
- * ventanas coinciden casi exactamente (o si el superadmin configuró menos
- * días que eso) — por eso este chequeo sigue siendo necesario y no un caso
- * puramente teórico. Si el revendedor ya facturó o ya le pagaron esa cuota,
- * no se toca automáticamente — lo resuelve el superadmin a mano.
+ * Solo anula si la cuota sigue en "generada" (todavía no facturada ni
+ * pagada al revendedor) — si ya se facturó o pagó, no se toca
+ * automáticamente, lo resuelve el superadmin a mano.
  *
  * {
  *   "pagoId": "agenda-<preapprovalId>-<año>-<mes>"  // el mismo id determinístico

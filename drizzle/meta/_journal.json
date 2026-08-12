@@ -64,6 +64,27 @@
       "when": 1786555869528,
       "tag": "0008_gorgeous_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786567292898,
+      "tag": "0009_overrated_plazm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786567400000,
+      "tag": "0010_rename_cbu_to_cbu_alias",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786567438429,
+      "tag": "0011_silent_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }

@@ -199,7 +199,7 @@ describe("POST /api/webhooks/pago", () => {
   });
 
   it("deja de generar cuotas al alcanzar el tope de comisionMeses configurado", async () => {
-    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 2, diasLiquidacionMp: 35 });
+    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 2 });
     await seedProducto();
     const rev = await seedRevendedor();
     const payload = { ...basePayload, codigoRevendedor: rev.codigoVentas };
@@ -233,7 +233,7 @@ describe("POST /api/webhooks/pago", () => {
   });
 
   it("sigue actualizando ultimoPagoEn después de agotar el tope de comisionMeses (aunque ya no genere cuota)", async () => {
-    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 1, diasLiquidacionMp: 35 });
+    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 1 });
     await seedProducto();
     const rev = await seedRevendedor();
     const payload = { ...basePayload, codigoRevendedor: rev.codigoVentas };

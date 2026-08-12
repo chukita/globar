@@ -24,14 +24,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  let body: { comisionMonto?: number; comisionMeses?: number; diasLiquidacionMp?: number };
+  let body: { comisionMonto?: number; comisionMeses?: number };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { comisionMonto, comisionMeses, diasLiquidacionMp } = body;
+  const { comisionMonto, comisionMeses } = body;
 
   if (typeof comisionMonto !== "number" || !Number.isFinite(comisionMonto) || comisionMonto <= 0) {
     return NextResponse.json({ error: "comisionMonto debe ser un número mayor a 0" }, { status: 400 });
@@ -39,10 +39,7 @@ export async function PUT(req: NextRequest) {
   if (typeof comisionMeses !== "number" || !Number.isInteger(comisionMeses) || comisionMeses <= 0) {
     return NextResponse.json({ error: "comisionMeses debe ser un entero mayor a 0" }, { status: 400 });
   }
-  if (typeof diasLiquidacionMp !== "number" || !Number.isInteger(diasLiquidacionMp) || diasLiquidacionMp < 0) {
-    return NextResponse.json({ error: "diasLiquidacionMp debe ser un entero mayor o igual a 0" }, { status: 400 });
-  }
 
-  const config = await updateConfiguracion({ comisionMonto, comisionMeses, diasLiquidacionMp });
+  const config = await updateConfiguracion({ comisionMonto, comisionMeses });
   return NextResponse.json({ config });
 }

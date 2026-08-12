@@ -13,7 +13,6 @@ export async function getConfiguracion() {
 export async function updateConfiguracion(values: {
   comisionMonto: number;
   comisionMeses: number;
-  diasLiquidacionMp: number;
 }) {
   await getConfiguracion(); // asegura que la fila exista antes del update
 
@@ -22,7 +21,6 @@ export async function updateConfiguracion(values: {
     .set({
       comisionMonto: String(values.comisionMonto),
       comisionMeses: values.comisionMeses,
-      diasLiquidacionMp: values.diasLiquidacionMp,
       actualizadoEn: new Date(),
     })
     .where(eq(configuracion.id, 1))

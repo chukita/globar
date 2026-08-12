@@ -4,7 +4,6 @@ import path from "path";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { updateConfiguracion } from "@/lib/configuracion";
 import { getCuotasFacturables } from "./panel-data";
 
 beforeAll(async () => {
@@ -59,32 +58,39 @@ async function seedCuotaGenerada(revendedorId: string, ventaId: string, generado
 }
 
 describe("getCuotasFacturables", () => {
-  it("no incluye una cuota generada hace menos de diasLiquidacionMp días", async () => {
+  it("incluye una cuota 'generada' apenas se genera, sin esperar", async () => {
     const { rev, venta } = await seedRevendedorConVenta();
-    const hace3Dias = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-    await seedCuotaGenerada(rev.id, venta.id, hace3Dias);
+    await seedCuotaGenerada(rev.id, venta.id, new Date());
+
+    const disponibles = await getCuotasFacturables(rev.id);
+    expect(disponibles).toHaveLength(1);
+  });
+
+  it("incluye una cuota 'generada' aunque sea muy vieja (no hay ventana de espera)", async () => {
+    const { rev, venta } = await seedRevendedorConVenta();
+    const hace6Meses = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+    await seedCuotaGenerada(rev.id, venta.id, hace6Meses);
+
+    const disponibles = await getCuotasFacturables(rev.id);
+    expect(disponibles).toHaveLength(1);
+  });
+
+  it("no incluye cuotas en otro estado (pendiente, facturada, pagada, anulada)", async () => {
+    const { rev, venta } = await seedRevendedorConVenta();
+    for (const status of ["pendiente", "facturada", "pagada", "anulada"] as const) {
+      await db.insert(schema.cuotas).values({
+        ventaId: venta.id,
+        revendedorId: rev.id,
+        numeroCuota: 1,
+        monto: "5000",
+        periodoMes: 8,
+        periodoAnio: 2026,
+        status,
+        pagoExternoId: `pago-${crypto.randomUUID()}`,
+      });
+    }
 
     const disponibles = await getCuotasFacturables(rev.id);
     expect(disponibles).toHaveLength(0);
-  });
-
-  it("incluye una cuota generada hace más de diasLiquidacionMp días", async () => {
-    const { rev, venta } = await seedRevendedorConVenta();
-    const hace15Dias = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-    await seedCuotaGenerada(rev.id, venta.id, hace15Dias);
-
-    const disponibles = await getCuotasFacturables(rev.id);
-    expect(disponibles).toHaveLength(1);
-  });
-
-  it("respeta el valor configurado de diasLiquidacionMp, no un default hardcodeado", async () => {
-    await updateConfiguracion({ comisionMonto: 5000, comisionMeses: 4, diasLiquidacionMp: 5 });
-    const { rev, venta } = await seedRevendedorConVenta();
-    const hace10Dias = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    await seedCuotaGenerada(rev.id, venta.id, hace10Dias);
-
-    // Con la ventana bajada a 5 días, una cuota de hace 10 días ya está disponible.
-    const disponibles = await getCuotasFacturables(rev.id);
-    expect(disponibles).toHaveLength(1);
   });
 });

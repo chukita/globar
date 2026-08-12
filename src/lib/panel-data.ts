@@ -1,7 +1,6 @@
 import { db } from "@/db";
 import { cuotas, ventas, productos, habilitaciones, facturas } from "@/db/schema";
-import { eq, and, inArray, lte, sql } from "drizzle-orm";
-import { getConfiguracion } from "./configuracion";
+import { eq, and, inArray, sql } from "drizzle-orm";
 
 export async function getRevendedorStats(revendedorId: string) {
   const [ventasCount] = await db
@@ -87,17 +86,12 @@ export async function getFacturasDelRevendedor(revendedorId: string) {
 }
 
 /**
- * Cuotas que el revendedor ya puede facturar: "generada" (el cliente pagó)
- * Y con al menos `diasLiquidacionMp` días desde ese pago — antes de eso el
- * cliente todavía puede ejercer el derecho de arrepentimiento (10 días,
- * Ley 24.240) y darse de baja con reembolso, así que la venta no está firme
- * todavía. No implica que MP ya le haya liquidado esa plata al superadmin
- * (eso tarda más) — si hace falta, la comisión se paga adelantada.
+ * Cuotas que el revendedor ya puede facturar: "generada" (el cliente pagó o
+ * renovó). Facturable de inmediato — sin reembolso automático al cancelar
+ * (ver CLAUDE.md, "Derecho de arrepentimiento" del lado de agendaonline) no
+ * hay riesgo de pagarle comisión al revendedor por una venta que se cae.
  */
 export async function getCuotasFacturables(revendedorId: string) {
-  const { diasLiquidacionMp } = await getConfiguracion();
-  const fechaCorte = new Date(Date.now() - diasLiquidacionMp * 24 * 60 * 60 * 1000);
-
   return db
     .select({
       id: cuotas.id,
@@ -114,6 +108,5 @@ export async function getCuotasFacturables(revendedorId: string) {
     .where(and(
       eq(cuotas.revendedorId, revendedorId),
       eq(cuotas.status, "generada"),
-      lte(cuotas.generadoEn, fechaCorte),
     ));
 }

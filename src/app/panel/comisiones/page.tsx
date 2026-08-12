@@ -11,45 +11,12 @@ const fmtARS = (n: number) =>
 const MES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const STATUS_MAP = {
-  pendiente:  { label: "Pendiente",       bg: "#FCE6E9", fg: "#9B4A57" },
-  generada:   { label: "A facturar",      bg: "#FFF3CD", fg: "#7A6020" },
-  liquidando: { label: "En liquidación",  bg: "#F1F3F5", fg: "#5B6577" }, // "generada" pero todavía dentro de la ventana de arrepentimiento — no es un status real en DB, es solo para mostrar
-  facturada:  { label: "Facturada",       bg: "#E1EFF8", fg: "#0B5A8F" },
-  pagada:     { label: "Pagado",          bg: "#E7F5EE", fg: "#0B6B47" },
-  anulada:    { label: "Anulada",         bg: "#F1F3F5", fg: "#5B6577" },
+  pendiente:  { label: "Pendiente",  bg: "#FCE6E9", fg: "#9B4A57" },
+  generada:   { label: "A facturar", bg: "#FFF3CD", fg: "#7A6020" },
+  facturada:  { label: "Facturada",  bg: "#E1EFF8", fg: "#0B5A8F" },
+  pagada:     { label: "Pagado",     bg: "#E7F5EE", fg: "#0B6B47" },
+  anulada:    { label: "Anulada",    bg: "#F1F3F5", fg: "#5B6577" },
 } as const;
-
-type CuotaRow = {
-  status: "pendiente" | "generada" | "facturada" | "pagada" | "anulada";
-  generadoEn: Date | null;
-};
-
-/**
- * "generada" se separa en dos según si ya pasaron los diasLiquidacionMp desde
- * que se generó — antes de eso el cliente todavía puede arrepentirse y pedir
- * reembolso, así que la venta no está firme y no está realmente "lista para
- * facturar" aunque la cuota ya exista (ver getCuotasFacturables en
- * panel-data.ts, misma regla).
- *
- * Función aparte (no inline en el componente) para que el `Date.now()` no
- * quede dentro del cuerpo de ComisionesPage — la regla de pureza de
- * react-hooks lo marca ahí aunque sea un server component que solo corre
- * una vez por request.
- */
-function conDisponibilidad<T extends CuotaRow>(rows: T[], diasLiquidacionMp: number) {
-  const ahora = Date.now();
-  return rows.map(r => {
-    const disponibleDesde = r.generadoEn
-      ? new Date(r.generadoEn.getTime() + diasLiquidacionMp * 24 * 60 * 60 * 1000)
-      : null;
-    const facturableAhora = r.status === "generada" && !!disponibleDesde && disponibleDesde.getTime() <= ahora;
-    return {
-      ...r,
-      disponibleDesde,
-      displayStatus: r.status === "generada" && !facturableAhora ? ("liquidando" as const) : r.status,
-    };
-  });
-}
 
 export default async function ComisionesPage() {
   const session = await auth();
@@ -67,10 +34,10 @@ export default async function ComisionesPage() {
     );
   }
 
-  const { comisionMeses, diasLiquidacionMp } = await getConfiguracion();
+  const { comisionMeses } = await getConfiguracion();
 
   // Todas las cuotas del revendedor con info de venta y producto
-  const rowsRaw = await db
+  const rows = await db
     .select({
       cuotaId:      cuotas.id,
       numeroCuota:  cuotas.numeroCuota,
@@ -78,7 +45,6 @@ export default async function ComisionesPage() {
       periodoMes:   cuotas.periodoMes,
       periodoAnio:  cuotas.periodoAnio,
       status:       cuotas.status,
-      generadoEn:   cuotas.generadoEn,
       ventaId:      ventas.id,
       clienteNombre: ventas.clienteNombre,
       vendidoEn:    ventas.vendidoEn,
@@ -90,17 +56,13 @@ export default async function ComisionesPage() {
     .where(eq(cuotas.revendedorId, rev.id))
     .orderBy(cuotas.periodoAnio, cuotas.periodoMes, cuotas.numeroCuota);
 
-  const rows = conDisponibilidad(rowsRaw, diasLiquidacionMp);
-
   // Totales (una cuota "anulada" — cliente arrepentido y reembolsado — no cuenta ni como cobrada ni como pendiente)
   const cobrado = rows.filter(r => r.status === "pagada").reduce((a, r) => a + parseFloat(r.monto), 0);
   const pendiente = rows.filter(r => r.status !== "pagada" && r.status !== "anulada").reduce((a, r) => a + parseFloat(r.monto), 0);
-  const facturablesAhora = rows.filter(r => r.displayStatus === "generada");
-  const enLiquidacion = rows.filter(r => r.displayStatus === "liquidando");
+  const facturablesAhora = rows.filter(r => r.status === "generada");
   const aFacturar = facturablesAhora.reduce((a, r) => a + parseFloat(r.monto), 0);
 
-  // Próximo pago: cuotas ya facturables del mes más próximo (si no hay ninguna
-  // facturable todavía, no mostramos el banner — ver cuotas en liquidación en la tabla de abajo)
+  // Próximo pago: cuotas facturables del mes más próximo (si no hay ninguna, no mostramos el banner)
   const proximoMes = facturablesAhora.length > 0
     ? `${MES[facturablesAhora[0].periodoMes - 1]} ${facturablesAhora[0].periodoAnio}`
     : null;
@@ -125,7 +87,6 @@ export default async function ComisionesPage() {
   const TOTALS = [
     { label: "Cobrado",          value: fmtARS(cobrado),    sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
     { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${facturablesAhora.length} cuotas listas para facturar`,                     accent: "#7A6020" },
-    { label: "En liquidación",   value: fmtARS(enLiquidacion.reduce((a, r) => a + parseFloat(r.monto), 0)), sub: `${enLiquidacion.length} cuotas, todavía dentro de la ventana de arrepentimiento`, accent: "#5B6577" },
     { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada" && r.status !== "anulada").length} cuotas programadas`, accent: "#9B4A57" },
   ];
 
@@ -164,7 +125,7 @@ export default async function ComisionesPage() {
       )}
 
       {/* Totales */}
-      <div className="grid grid-cols-4 gap-4 mt-4">
+      <div className="grid grid-cols-3 gap-4 mt-4">
         {TOTALS.map((t) => (
           <div key={t.label} className="bg-white border border-[#E9ECEF] rounded-2xl p-[22px]">
             <div className="text-[13px] text-[#5B6577] font-medium">{t.label}</div>
@@ -182,21 +143,18 @@ export default async function ComisionesPage() {
         ) : (
           <>
             <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
-              style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr 1.1fr .9fr" }}>
-              <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span>Disponible</span><span className="text-right">Estado</span>
+              style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr .9fr" }}>
+              <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span className="text-right">Estado</span>
             </div>
             {rows.map((r) => {
-              const s = STATUS_MAP[r.displayStatus];
+              const s = STATUS_MAP[r.status];
               return (
                 <div key={r.cuotaId} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
-                  style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr 1.1fr .9fr" }}>
+                  style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr .9fr" }}>
                   <span className="font-semibold">{MES[r.periodoMes - 1]} {r.periodoAnio}</span>
                   <span className="text-[#5B6577] truncate">{r.clienteNombre}</span>
                   <span className="text-[#0C2A45] font-medium">{r.productoNombre}</span>
                   <span className="font-bold">{fmtARS(parseFloat(r.monto))}</span>
-                  <span className="text-[#9AA3B2] text-[13px]">
-                    {r.displayStatus === "liquidando" && r.disponibleDesde ? formatFecha(r.disponibleDesde) : "—"}
-                  </span>
                   <span className="text-right">
                     <span className="text-[12.5px] font-semibold rounded-full px-3 py-1.5 inline-block"
                       style={{ background: s.bg, color: s.fg }}>{s.label}</span>

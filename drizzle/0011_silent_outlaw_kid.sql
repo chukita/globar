@@ -1,0 +1,1 @@
+ALTER TABLE "configuracion" DROP COLUMN "dias_liquidacion_mp";

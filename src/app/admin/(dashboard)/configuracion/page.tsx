@@ -17,7 +17,6 @@ export default async function ConfiguracionPage() {
         <ConfiguracionForm
           comisionMonto={Number(config.comisionMonto)}
           comisionMeses={config.comisionMeses}
-          diasLiquidacionMp={config.diasLiquidacionMp}
         />
       </div>
     </div>

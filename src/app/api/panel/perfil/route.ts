@@ -18,7 +18,7 @@ export async function PATCH(req: NextRequest) {
     const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, session.user.email)).limit(1);
     if (!user) return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
 
-    await db.update(revendedores).set({ cbu: cbu || null }).where(eq(revendedores.userId, user.id));
+    await db.update(revendedores).set({ cbuAlias: cbu || null }).where(eq(revendedores.userId, user.id));
   }
 
   return NextResponse.json({ ok: true });

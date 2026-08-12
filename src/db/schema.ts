@@ -81,8 +81,11 @@ export const revendedores = pgTable("revendedores", {
   localidad:      text("localidad"),
   dni:            text("dni"),
   fechaNacimiento: text("fecha_nacimiento"),   // ISO date string YYYY-MM-DD
+  telefono:       text("telefono"),
   puedeFacturar:  boolean("puede_facturar").notNull().default(false),
-  cbu:            text("cbu"),
+  cbuAlias:       text("cbu_alias"),   // CBU (22 dígitos) o alias tipo Mercado Pago
+  titularNombre:  text("titular_nombre"),   // a nombre de quién está la cuenta de cobro
+  titularCuit:    text("titular_cuit"),     // obligatorio a nivel de app si puedeFacturar
   activo:         boolean("activo").notNull().default(true),
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),
 });
@@ -181,15 +184,5 @@ export const configuracion = pgTable("configuracion", {
   id:            integer("id").primaryKey().default(1),
   comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
-  // Días desde que se generó la cuota (= cuando el cliente pagó) hasta que
-  // se la considera "firme" y se le puede pagar la comisión al revendedor.
-  // No es cuándo Mercado Pago liquida esa plata al superadmin (eso tarda
-  // ~35 días) — es la ventana de derecho de arrepentimiento (10 días,
-  // Ley 24.240): pasado ese plazo el cliente ya no puede darse de baja y
-  // pedir reembolso, así que la venta es segura aunque el superadmin todavía
-  // no haya cobrado. Si se paga la comisión antes de que MP liquide, el
-  // superadmin la adelanta de su bolsillo. Antes de esos días, la cuota no
-  // aparece como facturable aunque ya esté "generada".
-  diasLiquidacionMp: integer("dias_liquidacion_mp").notNull().default(10),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);
