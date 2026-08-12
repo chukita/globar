@@ -45,29 +45,26 @@ export async function getComisionesDelRevendedor(revendedorId: string) {
     .orderBy(sql`${cuotas.periodoAnio} desc, ${cuotas.periodoMes} desc`);
 }
 
-export async function getVentasDelRevendedor(revendedorId: string) {
-  const filas = await db
+/**
+ * Clientes que le compraron a este revendedor. No incluye el estado real de
+ * la suscripción (activa/cancelada) — glob.ar solo se entera de pagos vía
+ * webhook, no hay ningún aviso del producto cuando el cliente cancela, así
+ * que ese dato no existe acá todavía.
+ */
+export async function getClientesDelRevendedor(revendedorId: string) {
+  return db
     .select({
       id: ventas.id,
       cliente: ventas.clienteNombre,
+      clienteEmail: ventas.clienteEmail,
       producto: productos.nombre,
       vendidoEn: ventas.vendidoEn,
-      activa: ventas.activa,
+      precioMensual: ventas.precioMensual,
     })
     .from(ventas)
     .innerJoin(productos, eq(ventas.productoId, productos.id))
     .where(eq(ventas.revendedorId, revendedorId))
     .orderBy(sql`${ventas.vendidoEn} desc`);
-
-  const cuotasPorVenta = await db
-    .select({ ventaId: cuotas.ventaId, count: sql<number>`count(*)::int` })
-    .from(cuotas)
-    .where(eq(cuotas.revendedorId, revendedorId))
-    .groupBy(cuotas.ventaId);
-
-  const cuotasMap = new Map(cuotasPorVenta.map((c) => [c.ventaId, c.count]));
-
-  return filas.map((v) => ({ ...v, cuotasGeneradas: cuotasMap.get(v.id) ?? 0 }));
 }
 
 export async function getProductosConHabilitacion(revendedorId: string) {

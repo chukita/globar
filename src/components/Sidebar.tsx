@@ -7,6 +7,7 @@ import { Logo } from "./Logo";
 
 const NAV = [
   { href: "/panel/productos",    label: "Mis productos" },
+  { href: "/panel/clientes",     label: "Mis clientes" },
   { href: "/panel/comisiones",   label: "Comisiones" },
   { href: "/panel/facturas",     label: "Facturas" },
   { href: "/panel/capacitacion", label: "Capacitación" },
