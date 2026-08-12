@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ProvinciaLocalidadFields } from "@/components/ProvinciaLocalidadFields";
 
@@ -18,6 +19,7 @@ export default function RegistroPage() {
     dni: "", fechaNacimiento: "", telefono: "",
     puedeFacturar: false,
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -150,13 +152,34 @@ export default function RegistroPage() {
               </span>
             </label>
 
+            {/* Términos y privacidad */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                required
+                className="mt-0.5 w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
+              />
+              <span className="text-[13.5px] text-[#0C2A45] leading-snug">
+                Acepto los{" "}
+                <Link href="/terminos" target="_blank" rel="noopener noreferrer" className="text-[#0E6BA8] font-semibold">
+                  Términos y Condiciones
+                </Link>{" "}
+                y la{" "}
+                <Link href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-[#0E6BA8] font-semibold">
+                  Política de Privacidad
+                </Link>.
+              </span>
+            </label>
+
             {error && (
               <div className="bg-[#FCE6E9] border border-[#E7A9B3] rounded-xl px-4 py-3 text-[13.5px] text-[#9B4A57] font-medium">
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || !termsAccepted}
               className="w-full bg-[#0E6BA8] text-white font-semibold text-[15px] rounded-xl py-3.5 mt-1 cursor-pointer border-0 transition-opacity disabled:opacity-60">
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>

@@ -27,7 +27,7 @@ export function PublicNav({ activeLink }: PublicNavProps) {
           Revendedores
         </Link>
         <Link
-          href="/panel/comisiones"
+          href="/login"
           className="text-[14.5px] font-semibold bg-[#0C2A45] text-white rounded-[10px] px-[18px] py-[11px]"
         >
           Ingresar

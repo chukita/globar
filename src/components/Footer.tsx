@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "./Logo";
 
 export function Footer() {
@@ -13,25 +14,25 @@ export function Footer() {
         <div>
           <div className="text-[13px] font-semibold text-white mb-3.5">Producto</div>
           <div className="flex flex-col gap-2.5 text-[13.5px] text-[#8595A8]">
-            <span>Cómo funciona</span>
-            <span>Productos</span>
-            <span>Calculadora</span>
+            <Link href="/#como-funciona" className="hover:text-white">Cómo funciona</Link>
+            <Link href="/#productos" className="hover:text-white">Productos</Link>
+            <Link href="/#productos" className="hover:text-white">Calculadora</Link>
           </div>
         </div>
         <div>
           <div className="text-[13px] font-semibold text-white mb-3.5">Revendedores</div>
           <div className="flex flex-col gap-2.5 text-[13.5px] text-[#8595A8]">
-            <span>Registrarse</span>
-            <span>Ingresar</span>
-            <span>Comisiones</span>
+            <Link href="/registro" className="hover:text-white">Registrarse</Link>
+            <Link href="/login" className="hover:text-white">Ingresar</Link>
+            <Link href="/panel/comisiones" className="hover:text-white">Comisiones</Link>
           </div>
         </div>
         <div>
           <div className="text-[13px] font-semibold text-white mb-3.5">Legal</div>
           <div className="flex flex-col gap-2.5 text-[13.5px] text-[#8595A8]">
-            <span>Términos</span>
-            <span>Privacidad</span>
-            <span>Contacto</span>
+            <Link href="/terminos" className="hover:text-white">Términos</Link>
+            <Link href="/privacidad" className="hover:text-white">Privacidad</Link>
+            <a href="mailto:legal@glob.ar" className="hover:text-white">Contacto</a>
           </div>
         </div>
       </div>
