@@ -59,7 +59,6 @@ export async function getClientesDelRevendedor(revendedorId: string) {
       clienteEmail: ventas.clienteEmail,
       producto: productos.nombre,
       vendidoEn: ventas.vendidoEn,
-      precioMensual: ventas.precioMensual,
     })
     .from(ventas)
     .innerJoin(productos, eq(ventas.productoId, productos.id))

@@ -5,9 +5,6 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getClientesDelRevendedor } from "@/lib/panel-data";
 
-const fmtARS = (n: number) =>
-  new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
-
 const formatFecha = (d: Date) => d.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
 
 export default async function ClientesPage() {
@@ -35,17 +32,16 @@ export default async function ClientesPage() {
         ) : (
           <>
             <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
-              style={{ display: "grid", gridTemplateColumns: "1.3fr 1.5fr 1fr .9fr 1fr" }}>
-              <span>Cliente</span><span>Email</span><span>Producto</span><span>Alta</span><span className="text-right">Precio mensual</span>
+              style={{ display: "grid", gridTemplateColumns: "1.3fr 1.5fr 1fr 1fr" }}>
+              <span>Cliente</span><span>Email</span><span>Producto</span><span className="text-right">Alta</span>
             </div>
             {clientes.map((c) => (
               <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
-                style={{ display: "grid", gridTemplateColumns: "1.3fr 1.5fr 1fr .9fr 1fr" }}>
+                style={{ display: "grid", gridTemplateColumns: "1.3fr 1.5fr 1fr 1fr" }}>
                 <span className="font-semibold text-[#0C2A45] truncate">{c.cliente}</span>
                 <span className="text-[#5B6577] truncate">{c.clienteEmail ?? "—"}</span>
                 <span className="text-[#0C2A45] font-medium">{c.producto}</span>
-                <span className="text-[#9AA3B2] text-[13px]">{formatFecha(c.vendidoEn)}</span>
-                <span className="text-right font-bold">{fmtARS(parseFloat(c.precioMensual))}</span>
+                <span className="text-right text-[#9AA3B2] text-[13px]">{formatFecha(c.vendidoEn)}</span>
               </div>
             ))}
           </>
