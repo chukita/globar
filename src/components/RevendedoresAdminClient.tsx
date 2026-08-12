@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { fmtARS } from "@/lib/constants";
-import { toggleRevendedorActivoAction, toggleHabilitacionAction } from "@/lib/actions";
+import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction } from "@/lib/actions";
 
 interface Producto {
   id: string;
@@ -40,6 +40,15 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
     startTransition(() => { toggleHabilitacionAction(r.id, p.id, nuevoEstado); });
   }
 
+  function eliminar(r: Revendedor) {
+    const confirmado = window.confirm(
+      `¿Borrar a ${r.nombre ?? r.email} (${r.codigoVentas})?\n\nEsto borra también sus ventas, cuotas y facturas. No se puede deshacer.`
+    );
+    if (!confirmado) return;
+    setRevendedores(prev => prev.filter(x => x.id !== r.id));
+    startTransition(() => { eliminarRevendedorAction(r.id); });
+  }
+
   return (
     <div className="p-10">
       <div className="flex items-end justify-between flex-wrap gap-3">
@@ -71,17 +80,18 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
       ) : (
         <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-5 overflow-hidden">
           <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
-            style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr" }}>
+            style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
             <span>Revendedor</span>
             <span>Código</span>
             <span>Ventas</span>
             <span>Cobrado</span>
             <span>Productos</span>
-            <span className="text-right">Estado</span>
+            <span>Estado</span>
+            <span className="text-right"></span>
           </div>
           {revendedores.map((r) => (
             <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px]"
-              style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr" }}>
+              style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
               <div>
                 <div className="font-semibold">{r.nombre ?? "—"}</div>
                 <div className="text-[11.5px] text-[#9AA3B2] mt-0.5">{r.email}</div>
@@ -105,7 +115,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
                   </button>
                 ))}
               </div>
-              <span className="text-right">
+              <span>
                 <button
                   onClick={() => toggleActivo(r)}
                   className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0"
@@ -115,6 +125,15 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
                   }}
                 >
                   {r.activo ? "Activo" : "Inactivo"}
+                </button>
+              </span>
+              <span className="text-right">
+                <button
+                  onClick={() => eliminar(r)}
+                  className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0 bg-[#FCE6E9] text-[#9B4A57]"
+                  title="Borrar revendedor y todo lo asociado"
+                >
+                  Eliminar
                 </button>
               </span>
             </div>

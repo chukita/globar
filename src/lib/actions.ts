@@ -2,7 +2,7 @@
 
 import { signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas } from "@/db/schema";
+import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -41,6 +41,43 @@ export async function toggleHabilitacionAction(revendedorId: string, productoId:
       and(eq(habilitaciones.revendedorId, revendedorId), eq(habilitaciones.productoId, productoId))
     );
   }
+  revalidatePath("/admin/revendedores");
+}
+
+/**
+ * Borra un revendedor y todo lo asociado: cuotas, facturas, ventas,
+ * habilitaciones, y el usuario (users → cascade a accounts/sessions/
+ * revendedores/habilitaciones). cuotas/ventas/facturas no tienen onDelete
+ * cascade desde revendedores (a propósito, para no perder historial de
+ * plata por accidente en el uso normal) así que hay que borrarlas a mano,
+ * en orden, antes de borrar el usuario.
+ *
+ * Pensado para limpiar cuentas de prueba mientras glob.ar no tiene
+ * revendedores reales — si el negocio ya tiene ventas/comisiones reales en
+ * juego, esto debería reemplazarse por una baja lógica (activo=false) en
+ * vez de un borrado físico.
+ */
+export async function eliminarRevendedorAction(revendedorId: string) {
+  await requireSuperadmin();
+
+  await db.transaction(async (tx) => {
+    const [rev] = await tx.select({ userId: revendedores.userId }).from(revendedores).where(eq(revendedores.id, revendedorId));
+    if (!rev) return;
+
+    const cuotasDelRevendedor = await tx.select({ id: cuotas.id }).from(cuotas).where(eq(cuotas.revendedorId, revendedorId));
+    const cuotaIds = cuotasDelRevendedor.map((c) => c.id);
+    if (cuotaIds.length > 0) {
+      await tx.delete(cuotasFacturas).where(inArray(cuotasFacturas.cuotaId, cuotaIds));
+    }
+
+    await tx.delete(facturas).where(eq(facturas.revendedorId, revendedorId));
+    await tx.delete(cuotas).where(eq(cuotas.revendedorId, revendedorId));
+    await tx.delete(ventas).where(eq(ventas.revendedorId, revendedorId));
+
+    // Cascada automática: users → accounts, sessions, revendedores, habilitaciones.
+    await tx.delete(users).where(eq(users.id, rev.userId));
+  });
+
   revalidatePath("/admin/revendedores");
 }
 
