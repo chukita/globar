@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { revendedores, cuotas, ventas, productos, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { getConfiguracion } from "@/lib/configuracion";
 
 const fmtARS = (n: number) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
@@ -10,12 +11,44 @@ const fmtARS = (n: number) =>
 const MES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const STATUS_MAP = {
-  pendiente:  { label: "Pendiente",  bg: "#FCE6E9", fg: "#9B4A57" },
-  generada:   { label: "A facturar", bg: "#FFF3CD", fg: "#7A6020" },
-  facturada:  { label: "Facturada",  bg: "#E1EFF8", fg: "#0B5A8F" },
-  pagada:     { label: "Pagado",     bg: "#E7F5EE", fg: "#0B6B47" },
-  anulada:    { label: "Anulada",    bg: "#F1F3F5", fg: "#5B6577" },
+  pendiente:  { label: "Pendiente",       bg: "#FCE6E9", fg: "#9B4A57" },
+  generada:   { label: "A facturar",      bg: "#FFF3CD", fg: "#7A6020" },
+  liquidando: { label: "En liquidación",  bg: "#F1F3F5", fg: "#5B6577" }, // "generada" pero todavía no pasaron los días de liquidación de MP — no es un status real en DB, es solo para mostrar
+  facturada:  { label: "Facturada",       bg: "#E1EFF8", fg: "#0B5A8F" },
+  pagada:     { label: "Pagado",          bg: "#E7F5EE", fg: "#0B6B47" },
+  anulada:    { label: "Anulada",         bg: "#F1F3F5", fg: "#5B6577" },
 } as const;
+
+type CuotaRow = {
+  status: "pendiente" | "generada" | "facturada" | "pagada" | "anulada";
+  generadoEn: Date | null;
+};
+
+/**
+ * "generada" se separa en dos según si ya pasaron los diasLiquidacionMp desde
+ * que se generó — antes de eso el producto todavía no le liquidó esa plata al
+ * superadmin, así que no está realmente "lista para facturar" aunque la
+ * cuota ya exista (ver getCuotasFacturables en panel-data.ts, misma regla).
+ *
+ * Función aparte (no inline en el componente) para que el `Date.now()` no
+ * quede dentro del cuerpo de ComisionesPage — la regla de pureza de
+ * react-hooks lo marca ahí aunque sea un server component que solo corre
+ * una vez por request.
+ */
+function conDisponibilidad<T extends CuotaRow>(rows: T[], diasLiquidacionMp: number) {
+  const ahora = Date.now();
+  return rows.map(r => {
+    const disponibleDesde = r.generadoEn
+      ? new Date(r.generadoEn.getTime() + diasLiquidacionMp * 24 * 60 * 60 * 1000)
+      : null;
+    const facturableAhora = r.status === "generada" && !!disponibleDesde && disponibleDesde.getTime() <= ahora;
+    return {
+      ...r,
+      disponibleDesde,
+      displayStatus: r.status === "generada" && !facturableAhora ? ("liquidando" as const) : r.status,
+    };
+  });
+}
 
 export default async function ComisionesPage() {
   const session = await auth();
@@ -33,8 +66,10 @@ export default async function ComisionesPage() {
     );
   }
 
+  const { comisionMeses, diasLiquidacionMp } = await getConfiguracion();
+
   // Todas las cuotas del revendedor con info de venta y producto
-  const rows = await db
+  const rowsRaw = await db
     .select({
       cuotaId:      cuotas.id,
       numeroCuota:  cuotas.numeroCuota,
@@ -42,6 +77,7 @@ export default async function ComisionesPage() {
       periodoMes:   cuotas.periodoMes,
       periodoAnio:  cuotas.periodoAnio,
       status:       cuotas.status,
+      generadoEn:   cuotas.generadoEn,
       ventaId:      ventas.id,
       clienteNombre: ventas.clienteNombre,
       vendidoEn:    ventas.vendidoEn,
@@ -53,28 +89,33 @@ export default async function ComisionesPage() {
     .where(eq(cuotas.revendedorId, rev.id))
     .orderBy(cuotas.periodoAnio, cuotas.periodoMes, cuotas.numeroCuota);
 
+  const rows = conDisponibilidad(rowsRaw, diasLiquidacionMp);
+
   // Totales (una cuota "anulada" — cliente arrepentido y reembolsado — no cuenta ni como cobrada ni como pendiente)
   const cobrado = rows.filter(r => r.status === "pagada").reduce((a, r) => a + parseFloat(r.monto), 0);
   const pendiente = rows.filter(r => r.status !== "pagada" && r.status !== "anulada").reduce((a, r) => a + parseFloat(r.monto), 0);
-  const aFacturar = rows.filter(r => r.status === "generada").reduce((a, r) => a + parseFloat(r.monto), 0);
+  const facturablesAhora = rows.filter(r => r.displayStatus === "generada");
+  const enLiquidacion = rows.filter(r => r.displayStatus === "liquidando");
+  const aFacturar = facturablesAhora.reduce((a, r) => a + parseFloat(r.monto), 0);
 
-  // Próximo pago: cuotas generadas del mes más próximo
-  const generadas = rows.filter(r => r.status === "generada");
-  const proximoMes = generadas.length > 0
-    ? `${MES[generadas[0].periodoMes - 1]} ${generadas[0].periodoAnio}`
+  // Próximo pago: cuotas ya facturables del mes más próximo (si no hay ninguna
+  // facturable todavía, no mostramos el banner — ver cuotas en liquidación en la tabla de abajo)
+  const proximoMes = facturablesAhora.length > 0
+    ? `${MES[facturablesAhora[0].periodoMes - 1]} ${facturablesAhora[0].periodoAnio}`
     : null;
-  const proximoMonto = generadas
-    .filter(r => r.periodoMes === generadas[0]?.periodoMes && r.periodoAnio === generadas[0]?.periodoAnio)
+  const proximoMonto = facturablesAhora
+    .filter(r => r.periodoMes === facturablesAhora[0]?.periodoMes && r.periodoAnio === facturablesAhora[0]?.periodoAnio)
     .reduce((a, r) => a + parseFloat(r.monto), 0);
 
-  // Ventas únicas con progreso
-  const ventasMap = new Map<string, { fecha: Date; producto: string; cliente: string; cuotasPagadas: number; total: number }>();
+  // Ventas únicas con progreso, contra la cantidad de cuotas configurada (no
+  // contra cuántas cuotas ya existen — probar varias suscripciones distintas
+  // el mismo día para el mismo cliente puede acumular cuotas rápido).
+  const ventasMap = new Map<string, { fecha: Date; producto: string; cliente: string; cuotasPagadas: number }>();
   for (const r of rows) {
     if (!ventasMap.has(r.ventaId)) {
-      ventasMap.set(r.ventaId, { fecha: r.vendidoEn, producto: r.productoNombre, cliente: r.clienteNombre, cuotasPagadas: 0, total: 0 });
+      ventasMap.set(r.ventaId, { fecha: r.vendidoEn, producto: r.productoNombre, cliente: r.clienteNombre, cuotasPagadas: 0 });
     }
     const v = ventasMap.get(r.ventaId)!;
-    v.total++;
     if (r.status === "pagada") v.cuotasPagadas++;
   }
   const ventasList = [...ventasMap.entries()].map(([id, v]) => ({ id, ...v }))
@@ -82,7 +123,8 @@ export default async function ComisionesPage() {
 
   const TOTALS = [
     { label: "Cobrado",          value: fmtARS(cobrado),    sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
-    { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${generadas.length} cuotas listas para facturar`,                     accent: "#7A6020" },
+    { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${facturablesAhora.length} cuotas listas para facturar`,                     accent: "#7A6020" },
+    { label: "En liquidación",   value: fmtARS(enLiquidacion.reduce((a, r) => a + parseFloat(r.monto), 0)), sub: `${enLiquidacion.length} cuotas, todavía no liquidadas por el medio de pago`, accent: "#5B6577" },
     { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada" && r.status !== "anulada").length} cuotas programadas`, accent: "#9B4A57" },
   ];
 
@@ -108,7 +150,7 @@ export default async function ComisionesPage() {
             </div>
             <div>
               <div className="text-[13px] text-[#9DB0C4] font-semibold">Cuotas listas para facturar</div>
-              <div className="font-semibold text-[17px] text-white mt-0.5">{proximoMes} · {generadas.filter(r => r.periodoMes === generadas[0].periodoMes && r.periodoAnio === generadas[0].periodoAnio).length} cuotas</div>
+              <div className="font-semibold text-[17px] text-white mt-0.5">{proximoMes} · {facturablesAhora.filter(r => r.periodoMes === facturablesAhora[0].periodoMes && r.periodoAnio === facturablesAhora[0].periodoAnio).length} cuotas</div>
             </div>
           </div>
           <div className="relative text-right">
@@ -121,7 +163,7 @@ export default async function ComisionesPage() {
       )}
 
       {/* Totales */}
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-4 gap-4 mt-4">
         {TOTALS.map((t) => (
           <div key={t.label} className="bg-white border border-[#E9ECEF] rounded-2xl p-[22px]">
             <div className="text-[13px] text-[#5B6577] font-medium">{t.label}</div>
@@ -139,18 +181,21 @@ export default async function ComisionesPage() {
         ) : (
           <>
             <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
-              style={{ display: "grid", gridTemplateColumns: "1.1fr 1.2fr 1.2fr .9fr 1fr" }}>
-              <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span className="text-right">Estado</span>
+              style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr 1.1fr .9fr" }}>
+              <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span>Disponible</span><span className="text-right">Estado</span>
             </div>
             {rows.map((r) => {
-              const s = STATUS_MAP[r.status];
+              const s = STATUS_MAP[r.displayStatus];
               return (
                 <div key={r.cuotaId} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
-                  style={{ display: "grid", gridTemplateColumns: "1.1fr 1.2fr 1.2fr .9fr 1fr" }}>
+                  style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr 1.1fr .9fr" }}>
                   <span className="font-semibold">{MES[r.periodoMes - 1]} {r.periodoAnio}</span>
                   <span className="text-[#5B6577] truncate">{r.clienteNombre}</span>
                   <span className="text-[#0C2A45] font-medium">{r.productoNombre}</span>
                   <span className="font-bold">{fmtARS(parseFloat(r.monto))}</span>
+                  <span className="text-[#9AA3B2] text-[13px]">
+                    {r.displayStatus === "liquidando" && r.disponibleDesde ? formatFecha(r.disponibleDesde) : "—"}
+                  </span>
                   <span className="text-right">
                     <span className="text-[12.5px] font-semibold rounded-full px-3 py-1.5 inline-block"
                       style={{ background: s.bg, color: s.fg }}>{s.label}</span>
@@ -177,14 +222,14 @@ export default async function ComisionesPage() {
               <span>Fecha</span><span>Producto</span><span>Cliente</span><span>Progreso</span><span className="text-right">Estado</span>
             </div>
             {ventasList.map((v) => {
-              const finalizada = v.cuotasPagadas === v.total;
+              const finalizada = v.cuotasPagadas === comisionMeses;
               return (
                 <div key={v.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
                   style={{ display: "grid", gridTemplateColumns: ".9fr 1.1fr 1.4fr 1fr 1fr" }}>
                   <span className="text-[#5B6577]">{formatFecha(v.fecha)}</span>
                   <span className="font-semibold">{v.producto}</span>
                   <span className="text-[#0C2A45] truncate">{v.cliente}</span>
-                  <span className="text-[#9AA3B2] text-[13px]">Cuota {v.cuotasPagadas} de {v.total}</span>
+                  <span className="text-[#9AA3B2] text-[13px]">Cuota {v.cuotasPagadas} de {comisionMeses}</span>
                   <span className="text-right">
                     <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold rounded-full px-3 py-1.5"
                       style={{
