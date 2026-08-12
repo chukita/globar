@@ -4,7 +4,8 @@ import { revendedores, productos, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { CopyButton } from "./CopyButton";
-import { CbuForm } from "./CbuForm";
+import { DatosPersonalesForm } from "./DatosPersonalesForm";
+import { DatosCobroForm } from "./DatosCobroForm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 
@@ -97,31 +98,34 @@ export default async function PerfilPage() {
       {/* Profile data */}
       <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
         <div className="font-semibold text-[18px] mb-5">Datos personales</div>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-5 mb-5">
           <DataRow label="Nombre" value={user.name ?? "—"} />
           <DataRow label="Email" value={user.email} />
-          <DataRow label="DNI" value={rev?.dni ?? "—"} />
-          <DataRow label="Fecha de nacimiento" value={rev?.fechaNacimiento ? formatDate(rev.fechaNacimiento) : "—"} />
           <DataRow label="País" value={rev?.pais ?? "Argentina"} />
-          <DataRow label="Provincia" value={rev?.provincia ?? "—"} />
-          <DataRow label="Localidad" value={rev?.localidad ?? "—"} />
-          <DataRow
-            label="Posibilidad de emitir factura por las comisiones"
-            value={rev?.puedeFacturar ? "Sí" : "No"}
-            valueColor={rev?.puedeFacturar ? "#0B5A8F" : undefined}
-          />
           <DataRow label="Estado de cuenta" value={rev ? (rev.activo ? "Activa" : "Inactiva") : "Sin perfil"}
             valueColor={rev?.activo ? "#0B5A8F" : "#9B4A57"} />
         </div>
+        <DatosPersonalesForm
+          dni={rev?.dni ?? ""}
+          fechaNacimiento={rev?.fechaNacimiento ?? ""}
+          provincia={rev?.provincia ?? ""}
+          localidad={rev?.localidad ?? ""}
+          telefono={rev?.telefono ?? ""}
+        />
       </div>
 
-      {/* CBU */}
+      {/* Datos de cobro */}
       <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
-        <div className="font-semibold text-[18px] mb-1">CBU para cobro de comisiones</div>
+        <div className="font-semibold text-[18px] mb-1">Datos de cobro</div>
         <p className="text-[13.5px] text-[#5B6577] mb-5">
-          Ingresá tu CBU para que podamos acreditar tus comisiones por transferencia bancaria.
+          CBU o alias de Mercado Pago, y a nombre de quién está la cuenta, para acreditarte las comisiones.
         </p>
-        <CbuForm currentCbu={rev?.cbuAlias ?? ""} />
+        <DatosCobroForm
+          currentCbuAlias={rev?.cbuAlias ?? ""}
+          currentTitularNombre={rev?.titularNombre ?? ""}
+          currentTitularCuit={rev?.titularCuit ?? ""}
+          currentPuedeFacturar={rev?.puedeFacturar ?? false}
+        />
       </div>
     </div>
   );
@@ -134,9 +138,4 @@ function DataRow({ label, value, valueColor }: { label: string; value: string; v
       <div className="text-[15px] font-semibold mt-1" style={{ color: valueColor ?? "#0C2A45" }}>{value}</div>
     </div>
   );
-}
-
-function formatDate(iso: string) {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
 }

@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
+import { getRevendedorByUserId } from "@/lib/revendedor";
+import { redirect } from "next/navigation";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -11,6 +13,17 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     .join("");
 
   const role = session?.user?.role ?? undefined;
+
+  // Quien se registra con Google nunca pasó por /registro (que sí pide estos
+  // datos) — ensureRevendedor() le crea una fila vacía. Bloqueamos el resto
+  // del panel hasta que los complete en /panel/completar-perfil, que queda
+  // afuera de este route group a propósito (si no, se redirigiría a sí mismo).
+  if (session?.user?.id) {
+    const rev = await getRevendedorByUserId(session.user.id);
+    if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad) {
+      redirect("/panel/completar-perfil");
+    }
+  }
 
   return (
     <div className="flex min-h-screen">

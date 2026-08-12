@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { esDniValido } from "@/lib/validacion";
 
 function generarCodigo(nombre: string): string {
   const prefix = nombre
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log("[registro] body:", body);
-    const { nombre, email, password, provincia, localidad, dni, fechaNacimiento, puedeFacturar } = body;
+    const { nombre, email, password, provincia, localidad, dni, fechaNacimiento, telefono, puedeFacturar } = body;
 
     if (!nombre || !email || !password || !provincia || !localidad || !dni || !fechaNacimiento) {
       return NextResponse.json({ error: "Completá todos los campos obligatorios." }, { status: 400 });
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (password.length < 8) {
       return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres." }, { status: 400 });
     }
-    if (!/^\d{7,8}$/.test(dni)) {
+    if (!esDniValido(dni)) {
       return NextResponse.json({ error: "El DNI debe tener 7 u 8 dígitos." }, { status: 400 });
     }
 
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
         zona: `${provincia} · ${localidad}`,
         dni,
         fechaNacimiento,
+        telefono: telefono || null,
         puedeFacturar: !!puedeFacturar,
       });
     });

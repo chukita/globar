@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/Logo";
-
-const PROVINCIAS = [
-  "Buenos Aires","CABA","Catamarca","Chaco","Chubut","Córdoba","Corrientes",
-  "Entre Ríos","Formosa","Jujuy","La Pampa","La Rioja","Mendoza","Misiones",
-  "Neuquén","Río Negro","Salta","San Juan","San Luis","Santa Cruz","Santa Fe",
-  "Santiago del Estero","Tierra del Fuego","Tucumán",
-];
+import { ProvinciaLocalidadFields } from "@/components/ProvinciaLocalidadFields";
 
 // Calculado una sola vez al cargar el módulo (no en cada render: Date.now()
 // es impuro y React 19 rechaza llamarlo durante el render, incluso en useMemo).
@@ -21,39 +15,15 @@ export default function RegistroPage() {
   const [form, setForm] = useState({
     nombre: "", email: "", password: "",
     provincia: "", localidad: "",
-    dni: "", fechaNacimiento: "",
+    dni: "", fechaNacimiento: "", telefono: "",
     puedeFacturar: false,
   });
-  const [localidades, setLocalidades] = useState<string[]>([]);
-  const [loadingLoc, setLoadingLoc] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function set(field: string, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
   }
-
-  function handleProvinciaChange(value: string) {
-    setForm((f) => ({ ...f, provincia: value, localidad: "" }));
-    setLocalidades([]);
-  }
-
-  useEffect(() => {
-    if (!form.provincia) return;
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- arranca el indicador de carga antes del fetch externo
-    setLoadingLoc(true);
-    fetch(`https://apis.datos.gob.ar/georef/api/municipios?provincia=${encodeURIComponent(form.provincia)}&max=500&campos=nombre&orden=nombre`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        const nombres: string[] = [...new Set<string>((data.municipios ?? []).map((m: { nombre: string }) => m.nombre))];
-        setLocalidades(nombres);
-      })
-      .catch(() => { if (!cancelled) setLocalidades([]); })
-      .finally(() => { if (!cancelled) setLoadingLoc(false); });
-    return () => { cancelled = true; };
-  }, [form.provincia]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -130,27 +100,15 @@ export default function RegistroPage() {
               </div>
             </div>
 
-            {/* Provincia */}
-            <div>
-              <label className={labelClass}>Provincia</label>
-              <select value={form.provincia} onChange={(e) => handleProvinciaChange(e.target.value)}
-                required className={inputClass}>
-                <option value="">Seleccioná una provincia</option>
-                {PROVINCIAS.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-
-            {/* Localidad */}
-            <div>
-              <label className={labelClass}>Localidad</label>
-              <select value={form.localidad} onChange={(e) => set("localidad", e.target.value)}
-                required disabled={!form.provincia || loadingLoc} className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}>
-                <option value="">
-                  {!form.provincia ? "Primero seleccioná una provincia" : loadingLoc ? "Cargando…" : "Seleccioná una localidad"}
-                </option>
-                {localidades.map((l, i) => <option key={`${l}-${i}`} value={l}>{l}</option>)}
-              </select>
-            </div>
+            <ProvinciaLocalidadFields
+              provincia={form.provincia}
+              localidad={form.localidad}
+              onProvinciaChange={(v) => set("provincia", v)}
+              onLocalidadChange={(v) => set("localidad", v)}
+              required
+              inputClass={inputClass}
+              labelClass={labelClass}
+            />
 
             <hr className="border-[#F0F2F5]" />
 
@@ -167,6 +125,13 @@ export default function RegistroPage() {
                   required max={MAX_FECHA_NACIMIENTO}
                   className={inputClass} />
               </div>
+            </div>
+
+            {/* Teléfono */}
+            <div>
+              <label className={labelClass}>Teléfono <span className="text-[#9AA3B2] font-normal">(opcional)</span></label>
+              <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)}
+                placeholder="11 2345-6789" className={inputClass} />
             </div>
 
             <hr className="border-[#F0F2F5]" />

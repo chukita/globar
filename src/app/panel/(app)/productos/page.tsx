@@ -4,7 +4,9 @@ import { revendedores, productos, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { CopyButton } from "../perfil/CopyButton";
+import { QrToggle } from "@/components/QrToggle";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 
@@ -25,25 +27,28 @@ export default async function ProductosPage() {
 
   const codigo = rev?.codigoVentas ?? null;
 
+  const items = await Promise.all(lista.map(async (p) => {
+    const link = codigo ? `${p.urlRegistro}?vendedor=${codigo}` : p.urlRegistro;
+    const qrSvg = codigo ? await QRCode.toString(link, { type: "svg", margin: 1, width: 160 }) : null;
+    return { producto: p, link, qrSvg };
+  }));
+
   return (
     <div className="p-10 max-w-[920px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Mis productos</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-6">
-        Compartí tu link de referido para que tus clientes se registren. Las ventas se asocian automáticamente a tu cuenta.
+        Compartí tu link de referido — o mostrale el código QR — para que tus clientes se registren. Las ventas se asocian automáticamente a tu cuenta.
       </p>
 
-      {lista.length === 0 ? (
+      {items.length === 0 ? (
         <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-10 text-center text-[#9AA3B2] text-[15px]">
           No hay productos disponibles aún.
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-5">
-          {lista.map((p) => {
-            const link = codigo ? `${p.urlRegistro}?vendedor=${codigo}` : p.urlRegistro;
-            return (
-              <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} comisionTexto={comisionTexto} />
-            );
-          })}
+          {items.map(({ producto: p, link, qrSvg }) => (
+            <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} qrSvg={qrSvg} comisionTexto={comisionTexto} />
+          ))}
         </div>
       )}
 
@@ -61,11 +66,13 @@ function ProductCard({
   producto,
   link,
   tienecodigo,
+  qrSvg,
   comisionTexto,
 }: {
   producto: typeof import("@/db/schema").productos.$inferSelect;
   link: string;
   tienecodigo: boolean;
+  qrSvg: string | null;
   comisionTexto: string;
 }) {
   const inicial = producto.nombre[0].toLowerCase();
@@ -124,6 +131,7 @@ function ProductCard({
                 Abrir
               </a>
             </div>
+            {qrSvg && <QrToggle svg={qrSvg} />}
           </div>
         ) : (
           <div className="bg-[#FFF8E6] border border-[#F0D080] rounded-xl px-4 py-3 text-[13px] text-[#7A6020]">
