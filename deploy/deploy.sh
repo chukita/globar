@@ -36,6 +36,12 @@ echo "==> Waiting for app to be healthy (30 attempts x 3s = 90s)..."
 for i in $(seq 1 30); do
   if curl -sf "$HEALTH_URL" > /dev/null 2>&1; then
     echo "==> Health check OK: $HEALTH_URL"
+    # Cada deploy baja una imagen nueva con el mismo tag (:latest) y deja la
+    # anterior sin tag, ocupando espacio sin que nadie la use — sin esto el
+    # disco de la VM se termina llenando (ya pasó una vez, 35GB acumulados).
+    # Solo borra imágenes que ningún contenedor tiene en uso, nunca las activas.
+    echo "==> Limpiando imágenes viejas sin usar..."
+    docker image prune -a -f || true
     exit 0
   fi
   echo "    Attempt $i/30 - waiting 3s..."
