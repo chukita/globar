@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
+import os from "os";
 
 const root = import.meta.dirname;
 
@@ -7,6 +8,13 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Seteado acá (no en el test file) porque src/lib/uploads.ts lee
+    // process.env.UPLOAD_DIR una sola vez, al importarse — un `import`
+    // en el test file se resuelve antes que cualquier código de su propio
+    // cuerpo (hoisting de ES modules), así que asignarlo ahí llega tarde.
+    env: {
+      UPLOAD_DIR: path.join(os.tmpdir(), "globar-test-uploads"),
+    },
   },
   resolve: {
     alias: [
