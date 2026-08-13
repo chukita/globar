@@ -20,11 +20,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     ...authConfig.callbacks,
-    async signIn({ user }) {
-      if (user?.id && (user as { role?: string }).role === "revendedor") {
-        await ensureRevendedor(user.id);
+    // No usamos el callback `signIn` para esto: para un alta nueva por Google,
+    // Auth.js todavía no persistió la fila en `users` cuando corre `signIn`
+    // (el `user` que llega ahí es el perfil crudo de Google, con el id de
+    // Google, no el nuestro) — recién en `jwt` llega el usuario ya persistido
+    // con nuestro id real, así que es acá donde hay que asegurar el alta.
+    async jwt(params) {
+      if (params.user?.id && params.account?.provider === "google") {
+        await ensureRevendedor(params.user.id);
       }
-      return true;
+      return authConfig.callbacks?.jwt
+        ? authConfig.callbacks.jwt(params)
+        : params.token;
     },
   },
   providers: [
