@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { revendedores, users, productos, habilitaciones, ventas, cuotas, facturas, cuotasFacturas } from "@/db/schema";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 export async function getDashboardStats() {
   const [ventasCount] = await db.select({ count: sql<number>`count(*)::int` }).from(ventas);
@@ -34,6 +34,8 @@ export async function getFacturasPendientesResumen(limit = 5) {
       subidaEn: facturas.subidaEn,
       revendedor: revendedores.codigoVentas,
       revendedorNombre: users.name,
+      cbuAlias: revendedores.cbuAlias,
+      titularNombre: revendedores.titularNombre,
     })
     .from(facturas)
     .innerJoin(revendedores, eq(facturas.revendedorId, revendedores.id))
@@ -110,6 +112,8 @@ export async function getTodasLasFacturas() {
       pagadaEn: facturas.pagadaEn,
       revendedor: revendedores.codigoVentas,
       revendedorNombre: users.name,
+      cbuAlias: revendedores.cbuAlias,
+      titularNombre: revendedores.titularNombre,
     })
     .from(facturas)
     .innerJoin(revendedores, eq(facturas.revendedorId, revendedores.id))
@@ -171,4 +175,61 @@ export async function getTodosLosRevendedores() {
       habilitado: habilitacionesPorRevendedor.get(r.id)?.has(p.id) ?? false,
     })),
   }));
+}
+
+export async function getRevendedorDetalle(id: string) {
+  const [rev] = await db
+    .select({
+      id: revendedores.id,
+      codigoVentas: revendedores.codigoVentas,
+      zona: revendedores.zona,
+      pais: revendedores.pais,
+      provincia: revendedores.provincia,
+      localidad: revendedores.localidad,
+      dni: revendedores.dni,
+      fechaNacimiento: revendedores.fechaNacimiento,
+      telefono: revendedores.telefono,
+      puedeFacturar: revendedores.puedeFacturar,
+      cbuAlias: revendedores.cbuAlias,
+      titularNombre: revendedores.titularNombre,
+      titularCuit: revendedores.titularCuit,
+      activo: revendedores.activo,
+      creadoEn: revendedores.creadoEn,
+      nombre: users.name,
+      email: users.email,
+    })
+    .from(revendedores)
+    .innerJoin(users, eq(revendedores.userId, users.id))
+    .where(eq(revendedores.id, id))
+    .limit(1);
+
+  if (!rev) return null;
+
+  const [ventasCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(ventas)
+    .where(eq(ventas.revendedorId, id));
+
+  const [cobrado] = await db
+    .select({ total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
+    .from(cuotas)
+    .where(and(eq(cuotas.revendedorId, id), eq(cuotas.status, "pagada")));
+
+  const todosProductos = await db.select().from(productos).where(eq(productos.status, "activo"));
+  const habilitacionesDelRevendedor = await db
+    .select({ productoId: habilitaciones.productoId })
+    .from(habilitaciones)
+    .where(eq(habilitaciones.revendedorId, id));
+  const habilitadosSet = new Set(habilitacionesDelRevendedor.map((h) => h.productoId));
+
+  return {
+    ...rev,
+    ventas: ventasCount?.count ?? 0,
+    ingreso: Number(cobrado?.total ?? 0),
+    productos: todosProductos.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      habilitado: habilitadosSet.has(p.id),
+    })),
+  };
 }

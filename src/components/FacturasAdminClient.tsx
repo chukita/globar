@@ -13,6 +13,8 @@ interface Factura {
   subidaEn: string | Date;
   revendedor: string;
   revendedorNombre: string | null;
+  cbuAlias: string | null;
+  titularNombre: string | null;
   cuotas: number;
 }
 
@@ -136,12 +138,28 @@ function FacturaCard({ factura, confirmando, pagando, onConfirmar, onCancelar, o
                 Ver factura
               </a>
             </div>
+            <div className="flex items-center gap-2 flex-wrap mt-3">
+              {factura.cbuAlias ? (
+                <>
+                  <span className="text-[11px] font-semibold text-[#9AA3B2] uppercase tracking-[.04em]">Transferir a</span>
+                  <span className="font-mono text-[12.5px] font-semibold text-[#0B5A8F] bg-[#E1EFF8] px-2 py-1 rounded-lg">
+                    {factura.cbuAlias}
+                  </span>
+                  {factura.titularNombre && (
+                    <span className="text-[12.5px] text-[#5B6577]">({factura.titularNombre})</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-[12px] font-semibold text-[#9B4A57] bg-[#FCE6E9] px-2.5 py-1 rounded-lg">
+                  Sin datos de cobro cargados
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-right flex-shrink-0">
             <div className="font-extrabold text-[28px] text-[#0C2A45]" style={{ letterSpacing: "-0.02em" }}>
               {fmtARS(Number(factura.monto))}
             </div>
-            <div className="text-[12px] text-[#9AA3B2] mt-0.5">a transferir a nombre del revendedor</div>
           </div>
         </div>
       </div>
