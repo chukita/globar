@@ -34,7 +34,7 @@ export default async function AdminComisionesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-4 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
         {[
           { label: "Generadas",  value: totales.generadas,  color: "#0B5A8F", bg: "#E1EFF8" },
           { label: "Facturadas", value: totales.facturadas, color: "#856404", bg: "#FFF3CD" },
@@ -50,7 +50,8 @@ export default async function AdminComisionesPage() {
       </div>
 
       <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-5 overflow-hidden">
-        <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+        <div className="overflow-x-auto">
+        <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[820px]"
           style={{ display: "grid", gridTemplateColumns: ".8fr 1fr 1.2fr 1fr .7fr .7fr .9fr" }}>
           <span>Cuota</span>
           <span>Revendedor</span>
@@ -66,7 +67,7 @@ export default async function AdminComisionesPage() {
           cuotas.map((c) => {
             const s = STATUS_MAP[c.status];
             return (
-              <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[13.5px]"
+              <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[13.5px] min-w-[820px]"
                 style={{ display: "grid", gridTemplateColumns: ".8fr 1fr 1.2fr 1fr .7fr .7fr .9fr" }}>
                 <span className="text-[#9AA3B2]">{c.numeroCuota} / {config.comisionMeses}</span>
                 <span className="font-medium text-[#0C2A45]">{c.revendedor}</span>
@@ -84,6 +85,7 @@ export default async function AdminComisionesPage() {
             );
           })
         )}
+        </div>
       </div>
     </div>
   );

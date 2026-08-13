@@ -47,13 +47,13 @@ export default async function ClientesPage() {
         {clientes.length === 0 ? (
           <div className="px-6 py-8 text-[14.5px] text-[#9AA3B2]">Todavía no tenés clientes registrados.</div>
         ) : (
-          <>
-            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+          <div className="overflow-x-auto">
+            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[680px]"
               style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr .9fr .8fr 1fr" }}>
               <span>Cliente</span><span>Email</span><span>Producto</span><span>Alta</span><span className="text-right">Suscripción</span>
             </div>
             {clientes.map((c) => (
-              <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
+              <div key={c.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px] min-w-[680px]"
                 style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr .9fr .8fr 1fr" }}>
                 <span className="font-semibold text-[#0C2A45] truncate">{c.cliente}</span>
                 <span className="text-[#5B6577] truncate">{c.clienteEmail ?? "—"}</span>
@@ -79,7 +79,7 @@ export default async function ClientesPage() {
                 </span>
               </div>
             ))}
-          </>
+          </div>
         )}
       </div>
     </div>

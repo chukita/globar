@@ -40,7 +40,8 @@ export default async function AdminVentasPage() {
       </div>
 
       <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-5 overflow-hidden">
-        <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+        <div className="overflow-x-auto">
+        <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[700px]"
           style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.4fr 1fr .8fr .7fr" }}>
           <span>Fecha</span>
           <span>Revendedor</span>
@@ -53,7 +54,7 @@ export default async function AdminVentasPage() {
           <div className="px-6 py-10 text-center text-[14px] text-[#9AA3B2]">Todavía no hay ventas registradas.</div>
         ) : (
           ventas.map((v) => (
-            <div key={v.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px]"
+            <div key={v.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px] min-w-[700px]"
               style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.4fr 1fr .8fr .7fr" }}>
               <span className="text-[#5B6577]">{new Date(v.fecha).toLocaleDateString("es-AR")}</span>
               <span className="font-medium">{v.revendedor ?? "—"}</span>
@@ -72,6 +73,7 @@ export default async function AdminVentasPage() {
             </div>
           ))
         )}
+        </div>
       </div>
     </div>
   );

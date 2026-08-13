@@ -79,7 +79,8 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
         </div>
       ) : (
         <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-5 overflow-hidden">
-          <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+          <div className="overflow-x-auto">
+          <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[760px]"
             style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
             <span>Revendedor</span>
             <span>Código</span>
@@ -90,7 +91,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
             <span className="text-right"></span>
           </div>
           {revendedores.map((r) => (
-            <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px]"
+            <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px] min-w-[760px]"
               style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
               <div>
                 <div className="font-semibold">{r.nombre ?? "—"}</div>
@@ -138,6 +139,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
               </span>
             </div>
           ))}
+          </div>
         </div>
       )}
     </div>

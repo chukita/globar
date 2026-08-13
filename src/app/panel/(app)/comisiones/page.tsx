@@ -125,7 +125,7 @@ export default async function ComisionesPage() {
       )}
 
       {/* Totales */}
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
         {TOTALS.map((t) => (
           <div key={t.label} className="bg-white border border-[#E9ECEF] rounded-2xl p-[22px]">
             <div className="text-[13px] text-[#5B6577] font-medium">{t.label}</div>
@@ -141,15 +141,15 @@ export default async function ComisionesPage() {
         {rows.length === 0 ? (
           <div className="px-6 py-8 text-[14.5px] text-[#9AA3B2]">No hay cuotas registradas todavía.</div>
         ) : (
-          <>
-            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+          <div className="overflow-x-auto">
+            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[640px]"
               style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr .9fr" }}>
               <span>Período</span><span>Cliente</span><span>Producto</span><span>Monto</span><span className="text-right">Estado</span>
             </div>
             {rows.map((r) => {
               const s = STATUS_MAP[r.status];
               return (
-                <div key={r.cuotaId} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
+                <div key={r.cuotaId} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px] min-w-[640px]"
                   style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1.1fr .8fr .9fr" }}>
                   <span className="font-semibold">{MES[r.periodoMes - 1]} {r.periodoAnio}</span>
                   <span className="text-[#5B6577] truncate">{r.clienteNombre}</span>
@@ -162,7 +162,7 @@ export default async function ComisionesPage() {
                 </div>
               );
             })}
-          </>
+          </div>
         )}
       </div>
 
@@ -175,15 +175,15 @@ export default async function ComisionesPage() {
         {ventasList.length === 0 ? (
           <div className="px-6 py-8 text-[14.5px] text-[#9AA3B2]">No hay ventas registradas todavía.</div>
         ) : (
-          <>
-            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2]"
+          <div className="overflow-x-auto">
+            <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[680px]"
               style={{ display: "grid", gridTemplateColumns: ".9fr 1.1fr 1.4fr 1fr 1fr" }}>
               <span>Fecha</span><span>Producto</span><span>Cliente</span><span>Progreso</span><span className="text-right">Estado</span>
             </div>
             {ventasList.map((v) => {
               const finalizada = v.cuotasPagadas === comisionMeses;
               return (
-                <div key={v.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px]"
+                <div key={v.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14.5px] min-w-[680px]"
                   style={{ display: "grid", gridTemplateColumns: ".9fr 1.1fr 1.4fr 1fr 1fr" }}>
                   <span className="text-[#5B6577]">{formatFecha(v.fecha)}</span>
                   <span className="font-semibold">{v.producto}</span>
@@ -203,7 +203,7 @@ export default async function ComisionesPage() {
                 </div>
               );
             })}
-          </>
+          </div>
         )}
       </div>
     </div>
