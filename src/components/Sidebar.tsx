@@ -60,7 +60,9 @@ export function Sidebar({ resellerName = "Martina Quiroga", resellerInitials = "
           lg:static lg:translate-x-0 lg:z-auto`}
       >
       <div className="flex items-center justify-between px-2 pb-6 lg:block">
-        <Logo size="sm" />
+        <Link href="/">
+          <Logo size="sm" />
+        </Link>
         <button
           onClick={() => setOpen(false)}
           aria-label="Cerrar menú"

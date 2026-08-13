@@ -55,7 +55,9 @@ export function AdminSidebar() {
       >
       <div className="flex items-center justify-between px-2 pb-2 mb-4 lg:block">
         <div>
-          <Logo size="sm" />
+          <Link href="/">
+            <Logo size="sm" />
+          </Link>
           <div className="mt-2 px-0">
             <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-[#FADADD]">
               Superadmin
