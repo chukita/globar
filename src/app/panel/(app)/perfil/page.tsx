@@ -7,6 +7,7 @@ import { CopyButton } from "./CopyButton";
 import { DatosPersonalesForm } from "./DatosPersonalesForm";
 import { DatosCobroForm } from "./DatosCobroForm";
 import { NotificacionesForm } from "./NotificacionesForm";
+import { EliminarCuentaForm } from "./EliminarCuentaForm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 
@@ -139,6 +140,15 @@ export default async function PerfilPage() {
           notifFacturaPagada={rev?.notifFacturaPagada ?? true}
           notifComisionGenerada={rev?.notifComisionGenerada ?? true}
         />
+      </div>
+
+      {/* Danger zone */}
+      <div className="bg-white border border-[#E7A9B3] rounded-[20px] p-7 mt-5">
+        <div className="font-semibold text-[18px] mb-1">Eliminar cuenta</div>
+        <p className="text-[13.5px] text-[#5B6577] mb-5">
+          Borra tu cuenta de revendedor junto con tus ventas, cuotas y facturas. No vas a poder cobrar comisiones ya generadas pero no cobradas, ni las de suscripciones futuras de tus clientes. Esta acción no se puede deshacer.
+        </p>
+        <EliminarCuentaForm />
       </div>
     </div>
   );

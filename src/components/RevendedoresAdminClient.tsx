@@ -43,7 +43,9 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
 
   function eliminar(r: Revendedor) {
     const confirmado = window.confirm(
-      `¿Borrar a ${r.nombre ?? r.email} (${r.codigoVentas})?\n\nEsto borra también sus ventas, cuotas y facturas. No se puede deshacer.`
+      `¿Borrar a ${r.nombre ?? r.email} (${r.codigoVentas})?\n\n` +
+      "Pierde el acceso a todas sus ventas, cuotas y facturas — incluidas las comisiones ya generadas pero no cobradas, y no va a poder cobrar comisiones de las suscripciones futuras de sus clientes.\n\n" +
+      "Esta acción no se puede deshacer."
     );
     if (!confirmado) return;
     setRevendedores(prev => prev.filter(x => x.id !== r.id));

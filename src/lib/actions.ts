@@ -56,11 +56,10 @@ export async function toggleHabilitacionAction(revendedorId: string, productoId:
  * Pensado para limpiar cuentas de prueba mientras glob.ar no tiene
  * revendedores reales — si el negocio ya tiene ventas/comisiones reales en
  * juego, esto debería reemplazarse por una baja lógica (activo=false) en
- * vez de un borrado físico.
+ * vez de un borrado físico. Usado tanto por el superadmin (borrar a otro)
+ * como por la auto-eliminación del propio revendedor.
  */
-export async function eliminarRevendedorAction(revendedorId: string) {
-  await requireSuperadmin();
-
+async function borrarRevendedorPorId(revendedorId: string) {
   await db.transaction(async (tx) => {
     const [rev] = await tx.select({ userId: revendedores.userId }).from(revendedores).where(eq(revendedores.id, revendedorId));
     if (!rev) return;
@@ -78,8 +77,24 @@ export async function eliminarRevendedorAction(revendedorId: string) {
     // Cascada automática: users → accounts, sessions, revendedores, habilitaciones.
     await tx.delete(users).where(eq(users.id, rev.userId));
   });
+}
 
+export async function eliminarRevendedorAction(revendedorId: string) {
+  await requireSuperadmin();
+  await borrarRevendedorPorId(revendedorId);
   revalidatePath("/admin/revendedores");
+}
+
+/** El revendedor se borra a sí mismo — nunca recibe un id, solo actúa sobre su propia sesión. */
+export async function eliminarMiCuentaAction() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("No autorizado");
+
+  const [rev] = await db.select({ id: revendedores.id }).from(revendedores).where(eq(revendedores.userId, session.user.id)).limit(1);
+  if (!rev) throw new Error("Revendedor no encontrado");
+
+  await borrarRevendedorPorId(rev.id);
+  await signOut({ redirectTo: "/" });
 }
 
 export async function marcarFacturaPagadaAction(facturaId: string) {
