@@ -148,7 +148,7 @@ export default async function PerfilPage() {
         <p className="text-[13.5px] text-[#5B6577] mb-5">
           Borra tu cuenta de revendedor junto con tus ventas, cuotas y facturas. No vas a poder cobrar comisiones ya generadas pero no cobradas, ni las de suscripciones futuras de tus clientes. Esta acción no se puede deshacer.
         </p>
-        <EliminarCuentaForm />
+        <EliminarCuentaForm codigoVentas={rev?.codigoVentas ?? ""} />
       </div>
     </div>
   );

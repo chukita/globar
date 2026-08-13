@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { fmtARS } from "@/lib/constants";
 import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction } from "@/lib/actions";
+import { ConfirmarEliminacionModal } from "@/components/ConfirmarEliminacionModal";
 
 interface Producto {
   id: string;
@@ -25,7 +26,8 @@ interface Revendedor {
 
 export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedoresIniciales: Revendedor[] }) {
   const [revendedores, setRevendedores] = useState(revendedoresIniciales);
-  const [, startTransition] = useTransition();
+  const [eliminando, setEliminando] = useState<Revendedor | null>(null);
+  const [pending, startTransition] = useTransition();
 
   function toggleActivo(r: Revendedor) {
     const nuevoEstado = !r.activo;
@@ -41,13 +43,10 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
     startTransition(() => { toggleHabilitacionAction(r.id, p.id, nuevoEstado); });
   }
 
-  function eliminar(r: Revendedor) {
-    const confirmado = window.confirm(
-      `¿Borrar a ${r.nombre ?? r.email} (${r.codigoVentas})?\n\n` +
-      "Pierde el acceso a todas sus ventas, cuotas y facturas — incluidas las comisiones ya generadas pero no cobradas, y no va a poder cobrar comisiones de las suscripciones futuras de sus clientes.\n\n" +
-      "Esta acción no se puede deshacer."
-    );
-    if (!confirmado) return;
+  function confirmarEliminar() {
+    if (!eliminando) return;
+    const r = eliminando;
+    setEliminando(null);
     setRevendedores(prev => prev.filter(x => x.id !== r.id));
     startTransition(() => { eliminarRevendedorAction(r.id); });
   }
@@ -135,7 +134,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
               </span>
               <span className="text-right">
                 <button
-                  onClick={() => eliminar(r)}
+                  onClick={() => setEliminando(r)}
                   className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0 bg-[#FCE6E9] text-[#9B4A57]"
                   title="Borrar revendedor y todo lo asociado"
                 >
@@ -147,6 +146,16 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
           </div>
         </div>
       )}
+
+      <ConfirmarEliminacionModal
+        open={!!eliminando}
+        titulo={`Eliminar a ${eliminando?.nombre ?? eliminando?.email ?? "revendedor"}`}
+        advertencia="Pierde el acceso a todas sus ventas, cuotas y facturas — incluidas las comisiones ya generadas pero no cobradas, y no va a poder cobrar comisiones de las suscripciones futuras de sus clientes. Esta acción no se puede deshacer."
+        codigoEsperado={eliminando?.codigoVentas ?? ""}
+        confirmando={pending}
+        onConfirm={confirmarEliminar}
+        onCancel={() => setEliminando(null)}
+      />
     </div>
   );
 }
