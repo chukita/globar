@@ -38,6 +38,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Fuerza el selector de cuenta de Google en cada login — sin esto,
+      // si el navegador ya tiene una sesión de Google activa, Google la
+      // reusa en silencio y el usuario nunca ve con qué cuenta está
+      // entrando.
+      authorization: { params: { prompt: "select_account" } },
     }),
     // Sobreescribimos Credentials con la lógica real de DB
     Credentials({
