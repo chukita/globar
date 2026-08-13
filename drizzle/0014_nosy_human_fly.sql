@@ -1,0 +1,2 @@
+ALTER TABLE "configuracion" ADD COLUMN "notif_revendedor_nuevo" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "configuracion" ADD COLUMN "notif_factura_subida" boolean DEFAULT true NOT NULL;

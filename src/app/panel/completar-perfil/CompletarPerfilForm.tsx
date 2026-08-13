@@ -47,6 +47,7 @@ export function CompletarPerfilForm({
     if (!form.fechaNacimiento) faltan.push("Fecha de nacimiento");
     if (!form.provincia) faltan.push("Provincia");
     if (!form.localidad) faltan.push("Localidad");
+    if (!form.telefono) faltan.push("Teléfono");
     return faltan;
   }
 
@@ -111,9 +112,9 @@ export function CompletarPerfilForm({
       />
 
       <div>
-        <label className={labelClass}>Teléfono <span className="text-[#9AA3B2] font-normal">(opcional)</span></label>
+        <label className={labelClass}>Teléfono</label>
         <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)}
-          placeholder="11 2345-6789" className={inputClass} />
+          required placeholder="11 2345-6789" className={inputClass} />
       </div>
 
       <label className="flex items-start gap-3 cursor-pointer select-none">

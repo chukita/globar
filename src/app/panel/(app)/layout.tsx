@@ -26,7 +26,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     if (rev && !rev.activo) {
       redirect("/panel/cuenta-desactivada");
     }
-    if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad) {
+    if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad || !rev.telefono) {
       redirect("/panel/completar-perfil");
     }
   }

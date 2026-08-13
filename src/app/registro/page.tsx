@@ -36,6 +36,7 @@ export default function RegistroPage() {
     if (!form.localidad) faltan.push("Localidad");
     if (!form.dni) faltan.push("DNI");
     if (!form.fechaNacimiento) faltan.push("Fecha de nacimiento");
+    if (!form.telefono) faltan.push("Teléfono");
     return faltan;
   }
 
@@ -81,7 +82,9 @@ export default function RegistroPage() {
     <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[500px]">
         <div className="flex justify-center mb-8">
-          <Logo size="md" darkText />
+          <Link href="/">
+            <Logo size="md" darkText />
+          </Link>
         </div>
 
         <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-8">
@@ -154,9 +157,9 @@ export default function RegistroPage() {
 
             {/* Teléfono */}
             <div>
-              <label className={labelClass}>Teléfono <span className="text-[#9AA3B2] font-normal">(opcional)</span></label>
+              <label className={labelClass}>Teléfono</label>
               <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)}
-                placeholder="11 2345-6789" className={inputClass} />
+                required placeholder="11 2345-6789" className={inputClass} />
             </div>
 
             <hr className="border-[#F0F2F5]" />

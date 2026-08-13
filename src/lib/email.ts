@@ -46,10 +46,14 @@ export async function sendEmail({ to, toName, subject, html, replyTo }: { to: st
   }
 }
 
-/** Avisa a todos los destinatarios configurados en /admin/configuracion. */
-export async function notifyAdmins(subject: string, html: string) {
-  const { notifAdminEmails } = await getConfiguracion();
-  const destinatarios = (notifAdminEmails ?? "")
+/** Avisa a todos los destinatarios configurados en /admin/configuracion, si ese tipo de evento está habilitado. */
+export async function notifyAdmins(subject: string, html: string, tipo: "revendedorNuevo" | "facturaSubida") {
+  const config = await getConfiguracion();
+
+  const habilitado = tipo === "revendedorNuevo" ? config.notifRevendedorNuevo : config.notifFacturaSubida;
+  if (!habilitado) return;
+
+  const destinatarios = (config.notifAdminEmails ?? "")
     .split(",")
     .map((e) => e.trim())
     .filter(Boolean);

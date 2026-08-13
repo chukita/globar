@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
 
   const [user] = await db.select({ nombre: users.name }).from(users).where(eq(users.id, revendedor.userId));
   const { subject, html } = emailFacturaSubida(user?.nombre ?? revendedor.codigoVentas, revendedor.codigoVentas, monto);
-  await notifyAdmins(subject, html);
+  await notifyAdmins(subject, html, "facturaSubida");
 
   return NextResponse.json({
     ok:        true,

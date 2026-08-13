@@ -170,7 +170,7 @@ export default async function LandingPage() {
               const comisionTotal = comisionMes * 6;
               return (
                 <div key={p.id} className="bg-white border border-[#E9ECEF] rounded-[22px] p-[30px]">
-                  <div className="h-[180px] rounded-[14px] overflow-hidden">
+                  <div className="aspect-[560/180] rounded-[14px] overflow-hidden">
                     {p.nombre === "nume" ? <NumeIllustration /> : <AgendaIllustration />}
                   </div>
                   <div className="flex items-center justify-between mt-5">

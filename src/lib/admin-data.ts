@@ -107,6 +107,7 @@ export async function getTodasLasFacturas() {
       monto: facturas.monto,
       nota: facturas.nota,
       archivoUrl: facturas.archivoUrl,
+      comprobanteUrl: facturas.comprobanteUrl,
       pagada: facturas.pagada,
       subidaEn: facturas.subidaEn,
       pagadaEn: facturas.pagadaEn,

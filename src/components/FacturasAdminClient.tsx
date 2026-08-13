@@ -9,6 +9,7 @@ interface Factura {
   monto: string;
   nota: string | null;
   archivoUrl: string;
+  comprobanteUrl: string | null;
   pagada: boolean;
   subidaEn: string | Date;
   revendedor: string;
@@ -21,16 +22,30 @@ interface Factura {
 export function FacturasAdminClient({ facturasIniciales }: { facturasIniciales: Factura[] }) {
   const [facturas, setFacturas] = useState(facturasIniciales);
   const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [comprobante, setComprobante] = useState<File | null>(null);
+  const [subiendoError, setSubiendoError] = useState("");
   const [pending, startTransition] = useTransition();
 
   const pendientes = facturas.filter(f => !f.pagada);
   const pagadas    = facturas.filter(f => f.pagada);
 
   function marcarPagada(id: string) {
+    setSubiendoError("");
     startTransition(async () => {
+      if (comprobante) {
+        const form = new FormData();
+        form.append("archivo", comprobante);
+        const res = await fetch(`/api/admin/facturas/${id}/comprobante`, { method: "POST", body: form });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setSubiendoError(data.error ?? "No se pudo subir el comprobante.");
+          return;
+        }
+      }
       await marcarFacturaPagadaAction(id);
-      setFacturas(prev => prev.map(f => f.id === id ? { ...f, pagada: true } : f));
+      setFacturas(prev => prev.map(f => f.id === id ? { ...f, pagada: true, comprobanteUrl: comprobante ? "subido" : f.comprobanteUrl } : f));
       setConfirmando(null);
+      setComprobante(null);
     });
   }
 
@@ -68,8 +83,11 @@ export function FacturasAdminClient({ facturasIniciales }: { facturasIniciales: 
                 factura={f}
                 confirmando={confirmando === f.id}
                 pagando={pending && confirmando === f.id}
-                onConfirmar={() => setConfirmando(f.id)}
-                onCancelar={() => setConfirmando(null)}
+                comprobante={comprobante}
+                error={confirmando === f.id ? subiendoError : ""}
+                onConfirmar={() => { setConfirmando(f.id); setComprobante(null); setSubiendoError(""); }}
+                onCancelar={() => { setConfirmando(null); setComprobante(null); setSubiendoError(""); }}
+                onComprobanteChange={setComprobante}
                 onPagar={() => marcarPagada(f.id)}
               />
             ))}
@@ -91,6 +109,12 @@ export function FacturasAdminClient({ facturasIniciales }: { facturasIniciales: 
                   </div>
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
+                  {f.comprobanteUrl && (
+                    <a href={`/api/admin/facturas/${f.id}/comprobante`} target="_blank" rel="noreferrer"
+                      className="text-[12.5px] text-[#0E6BA8] font-medium">
+                      Ver comprobante
+                    </a>
+                  )}
                   <span className="font-bold text-[16px] text-[#9AA3B2]">{fmtARS(Number(f.monto))}</span>
                   <span className="text-[12px] font-semibold bg-[#E7F5EE] text-[#0B6B47] rounded-full px-3 py-1.5">
                     Pagada
@@ -105,12 +129,15 @@ export function FacturasAdminClient({ facturasIniciales }: { facturasIniciales: 
   );
 }
 
-function FacturaCard({ factura, confirmando, pagando, onConfirmar, onCancelar, onPagar }: {
+function FacturaCard({ factura, confirmando, pagando, comprobante, error, onConfirmar, onCancelar, onComprobanteChange, onPagar }: {
   factura: Factura;
   confirmando: boolean;
   pagando: boolean;
+  comprobante: File | null;
+  error: string;
   onConfirmar: () => void;
   onCancelar: () => void;
+  onComprobanteChange: (f: File | null) => void;
   onPagar: () => void;
 }) {
   return (
@@ -176,10 +203,27 @@ function FacturaCard({ factura, confirmando, pagando, onConfirmar, onCancelar, o
             </button>
           </>
         ) : (
-          <>
+          <div className="flex flex-col gap-3 w-full">
             <p className="text-[13.5px] font-semibold text-[#0C2A45] m-0">
               ¿Confirmás que ya realizaste la transferencia de <strong>{fmtARS(Number(factura.monto))}</strong>?
             </p>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <span className="text-[12.5px] font-medium text-[#5B6577]">
+                Comprobante de transferencia <span className="text-[#9AA3B2]">(opcional)</span>
+              </span>
+              <input
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                onChange={(e) => onComprobanteChange(e.target.files?.[0] ?? null)}
+                className="text-[12.5px] text-[#5B6577] max-w-[220px]"
+              />
+              {comprobante && <span className="text-[12px] text-[#0E6BA8] font-medium">{comprobante.name}</span>}
+            </label>
+            {error && (
+              <div className="bg-[#FCE6E9] border border-[#E7A9B3] rounded-lg px-3 py-2 text-[12.5px] text-[#9B4A57] font-medium">
+                {error}
+              </div>
+            )}
             <div className="flex gap-3">
               <button onClick={onCancelar} disabled={pagando}
                 className="font-semibold text-[14px] bg-white text-[#0C2A45] border border-[#DCE0E5] rounded-xl px-4 py-2.5 cursor-pointer">
@@ -190,7 +234,7 @@ function FacturaCard({ factura, confirmando, pagando, onConfirmar, onCancelar, o
                 {pagando ? "Guardando…" : "Sí, confirmar pago"}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

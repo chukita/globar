@@ -9,7 +9,7 @@ export default async function CompletarPerfilPage() {
 
   const rev = await getRevendedorByUserId(session.user.id);
   if (rev && !rev.activo) redirect("/panel/cuenta-desactivada");
-  if (rev?.dni && rev?.fechaNacimiento && rev?.provincia && rev?.localidad) {
+  if (rev?.dni && rev?.fechaNacimiento && rev?.provincia && rev?.localidad && rev?.telefono) {
     redirect("/panel/productos");
   }
 

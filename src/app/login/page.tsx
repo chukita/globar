@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { PasswordInput } from "@/components/PasswordInput";
 
@@ -40,7 +41,9 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Logo size="md" darkText />
+          <Link href="/">
+            <Logo size="md" darkText />
+          </Link>
         </div>
 
         <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-8">

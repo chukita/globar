@@ -43,6 +43,10 @@ export function ContactoForm() {
         <div className="w-12 h-12 rounded-full bg-[#E7F5EE] mx-auto flex items-center justify-center text-[22px] text-[#1B9462] font-bold">✓</div>
         <p className="font-semibold text-[16px] mt-4 mb-1">¡Gracias por escribirnos!</p>
         <p className="text-[14px] text-[#5B6577] m-0">Te respondemos a la brevedad.</p>
+        <button onClick={() => setEnviado(false)}
+          className="font-semibold text-[13.5px] text-[#0E6BA8] bg-transparent border-0 cursor-pointer mt-5">
+          Enviar otra consulta
+        </button>
       </div>
     );
   }

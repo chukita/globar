@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     console.log("[registro] body:", body);
     const { nombre, email, password, provincia, localidad, dni, fechaNacimiento, telefono, puedeFacturar } = body;
 
-    if (!nombre || !email || !password || !provincia || !localidad || !dni || !fechaNacimiento) {
+    if (!nombre || !email || !password || !provincia || !localidad || !dni || !fechaNacimiento || !telefono) {
       return NextResponse.json({ error: "Completá todos los campos obligatorios." }, { status: 400 });
     }
     if (password.length < 8) {
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     });
 
     const { subject, html } = emailRevendedorNuevo(nombre, email);
-    await notifyAdmins(subject, html);
+    await notifyAdmins(subject, html, "revendedorNuevo");
 
     return NextResponse.json({ ok: true });
   } catch (e) {

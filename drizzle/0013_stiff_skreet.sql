@@ -1,0 +1,1 @@
+ALTER TABLE "facturas" ADD COLUMN "comprobante_url" text;

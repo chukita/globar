@@ -6,14 +6,20 @@ export function ConfiguracionForm({
   comisionMonto,
   comisionMeses,
   notifAdminEmails,
+  notifRevendedorNuevo,
+  notifFacturaSubida,
 }: {
   comisionMonto: number;
   comisionMeses: number;
   notifAdminEmails: string;
+  notifRevendedorNuevo: boolean;
+  notifFacturaSubida: boolean;
 }) {
   const [monto, setMonto] = useState(String(comisionMonto));
   const [meses, setMeses] = useState(String(comisionMeses));
   const [emails, setEmails] = useState(notifAdminEmails);
+  const [avisoRevendedorNuevo, setAvisoRevendedorNuevo] = useState(notifRevendedorNuevo);
+  const [avisoFacturaSubida, setAvisoFacturaSubida] = useState(notifFacturaSubida);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -31,6 +37,8 @@ export function ConfiguracionForm({
         comisionMonto: Number(monto),
         comisionMeses: Number(meses),
         notifAdminEmails: emails,
+        notifRevendedorNuevo: avisoRevendedorNuevo,
+        notifFacturaSubida: avisoFacturaSubida,
       }),
     });
 
@@ -94,6 +102,27 @@ export function ConfiguracionForm({
           className="mt-1.5 w-full bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3 text-[15px] font-semibold text-[#0C2A45]"
         />
       </label>
+
+      <div className="flex flex-col gap-3 mt-4">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={avisoRevendedorNuevo}
+            onChange={(e) => setAvisoRevendedorNuevo(e.target.checked)}
+            className="w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
+          />
+          <span className="text-[14px] text-[#0C2A45]">Avisarme cuando se registra un nuevo revendedor</span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={avisoFacturaSubida}
+            onChange={(e) => setAvisoFacturaSubida(e.target.checked)}
+            className="w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
+          />
+          <span className="text-[14px] text-[#0C2A45]">Avisarme cuando un revendedor sube una factura</span>
+        </label>
+      </div>
 
       {error && <div className="mt-4 text-[13.5px] text-[#9B4A57] font-medium">{error}</div>}
 

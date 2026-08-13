@@ -25,14 +25,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  let body: { comisionMonto?: number; comisionMeses?: number; notifAdminEmails?: string };
+  let body: { comisionMonto?: number; comisionMeses?: number; notifAdminEmails?: string; notifRevendedorNuevo?: boolean; notifFacturaSubida?: boolean };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { comisionMonto, comisionMeses, notifAdminEmails } = body;
+  const { comisionMonto, comisionMeses, notifAdminEmails, notifRevendedorNuevo, notifFacturaSubida } = body;
 
   if (typeof comisionMonto !== "number" || !Number.isFinite(comisionMonto) || comisionMonto <= 0) {
     return NextResponse.json({ error: "comisionMonto debe ser un número mayor a 0" }, { status: 400 });
@@ -51,6 +51,12 @@ export async function PUT(req: NextRequest) {
     notifAdminEmailsNormalizado = emails.length > 0 ? emails.join(", ") : null;
   }
 
-  const config = await updateConfiguracion({ comisionMonto, comisionMeses, notifAdminEmails: notifAdminEmailsNormalizado });
+  const config = await updateConfiguracion({
+    comisionMonto,
+    comisionMeses,
+    notifAdminEmails: notifAdminEmailsNormalizado,
+    notifRevendedorNuevo,
+    notifFacturaSubida,
+  });
   return NextResponse.json({ config });
 }

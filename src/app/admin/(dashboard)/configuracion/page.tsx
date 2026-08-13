@@ -18,6 +18,8 @@ export default async function ConfiguracionPage() {
           comisionMonto={Number(config.comisionMonto)}
           comisionMeses={config.comisionMeses}
           notifAdminEmails={config.notifAdminEmails ?? ""}
+          notifRevendedorNuevo={config.notifRevendedorNuevo}
+          notifFacturaSubida={config.notifFacturaSubida}
         />
       </div>
     </div>

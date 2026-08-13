@@ -169,6 +169,7 @@ export const facturas = pgTable("facturas", {
   subidaEn:      timestamp("subida_en").defaultNow().notNull(),
   pagadaEn:      timestamp("pagada_en"),
   pagadaPor:     text("pagada_por").references(() => users.id),  // superadmin
+  comprobanteUrl: text("comprobante_url"),        // comprobante de transferencia, subido por el superadmin al pagar
 });
 
 // ─── Cuota ↔ Factura (una factura puede cubrir varias cuotas) ─────────────────
@@ -190,5 +191,10 @@ export const configuracion = pgTable("configuracion", {
   // nuevo" y "factura subida" — no hay usuario superadmin en `users` (login
   // solo por contraseña), así que no hay otra forma de saber a quién avisar.
   notifAdminEmails: text("notif_admin_emails"),
+  // Toggles independientes por tipo de evento — mismo espíritu que las
+  // preferencias de notificación del revendedor (notifFacturaPagada/
+  // notifComisionGenerada más arriba), pero a nivel global de superadmin.
+  notifRevendedorNuevo: boolean("notif_revendedor_nuevo").notNull().default(true),
+  notifFacturaSubida: boolean("notif_factura_subida").notNull().default(true),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

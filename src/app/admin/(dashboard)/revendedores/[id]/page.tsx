@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRevendedorDetalle } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
+import { waLink } from "@/lib/telefono";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,18 @@ export default async function RevendedorDetallePage({ params }: { params: Promis
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
           <DataRow label="DNI" value={rev.dni ?? "—"} />
           <DataRow label="Fecha de nacimiento" value={rev.fechaNacimiento ?? "—"} />
-          <DataRow label="Teléfono" value={rev.telefono ?? "—"} />
+          {rev.telefono ? (
+            <div className="border-b border-[#EEF0F2] pb-4">
+              <div className="text-[12.5px] text-[#9AA3B2]">Teléfono</div>
+              <a href={waLink(rev.telefono)} target="_blank" rel="noopener noreferrer"
+                className="text-[15px] font-semibold mt-1 text-[#0B6B47] hover:underline inline-flex items-center gap-1.5">
+                {rev.telefono}
+                <span className="text-[11.5px] font-medium text-[#0B6B47]/70">(WhatsApp)</span>
+              </a>
+            </div>
+          ) : (
+            <DataRow label="Teléfono" value="—" />
+          )}
           <DataRow label="País" value={rev.pais ?? "—"} />
           <DataRow label="Provincia" value={rev.provincia ?? "—"} />
           <DataRow label="Localidad" value={rev.localidad ?? "—"} />

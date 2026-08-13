@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fmtARS } from "@/lib/constants";
 import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction } from "@/lib/actions";
 import { ConfirmarEliminacionModal } from "@/components/ConfirmarEliminacionModal";
+import { ConfirmarModal } from "@/components/ConfirmarModal";
 
 interface Producto {
   id: string;
@@ -27,9 +28,13 @@ interface Revendedor {
 export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedoresIniciales: Revendedor[] }) {
   const [revendedores, setRevendedores] = useState(revendedoresIniciales);
   const [eliminando, setEliminando] = useState<Revendedor | null>(null);
+  const [cambiandoActivo, setCambiandoActivo] = useState<Revendedor | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function toggleActivo(r: Revendedor) {
+  function confirmarToggleActivo() {
+    if (!cambiandoActivo) return;
+    const r = cambiandoActivo;
+    setCambiandoActivo(null);
     const nuevoEstado = !r.activo;
     setRevendedores(prev => prev.map(x => x.id === r.id ? { ...x, activo: nuevoEstado } : x));
     startTransition(() => { toggleRevendedorActivoAction(r.id, nuevoEstado); });
@@ -122,7 +127,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
               </div>
               <span>
                 <button
-                  onClick={() => toggleActivo(r)}
+                  onClick={() => setCambiandoActivo(r)}
                   className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0"
                   style={{
                     background: r.activo ? "#E7F5EE" : "#EEF0F2",
@@ -146,6 +151,15 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
           </div>
         </div>
       )}
+
+      <ConfirmarModal
+        open={!!cambiandoActivo}
+        titulo={cambiandoActivo?.activo ? "Desactivar revendedor" : "Activar revendedor"}
+        mensaje={`Se le va a enviar un email a ${cambiandoActivo?.nombre ?? cambiandoActivo?.email ?? "este revendedor"} avisándole que su cuenta fue ${cambiandoActivo?.activo ? "desactivada" : "activada"}.`}
+        textoConfirmar={cambiandoActivo?.activo ? "Desactivar" : "Activar"}
+        onConfirm={confirmarToggleActivo}
+        onCancel={() => setCambiandoActivo(null)}
+      />
 
       <ConfirmarEliminacionModal
         open={!!eliminando}

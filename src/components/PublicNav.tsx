@@ -24,6 +24,9 @@ export function PublicNav({ activeLink }: PublicNavProps) {
         <Link href="/#productos" className="text-[14.5px] font-medium text-[#5B6577]">
           Productos
         </Link>
+        <Link href="/#contacto" className="text-[14.5px] font-medium text-[#5B6577]">
+          Contacto
+        </Link>
         <Link
           href="/revendedores"
           className="text-[14.5px] font-medium"
@@ -61,6 +64,9 @@ export function PublicNav({ activeLink }: PublicNavProps) {
         </Link>
         <Link href="/#productos" onClick={() => setOpen(false)} className="text-[14.5px] font-medium text-[#5B6577] py-3">
           Productos
+        </Link>
+        <Link href="/#contacto" onClick={() => setOpen(false)} className="text-[14.5px] font-medium text-[#5B6577] py-3">
+          Contacto
         </Link>
         <Link
           href="/revendedores"

@@ -72,6 +72,9 @@ export function DatosCobroForm({
 
   return (
     <div className="flex flex-col gap-3 max-w-[480px]">
+      <div className="bg-[#FFF8E6] border border-[#F0DCA0] rounded-xl px-4 py-3 text-[13px] text-[#8A6D1E] leading-relaxed">
+        Quien emite la factura tiene que ser el mismo titular de esta cuenta — Mercado Pago rechaza el pago si el CBU/alias no coincide con el CUIT/CUIL de la factura.
+      </div>
       <div>
         <label className={labelClass}>CBU o alias</label>
         <input

@@ -20,8 +20,8 @@ interface PerfilPatchBody {
   notifComisionGenerada?: boolean;
 }
 
-function perfilCompleto(v: { dni: string | null; fechaNacimiento: string | null; provincia: string | null; localidad: string | null }) {
-  return !!(v.dni && v.fechaNacimiento && v.provincia && v.localidad);
+function perfilCompleto(v: { dni: string | null; fechaNacimiento: string | null; provincia: string | null; localidad: string | null; telefono: string | null }) {
+  return !!(v.dni && v.fechaNacimiento && v.provincia && v.localidad && v.telefono);
 }
 
 export async function PATCH(req: NextRequest) {
@@ -79,6 +79,7 @@ export async function PATCH(req: NextRequest) {
     fechaNacimiento: fechaNacimiento !== undefined ? (fechaNacimiento || null) : rev.fechaNacimiento,
     provincia: provincia !== undefined ? (provincia || null) : rev.provincia,
     localidad: localidad !== undefined ? (localidad || null) : rev.localidad,
+    telefono: telefono !== undefined ? (telefono || null) : rev.telefono,
   });
 
   if (Object.keys(values).length > 0) {
@@ -87,7 +88,7 @@ export async function PATCH(req: NextRequest) {
 
   if (!eraCompleto && esCompletoAhora) {
     const { subject, html } = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
-    await notifyAdmins(subject, html);
+    await notifyAdmins(subject, html, "revendedorNuevo");
   }
 
   return NextResponse.json({ ok: true });
