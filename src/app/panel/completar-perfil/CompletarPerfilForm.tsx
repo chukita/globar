@@ -41,9 +41,29 @@ export function CompletarPerfilForm({
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function camposFaltantes() {
+    const faltan: string[] = [];
+    if (!form.dni) faltan.push("DNI");
+    if (!form.fechaNacimiento) faltan.push("Fecha de nacimiento");
+    if (!form.provincia) faltan.push("Provincia");
+    if (!form.localidad) faltan.push("Localidad");
+    return faltan;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    const faltan = camposFaltantes();
+    if (faltan.length > 0) {
+      setError(`Completá: ${faltan.join(", ")}.`);
+      return;
+    }
+    if (!termsAccepted) {
+      setError("Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/panel/perfil", {
@@ -66,7 +86,7 @@ export function CompletarPerfilForm({
   const labelClass = "block text-[13px] font-semibold text-[#0C2A45] mb-1.5";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>DNI</label>
@@ -135,7 +155,7 @@ export function CompletarPerfilForm({
         </div>
       )}
 
-      <button type="submit" disabled={loading || !termsAccepted}
+      <button type="submit" disabled={loading}
         className="w-full bg-[#0E6BA8] text-white font-semibold text-[15px] rounded-xl py-3.5 mt-1 cursor-pointer border-0 transition-opacity disabled:opacity-60">
         {loading ? "Guardando…" : "Continuar"}
       </button>

@@ -18,7 +18,7 @@ export default async function CompletarPerfilPage() {
         Completá tu perfil
       </h1>
       <p className="text-[14px] text-[#5B6577] mb-6">
-        Nos faltan estos datos para habilitarte el panel de revendedor.
+        Todavía no tenés un perfil de revendedor completo — completá estos datos para terminar de crear tu cuenta y habilitar el panel.
       </p>
       <CompletarPerfilForm
         dni={rev?.dni ?? ""}

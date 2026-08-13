@@ -27,9 +27,32 @@ export default function RegistroPage() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function camposFaltantes() {
+    const faltan: string[] = [];
+    if (!form.nombre) faltan.push("Nombre completo");
+    if (!form.email) faltan.push("Email");
+    if (!form.password) faltan.push("Contraseña");
+    if (!form.provincia) faltan.push("Provincia");
+    if (!form.localidad) faltan.push("Localidad");
+    if (!form.dni) faltan.push("DNI");
+    if (!form.fechaNacimiento) faltan.push("Fecha de nacimiento");
+    return faltan;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    const faltan = camposFaltantes();
+    if (faltan.length > 0) {
+      setError(`Completá: ${faltan.join(", ")}.`);
+      return;
+    }
+    if (!termsAccepted) {
+      setError("Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/registro", {
@@ -69,7 +92,7 @@ export default function RegistroPage() {
             Completá tus datos para empezar a vender productos de glob.ar.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
 
             {/* Nombre */}
             <div>
@@ -179,7 +202,7 @@ export default function RegistroPage() {
               </div>
             )}
 
-            <button type="submit" disabled={loading || !termsAccepted}
+            <button type="submit" disabled={loading}
               className="w-full bg-[#0E6BA8] text-white font-semibold text-[15px] rounded-xl py-3.5 mt-1 cursor-pointer border-0 transition-opacity disabled:opacity-60">
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>
