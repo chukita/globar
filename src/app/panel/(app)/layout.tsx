@@ -20,6 +20,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   // afuera de este route group a propósito (si no, se redirigiría a sí mismo).
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
+    // Sesión JWT: activo=false no invalida el token ya emitido, así que hay
+    // que chequearlo acá en cada render (Server Component, con DB) — la
+    // sesión en sí sigue siendo válida, lo que se corta es el acceso al panel.
+    if (rev && !rev.activo) {
+      redirect("/panel/cuenta-desactivada");
+    }
     if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad) {
       redirect("/panel/completar-perfil");
     }

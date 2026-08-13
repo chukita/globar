@@ -65,6 +65,9 @@ export async function POST(req: NextRequest) {
   if (!revendedor) {
     return NextResponse.json({ error: "Revendedor no encontrado" }, { status: 404 });
   }
+  if (!revendedor.activo) {
+    return NextResponse.json({ error: "Cuenta desactivada" }, { status: 403 });
+  }
 
   // ── Verificar que las cuotas pertenecen a este revendedor y están generadas ──
   const cuotasValidas = await db

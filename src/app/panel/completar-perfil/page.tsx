@@ -8,6 +8,7 @@ export default async function CompletarPerfilPage() {
   if (!session?.user?.id) redirect("/login");
 
   const rev = await getRevendedorByUserId(session.user.id);
+  if (rev && !rev.activo) redirect("/panel/cuenta-desactivada");
   if (rev?.dni && rev?.fechaNacimiento && rev?.provincia && rev?.localidad) {
     redirect("/panel/productos");
   }
