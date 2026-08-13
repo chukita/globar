@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { facturas, cuotas, cuotasFacturas, revendedores } from "@/db/schema";
+import { facturas, cuotas, cuotasFacturas, revendedores, users } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { UPLOAD_DIR } from "@/lib/uploads";
+import { notifyAdmins, emailFacturaSubida } from "@/lib/email";
 
 const MAX_FILE_MB = 5;
 
@@ -119,6 +120,10 @@ export async function POST(req: NextRequest) {
 
     return factura;
   });
+
+  const [user] = await db.select({ nombre: users.name }).from(users).where(eq(users.id, revendedor.userId));
+  const { subject, html } = emailFacturaSubida(user?.nombre ?? revendedor.codigoVentas, revendedor.codigoVentas, monto);
+  await notifyAdmins(subject, html);
 
   return NextResponse.json({
     ok:        true,

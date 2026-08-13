@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getConfiguracion, updateConfiguracion } from "@/lib/configuracion";
+import { esEmailValido } from "@/lib/validacion";
 
 export async function GET() {
   const session = await auth();
@@ -24,14 +25,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  let body: { comisionMonto?: number; comisionMeses?: number };
+  let body: { comisionMonto?: number; comisionMeses?: number; notifAdminEmails?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { comisionMonto, comisionMeses } = body;
+  const { comisionMonto, comisionMeses, notifAdminEmails } = body;
 
   if (typeof comisionMonto !== "number" || !Number.isFinite(comisionMonto) || comisionMonto <= 0) {
     return NextResponse.json({ error: "comisionMonto debe ser un número mayor a 0" }, { status: 400 });
@@ -40,6 +41,16 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "comisionMeses debe ser un entero mayor a 0" }, { status: 400 });
   }
 
-  const config = await updateConfiguracion({ comisionMonto, comisionMeses });
+  let notifAdminEmailsNormalizado: string | null | undefined;
+  if (notifAdminEmails !== undefined) {
+    const emails = notifAdminEmails.split(",").map((e) => e.trim()).filter(Boolean);
+    const invalido = emails.find((e) => !esEmailValido(e));
+    if (invalido) {
+      return NextResponse.json({ error: `"${invalido}" no es un email válido.` }, { status: 400 });
+    }
+    notifAdminEmailsNormalizado = emails.length > 0 ? emails.join(", ") : null;
+  }
+
+  const config = await updateConfiguracion({ comisionMonto, comisionMeses, notifAdminEmails: notifAdminEmailsNormalizado });
   return NextResponse.json({ config });
 }

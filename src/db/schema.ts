@@ -87,6 +87,8 @@ export const revendedores = pgTable("revendedores", {
   titularNombre:  text("titular_nombre"),   // a nombre de quién está la cuenta de cobro
   titularCuit:    text("titular_cuit"),     // obligatorio a nivel de app si puedeFacturar
   activo:         boolean("activo").notNull().default(true),
+  notifFacturaPagada:    boolean("notif_factura_pagada").notNull().default(true),
+  notifComisionGenerada: boolean("notif_comision_generada").notNull().default(true),
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),
 });
 
@@ -184,5 +186,9 @@ export const configuracion = pgTable("configuracion", {
   id:            integer("id").primaryKey().default(1),
   comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
+  // Lista de emails separados por coma que reciben los avisos de "revendedor
+  // nuevo" y "factura subida" — no hay usuario superadmin en `users` (login
+  // solo por contraseña), así que no hay otra forma de saber a quién avisar.
+  notifAdminEmails: text("notif_admin_emails"),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

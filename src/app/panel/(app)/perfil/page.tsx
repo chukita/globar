@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { CopyButton } from "./CopyButton";
 import { DatosPersonalesForm } from "./DatosPersonalesForm";
 import { DatosCobroForm } from "./DatosCobroForm";
+import { NotificacionesForm } from "./NotificacionesForm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 
@@ -125,6 +126,18 @@ export default async function PerfilPage() {
           currentTitularNombre={rev?.titularNombre ?? ""}
           currentTitularCuit={rev?.titularCuit ?? ""}
           currentPuedeFacturar={rev?.puedeFacturar ?? false}
+        />
+      </div>
+
+      {/* Notificaciones */}
+      <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
+        <div className="font-semibold text-[18px] mb-1">Notificaciones</div>
+        <p className="text-[13.5px] text-[#5B6577] mb-5">
+          Elegí qué avisos por email querés recibir.
+        </p>
+        <NotificacionesForm
+          notifFacturaPagada={rev?.notifFacturaPagada ?? true}
+          notifComisionGenerada={rev?.notifComisionGenerada ?? true}
         />
       </div>
     </div>

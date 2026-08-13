@@ -4,6 +4,7 @@ import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { esDniValido } from "@/lib/validacion";
+import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
 
 function generarCodigo(nombre: string): string {
   const prefix = nombre
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
         puedeFacturar: !!puedeFacturar,
       });
     });
+
+    const { subject, html } = emailRevendedorNuevo(nombre, email);
+    await notifyAdmins(subject, html);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

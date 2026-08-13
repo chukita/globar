@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { esDniValido, esCbuOAliasValido, esCuitValido, normalizarCuit } from "@/lib/validacion";
+import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
 
 interface PerfilPatchBody {
   dni?: string;
@@ -15,20 +16,26 @@ interface PerfilPatchBody {
   titularNombre?: string;
   titularCuit?: string;
   puedeFacturar?: boolean;
+  notifFacturaPagada?: boolean;
+  notifComisionGenerada?: boolean;
+}
+
+function perfilCompleto(v: { dni: string | null; fechaNacimiento: string | null; provincia: string | null; localidad: string | null }) {
+  return !!(v.dni && v.fechaNacimiento && v.provincia && v.localidad);
 }
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
-  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, session.user.email)).limit(1);
+  const [user] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.email, session.user.email)).limit(1);
   if (!user) return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
 
   const [rev] = await db.select().from(revendedores).where(eq(revendedores.userId, user.id)).limit(1);
   if (!rev) return NextResponse.json({ error: "Revendedor no encontrado." }, { status: 404 });
 
   const body: PerfilPatchBody = await req.json();
-  const { dni, fechaNacimiento, provincia, localidad, telefono, cbuAlias, titularNombre, titularCuit, puedeFacturar } = body;
+  const { dni, fechaNacimiento, provincia, localidad, telefono, cbuAlias, titularNombre, titularCuit, puedeFacturar, notifFacturaPagada, notifComisionGenerada } = body;
 
   if (dni !== undefined && dni !== "" && !esDniValido(dni)) {
     return NextResponse.json({ error: "El DNI debe tener 7 u 8 dígitos." }, { status: 400 });
@@ -59,9 +66,28 @@ export async function PATCH(req: NextRequest) {
   if (titularNombre !== undefined) values.titularNombre = titularNombre || null;
   if (titularCuit !== undefined) values.titularCuit = titularCuit ? normalizarCuit(titularCuit) : null;
   if (puedeFacturar !== undefined) values.puedeFacturar = !!puedeFacturar;
+  if (notifFacturaPagada !== undefined) values.notifFacturaPagada = !!notifFacturaPagada;
+  if (notifComisionGenerada !== undefined) values.notifComisionGenerada = !!notifComisionGenerada;
+
+  // Se avisa al superadmin la primera vez que el perfil pasa de incompleto a
+  // completo — cubre tanto el alta por Google (que llega acá vacío desde
+  // completar-perfil) como cualquier edición posterior desde /panel/perfil,
+  // sin mandar el aviso de nuevo en cada edición de un perfil ya completo.
+  const eraCompleto = perfilCompleto(rev);
+  const esCompletoAhora = perfilCompleto({
+    dni: dni !== undefined ? (dni || null) : rev.dni,
+    fechaNacimiento: fechaNacimiento !== undefined ? (fechaNacimiento || null) : rev.fechaNacimiento,
+    provincia: provincia !== undefined ? (provincia || null) : rev.provincia,
+    localidad: localidad !== undefined ? (localidad || null) : rev.localidad,
+  });
 
   if (Object.keys(values).length > 0) {
     await db.update(revendedores).set(values).where(eq(revendedores.userId, user.id));
+  }
+
+  if (!eraCompleto && esCompletoAhora) {
+    const { subject, html } = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
+    await notifyAdmins(subject, html);
   }
 
   return NextResponse.json({ ok: true });

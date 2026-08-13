@@ -13,6 +13,7 @@ export async function getConfiguracion() {
 export async function updateConfiguracion(values: {
   comisionMonto: number;
   comisionMeses: number;
+  notifAdminEmails?: string | null;
 }) {
   await getConfiguracion(); // asegura que la fila exista antes del update
 
@@ -21,6 +22,7 @@ export async function updateConfiguracion(values: {
     .set({
       comisionMonto: String(values.comisionMonto),
       comisionMeses: values.comisionMeses,
+      ...(values.notifAdminEmails !== undefined ? { notifAdminEmails: values.notifAdminEmails } : {}),
       actualizadoEn: new Date(),
     })
     .where(eq(configuracion.id, 1))

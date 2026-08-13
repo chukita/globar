@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { ventas, cuotas, revendedores, productos } from "@/db/schema";
+import { ventas, cuotas, revendedores, productos, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getConfiguracion } from "@/lib/configuracion";
+import { sendEmail, emailComisionGenerada } from "@/lib/email";
 
 /**
  * Payload esperado de los productos digitales (agendaonline, nume, etc.)
@@ -177,6 +178,14 @@ export async function POST(req: NextRequest) {
       generadoEn:    new Date(),
     })
     .returning();
+
+  if (revendedor.notifComisionGenerada) {
+    const [user] = await db.select({ email: users.email, nombre: users.name }).from(users).where(eq(users.id, revendedor.userId));
+    if (user) {
+      const { subject, html } = emailComisionGenerada(montoCuota, numeroCuota, comisionMeses);
+      await sendEmail({ to: user.email, toName: user.nombre ?? undefined, subject, html });
+    }
+  }
 
   return NextResponse.json({
     ok: true,

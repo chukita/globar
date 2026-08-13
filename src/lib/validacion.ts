@@ -13,3 +13,7 @@ export function esCuitValido(v: string): boolean {
 export function normalizarCuit(v: string): string {
   return v.replace(/\D/g, "");
 }
+
+export function esEmailValido(v: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}

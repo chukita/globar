@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { sendEmail, emailFacturaPagada } from "@/lib/email";
 
 export async function logoutAction() {
   const session = await auth();
@@ -84,6 +85,11 @@ export async function eliminarRevendedorAction(revendedorId: string) {
 export async function marcarFacturaPagadaAction(facturaId: string) {
   await requireSuperadmin();
 
+  const [factura] = await db
+    .select({ monto: facturas.monto, revendedorId: facturas.revendedorId })
+    .from(facturas)
+    .where(eq(facturas.id, facturaId));
+
   await db.transaction(async (tx) => {
     await tx.update(facturas).set({ pagada: true, pagadaEn: new Date() }).where(eq(facturas.id, facturaId));
 
@@ -96,4 +102,16 @@ export async function marcarFacturaPagadaAction(facturaId: string) {
 
   revalidatePath("/admin/facturas");
   revalidatePath("/admin");
+
+  if (factura) {
+    const [rev] = await db
+      .select({ email: users.email, nombre: users.name, notifFacturaPagada: revendedores.notifFacturaPagada })
+      .from(revendedores)
+      .innerJoin(users, eq(revendedores.userId, users.id))
+      .where(eq(revendedores.id, factura.revendedorId));
+    if (rev?.notifFacturaPagada) {
+      const { subject, html } = emailFacturaPagada(Number(factura.monto));
+      await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html });
+    }
+  }
 }

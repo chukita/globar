@@ -5,12 +5,15 @@ import { useState } from "react";
 export function ConfiguracionForm({
   comisionMonto,
   comisionMeses,
+  notifAdminEmails,
 }: {
   comisionMonto: number;
   comisionMeses: number;
+  notifAdminEmails: string;
 }) {
   const [monto, setMonto] = useState(String(comisionMonto));
   const [meses, setMeses] = useState(String(comisionMeses));
+  const [emails, setEmails] = useState(notifAdminEmails);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -27,6 +30,7 @@ export function ConfiguracionForm({
       body: JSON.stringify({
         comisionMonto: Number(monto),
         comisionMeses: Number(meses),
+        notifAdminEmails: emails,
       }),
     });
 
@@ -75,6 +79,21 @@ export function ConfiguracionForm({
           />
         </label>
       </div>
+
+      <div className="text-[13px] text-[#9AA3B2] font-semibold uppercase tracking-[.05em] mt-7">Notificaciones al superadmin</div>
+      <p className="text-[13.5px] text-[#5B6577] mt-1.5 mb-0">
+        Emails que reciben el aviso de &ldquo;nuevo revendedor&rdquo; y &ldquo;factura subida&rdquo;. No hay usuario de superadmin ligado a una cuenta, así que hay que indicarlo acá.
+      </p>
+      <label className="block mt-5">
+        <span className="text-[12.5px] text-[#5B6577] font-medium">Destinatarios (separados por coma)</span>
+        <input
+          type="text"
+          value={emails}
+          onChange={(e) => setEmails(e.target.value)}
+          placeholder="admin@glob.ar, otro@glob.ar"
+          className="mt-1.5 w-full bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3 text-[15px] font-semibold text-[#0C2A45]"
+        />
+      </label>
 
       {error && <div className="mt-4 text-[13.5px] text-[#9B4A57] font-medium">{error}</div>}
 
