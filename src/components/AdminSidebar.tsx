@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
@@ -16,16 +17,61 @@ const NAV = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    setOpen(false);
+  }
 
   return (
-    <div className="w-[236px] flex-shrink-0 bg-[#0C2A45] flex flex-col p-6 min-h-screen">
-      <div className="px-2 pb-2 mb-4">
+    <div className="lg:contents">
+      <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between bg-[#0C2A45] px-4 py-3">
         <Logo size="sm" />
-        <div className="mt-2 px-0">
-          <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-[#FADADD]">
-            Superadmin
-          </span>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Abrir menú"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border-0 cursor-pointer"
+          style={{ background: "rgba(255,255,255,.08)", color: "#fff" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/40 z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <div
+        className={`w-[236px] flex-shrink-0 bg-[#0C2A45] flex flex-col p-6 min-h-screen
+          fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-out
+          ${open ? "translate-x-0" : "-translate-x-full"}
+          lg:static lg:translate-x-0 lg:z-auto`}
+      >
+      <div className="flex items-center justify-between px-2 pb-2 mb-4 lg:block">
+        <div>
+          <Logo size="sm" />
+          <div className="mt-2 px-0">
+            <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-[#FADADD]">
+              Superadmin
+            </span>
+          </div>
         </div>
+        <button
+          onClick={() => setOpen(false)}
+          aria-label="Cerrar menú"
+          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg border-0 cursor-pointer flex-shrink-0"
+          style={{ background: "rgba(255,255,255,.08)", color: "#9DA7B5" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
 
       <nav className="flex flex-col gap-1">
@@ -87,6 +133,7 @@ export function AdminSidebar() {
             </svg>
           </button>
         </form>
+      </div>
       </div>
       </div>
     </div>
