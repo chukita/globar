@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { productos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { LandingCalculator } from "@/components/LandingCalculator";
+import { ContactoForm } from "@/components/ContactoForm";
 
 const PRODUCT_COLORS: Record<string, { bg: string; text: string; tag: string }> = {
   agendaonline: { bg: "#E1EFF8", text: "#0B5A8F", tag: "Turnos & reservas" },
@@ -225,6 +226,22 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Contacto */}
+      <div id="contacto" className="max-w-[1180px] mx-auto px-4 sm:px-8 pb-[56px] sm:pb-[84px]">
+        <div className="text-center mb-8">
+          <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8] mb-2.5">
+            Contacto
+          </div>
+          <h2 className="font-extrabold text-[28px] sm:text-[34px] m-0" style={{ letterSpacing: "-0.025em" }}>
+            ¿Tenés dudas? Escribinos
+          </h2>
+          <p className="text-[15px] text-[#5B6577] mt-2.5 mb-0">
+            Te respondemos a la brevedad.
+          </p>
+        </div>
+        <ContactoForm />
       </div>
 
       <Footer />

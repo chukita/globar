@@ -32,7 +32,7 @@ export function Footer() {
           <div className="flex flex-col gap-2.5 text-[13.5px] text-[#8595A8]">
             <Link href="/terminos" className="hover:text-white">Términos</Link>
             <Link href="/privacidad" className="hover:text-white">Privacidad</Link>
-            <a href="mailto:legal@glob.ar" className="hover:text-white">Contacto</a>
+            <a href="mailto:hola@glob.ar" className="hover:text-white">Contacto</a>
           </div>
         </div>
       </div>

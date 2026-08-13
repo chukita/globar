@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendEmail, emailFacturaPagada } from "@/lib/email";
+import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada } from "@/lib/email";
 
 export async function logoutAction() {
   const session = await auth();
@@ -31,6 +31,16 @@ export async function toggleRevendedorActivoAction(revendedorId: string, activo:
   await requireSuperadmin();
   await db.update(revendedores).set({ activo }).where(eq(revendedores.id, revendedorId));
   revalidatePath("/admin/revendedores");
+
+  const [rev] = await db
+    .select({ email: users.email, nombre: users.name })
+    .from(revendedores)
+    .innerJoin(users, eq(revendedores.userId, users.id))
+    .where(eq(revendedores.id, revendedorId));
+  if (rev) {
+    const { subject, html } = activo ? emailCuentaActivada() : emailCuentaDesactivada();
+    await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html });
+  }
 }
 
 export async function toggleHabilitacionAction(revendedorId: string, productoId: string, habilitar: boolean) {

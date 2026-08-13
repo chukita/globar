@@ -18,7 +18,7 @@ function wrapHtml(title: string, bodyHtml: string): string {
 }
 
 /** Envío best-effort a la API transaccional de Brevo — nunca tira, solo loguea. */
-export async function sendEmail({ to, toName, subject, html }: { to: string; toName?: string; subject: string; html: string }) {
+export async function sendEmail({ to, toName, subject, html, replyTo }: { to: string; toName?: string; subject: string; html: string; replyTo?: string }) {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     console.warn("[email] BREVO_API_KEY no configurada, no se envía:", subject, "→", to);
@@ -30,7 +30,7 @@ export async function sendEmail({ to, toName, subject, html }: { to: string; toN
       headers: { "Content-Type": "application/json", "api-key": apiKey },
       body: JSON.stringify({
         sender: SENDER,
-        replyTo: { email: "legal@glob.ar" },
+        replyTo: { email: replyTo || "hola@glob.ar" },
         to: [{ email: to, name: toName || to }],
         subject,
         htmlContent: html,
@@ -98,6 +98,36 @@ export function emailFacturaSubida(revendedorNombre: string, codigoVentas: strin
     html: wrapHtml("Nueva factura para revisar", `
       <p><strong>${revendedorNombre}</strong> (${codigoVentas}) subió una factura por <strong>${fmtARS(monto)}</strong>.</p>
       <p>Podés revisarla y marcarla como pagada desde el panel de superadmin, sección Facturas.</p>
+    `),
+  };
+}
+
+export function emailCuentaActivada() {
+  return {
+    subject: "Tu cuenta de revendedor está activa",
+    html: wrapHtml("¡Tu cuenta está activa!", `
+      <p>Tu cuenta de revendedor en glob.ar fue activada — ya podés generar ventas y cobrar comisiones con normalidad.</p>
+      <p>Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
+    `),
+  };
+}
+
+export function emailCuentaDesactivada() {
+  return {
+    subject: "Tu cuenta de revendedor fue desactivada",
+    html: wrapHtml("Tu cuenta fue desactivada", `
+      <p>Tu cuenta de revendedor en glob.ar fue desactivada por el equipo de glob.ar. Mientras esté así, no vas a poder generar nuevas ventas ni comisiones.</p>
+      <p>Si tenés dudas o creés que es un error, escribinos a <strong>hola@glob.ar</strong>.</p>
+    `),
+  };
+}
+
+export function emailContacto(nombre: string, email: string, mensaje: string) {
+  return {
+    subject: `Nuevo mensaje de contacto de ${nombre}`,
+    html: wrapHtml("Nuevo mensaje desde la landing", `
+      <p><strong>${nombre}</strong> (${email}) escribió desde el formulario de contacto:</p>
+      <p style="background:#F7F8FA; border-radius:10px; padding:14px 16px; white-space:pre-wrap;">${mensaje}</p>
     `),
   };
 }
