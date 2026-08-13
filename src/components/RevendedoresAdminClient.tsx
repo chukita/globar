@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { fmtARS } from "@/lib/constants";
 import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction } from "@/lib/actions";
 
@@ -94,7 +95,9 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
             <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px] min-w-[760px]"
               style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
               <div>
-                <div className="font-semibold">{r.nombre ?? "—"}</div>
+                <Link href={`/admin/revendedores/${r.id}`} className="font-semibold text-[#0C2A45] hover:text-[#0B5A8F] hover:underline">
+                  {r.nombre ?? "—"}
+                </Link>
                 <div className="text-[11.5px] text-[#9AA3B2] mt-0.5">{r.email}</div>
               </div>
               <span className="font-mono text-[12.5px] font-semibold text-[#0B5A8F] bg-[#E1EFF8] px-2 py-1 rounded-lg self-start">{r.codigoVentas}</span>
