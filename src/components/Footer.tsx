@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 export function Footer() {
   return (
     <div className="bg-[#0C2A45]">
-      <div className="max-w-[1180px] mx-auto px-8 py-14 grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-14 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
         <div>
           <Logo size="sm" />
           <p className="text-[13.5px] text-[#8595A8] leading-relaxed mt-4 max-w-[240px]">
@@ -37,7 +37,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-white/[0.08]">
-        <div className="max-w-[1180px] mx-auto px-8 py-5 text-[12.5px] text-[#6B7B8E]">
+        <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-5 text-[12.5px] text-[#6B7B8E]">
           © 2026 glob.ar — Hecho en Argentina 🇦🇷
         </div>
       </div>

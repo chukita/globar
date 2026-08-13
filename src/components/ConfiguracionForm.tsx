@@ -49,7 +49,7 @@ export function ConfiguracionForm({
         Se aplica a todas las cuotas generadas a partir de ahora. Las cuotas ya generadas no se recalculan.
       </p>
 
-      <div className="grid grid-cols-2 gap-5 mt-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
         <label className="block">
           <span className="text-[12.5px] text-[#5B6577] font-medium">Monto por cuota (ARS)</span>
           <input

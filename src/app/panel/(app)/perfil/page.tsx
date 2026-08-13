@@ -34,7 +34,7 @@ export default async function PerfilPage() {
         Gestioná tus datos y compartí tu código para registrar nuevas ventas.
       </p>
 
-      <div className="grid grid-cols-2 gap-5 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
         {/* Sales code */}
         <div className="bg-[#0C2A45] rounded-[20px] p-7 relative overflow-hidden">
           <div className="absolute -top-[50px] -right-[30px] w-[200px] h-[200px] rounded-full"
@@ -98,7 +98,7 @@ export default async function PerfilPage() {
       {/* Profile data */}
       <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
         <div className="font-semibold text-[18px] mb-5">Datos personales</div>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-5 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 mb-5">
           <DataRow label="Nombre" value={user.name ?? "—"} />
           <DataRow label="Email" value={user.email} />
           <DataRow label="País" value={rev?.pais ?? "Argentina"} />

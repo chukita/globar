@@ -22,11 +22,11 @@ export function LandingCalculator({ productos }: { productos: Producto[] }) {
   const comisionTotal = comisionMensual * 6;
 
   return (
-    <div className="max-w-[1180px] mx-auto px-8 pt-[84px]">
-      <div className="bg-white border border-[#E9ECEF] rounded-[28px] p-12 grid grid-cols-2 gap-12 items-center">
+    <div className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
+      <div className="bg-white border border-[#E9ECEF] rounded-[28px] p-6 sm:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div>
           <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8]">Calculadora</div>
-          <h2 className="font-extrabold text-[34px] mt-2.5 mb-2" style={{ letterSpacing: "-0.025em" }}>¿Cuánto podés ganar?</h2>
+          <h2 className="font-extrabold text-[26px] sm:text-[34px] mt-2.5 mb-2" style={{ letterSpacing: "-0.025em" }}>¿Cuánto podés ganar?</h2>
           <p className="text-[15px] text-[#5B6577] leading-[1.55] mb-7">
             Ajustá cuántas ventas hacés este mes y mirá tus comisiones a lo largo de 6 meses.
           </p>
@@ -60,7 +60,7 @@ export function LandingCalculator({ productos }: { productos: Producto[] }) {
             <div className="text-[13px] text-[#9DB0C4] font-semibold">
               Con {totalVentas} venta{totalVentas !== 1 ? "s" : ""} este mes cobrás
             </div>
-            <div className="font-extrabold text-[54px] text-white leading-none mt-2.5" style={{ letterSpacing: "-0.03em" }}>
+            <div className="font-extrabold text-[38px] sm:text-[54px] text-white leading-none mt-2.5" style={{ letterSpacing: "-0.03em" }}>
               {fmtARS(comisionTotal)}
             </div>
             <div className="text-sm text-[#BBD9EE] mt-1.5">en total, a lo largo de 6 meses</div>

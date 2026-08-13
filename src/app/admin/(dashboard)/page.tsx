@@ -34,7 +34,7 @@ export default async function AdminDashboard() {
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Dashboard</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">Resumen general de ventas, comisiones y pagos pendientes.</p>
 
-      <div className="grid grid-cols-4 gap-4 mt-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         {statCards.map((s) => (
           <div key={s.label} className="bg-white border border-[#E9ECEF] rounded-[16px] p-5">
             <div className="text-[13px] text-[#5B6577] font-medium">{s.label}</div>
@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-[1.2fr_1fr] gap-5 mt-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-5 mt-5">
         <div className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden">
           <div className="px-6 py-4 border-b border-[#EEF0F2] flex items-center justify-between">
             <span className="font-semibold text-[17px]">Facturas por pagar</span>

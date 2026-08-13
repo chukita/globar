@@ -45,7 +45,7 @@ export default async function ProductosPage() {
           No hay productos disponibles aún.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {items.map(({ producto: p, link, qrSvg }) => (
             <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} qrSvg={qrSvg} comisionTexto={comisionTexto} />
           ))}

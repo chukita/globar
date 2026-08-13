@@ -55,16 +55,16 @@ export default function RevendedoresPage() {
     <div className="min-h-screen bg-[#F7F8FA] text-[#0C2A45]" style={WAVE_BG}>
       <PublicNav activeLink="revendedores" />
 
-      <div className="max-w-[1180px] mx-auto mt-[18px] px-8">
-        <div className="grid gap-10 items-start" style={{ gridTemplateColumns: "0.82fr 1.18fr" }}>
+      <div className="max-w-[1180px] mx-auto mt-[18px] px-4 sm:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[0.82fr_1.18fr] gap-10 items-start">
 
           {/* Left sticky panel */}
-          <div className="sticky top-24">
+          <div className="lg:sticky lg:top-24">
             <div className="inline-flex items-center gap-2 bg-[#E1EFF8] rounded-full px-3.5 py-1.5">
               <span className="w-[7px] h-[7px] rounded-full bg-[#0E6BA8]" />
               <span className="text-[13px] font-semibold text-[#0B5A8F]">Convertite en revendedor</span>
             </div>
-            <h1 className="font-extrabold text-[46px] leading-[1.05] mt-4 mb-0"
+            <h1 className="font-extrabold text-[32px] sm:text-[38px] lg:text-[46px] leading-[1.05] mt-4 mb-0"
               style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
               Requisitos para sumarte
             </h1>
@@ -127,12 +127,12 @@ export default function RevendedoresPage() {
       </div>
 
       {/* CTA */}
-      <div className="max-w-[1180px] mx-auto px-8 py-12">
-        <div className="bg-[#0E6BA8] rounded-[24px] px-12 py-11 flex items-center justify-between flex-wrap gap-6 relative overflow-hidden">
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-12">
+        <div className="bg-[#0E6BA8] rounded-[24px] px-6 py-8 sm:px-12 sm:py-11 flex items-center justify-between flex-wrap gap-6 relative overflow-hidden">
           <div className="absolute -top-[70px] -right-[30px] w-[240px] h-[240px] rounded-full"
             style={{ background: "radial-gradient(circle,rgba(250,218,221,.28),transparent 70%)" }} />
           <div className="relative">
-            <h2 className="font-extrabold text-[30px] text-white m-0" style={{ letterSpacing: "-0.025em" }}>
+            <h2 className="font-extrabold text-[24px] sm:text-[30px] text-white m-0" style={{ letterSpacing: "-0.025em" }}>
               ¿Cumplís con los requisitos?
             </h2>
             <p className="text-base text-[#DCEAF4] mt-2 mb-0">

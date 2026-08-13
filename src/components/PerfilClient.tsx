@@ -30,7 +30,7 @@ export function PerfilClient({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-5 mt-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
         {/* Sales code */}
         <div className="bg-[#0C2A45] rounded-[20px] p-7 relative overflow-hidden">
           <div className="absolute -top-[50px] -right-[30px] w-[200px] h-[200px] rounded-full"
@@ -80,7 +80,7 @@ export function PerfilClient({
         <div className="flex items-center justify-between">
           <span className="font-semibold text-[18px]">Datos del revendedor</span>
         </div>
-        <div className="grid grid-cols-2 gap-5 mt-5" style={{ rowGap: "20px", columnGap: "32px" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5" style={{ rowGap: "20px", columnGap: "32px" }}>
           <div className="border-b border-[#EEF0F2] pb-4">
             <div className="text-[12.5px] text-[#9AA3B2]">Nombre</div>
             <div className="text-[15.5px] font-semibold mt-1">{nombre || "—"}</div>

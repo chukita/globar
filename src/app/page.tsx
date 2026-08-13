@@ -40,21 +40,21 @@ export default async function LandingPage() {
       <PublicNav />
 
       {/* Hero */}
-      <div className="max-w-[1180px] mx-auto mt-3.5 px-8">
-        <div className="bg-[#0E6BA8] rounded-[28px] px-16 py-[76px] relative overflow-hidden">
+      <div className="max-w-[1180px] mx-auto mt-3.5 px-4 sm:px-8">
+        <div className="bg-[#0E6BA8] rounded-[28px] px-6 py-10 md:px-10 md:py-16 lg:px-16 lg:py-[76px] relative overflow-hidden">
           <div className="absolute -top-[90px] -right-[50px] w-[360px] h-[360px] rounded-full"
             style={{ background: "radial-gradient(circle,rgba(250,218,221,.35),transparent 70%)" }} />
           <div className="absolute -bottom-[120px] -left-[80px] w-[300px] h-[300px] rounded-full"
             style={{ background: "radial-gradient(circle,rgba(255,255,255,.16),transparent 70%)" }} />
 
-          <div className="relative grid grid-cols-[1.15fr_.85fr] gap-12 items-center">
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1.15fr_.85fr] gap-8 lg:gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/30"
                 style={{ background: "rgba(255,255,255,.16)" }}>
                 <span className="w-[7px] h-[7px] rounded-full bg-[#FADADD]" />
                 <span className="text-[13px] font-semibold text-white">Programa de revendedores</span>
               </div>
-              <h1 className="font-extrabold text-[58px] leading-[1.04] text-white mt-5 mb-0"
+              <h1 className="font-extrabold text-[34px] md:text-[44px] lg:text-[58px] leading-[1.08] lg:leading-[1.04] text-white mt-5 mb-0"
                 style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
                 Vendé herramientas digitales y cobrá comisiones{" "}
                 <span className="text-[#FADADD]">sin inversión inicial</span>.
@@ -131,17 +131,17 @@ export default async function LandingPage() {
       </div>
 
       {/* Cómo funciona */}
-      <div id="como-funciona" className="max-w-[1180px] mx-auto px-8 pt-[84px]">
+      <div id="como-funciona" className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 font-semibold text-[13px] uppercase tracking-[.12em] text-[#0E6BA8]">
             <span className="w-[7px] h-[7px] rounded-full bg-[#E7A9B3]" />
             Cómo funciona
           </div>
-          <h2 className="font-extrabold text-[38px] mt-2.5" style={{ letterSpacing: "-0.025em" }}>
+          <h2 className="font-extrabold text-[28px] sm:text-[38px] mt-2.5" style={{ letterSpacing: "-0.025em" }}>
             Empezá a cobrar en tres pasos
           </h2>
         </div>
-        <div className="grid grid-cols-3 gap-5 mt-11">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-11">
           {STEPS.map((s) => (
             <div key={s.n} className="bg-white border border-[#E9ECEF] rounded-[20px] p-[30px]">
               <div className="w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold text-[15px]"
@@ -154,14 +154,14 @@ export default async function LandingPage() {
       </div>
 
       {/* Productos */}
-      <div id="productos" className="max-w-[1180px] mx-auto px-8 pt-[84px]">
+      <div id="productos" className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
         <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8] mb-6">
           Productos disponibles
         </div>
         {lista.length === 0 ? (
           <p className="text-[#9AA3B2]">Próximamente.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {lista.map((p) => {
               const c = PRODUCT_COLORS[p.nombre] ?? DEFAULT_COLOR;
               const precio = parseFloat(String(p.precioMensual));
@@ -201,12 +201,12 @@ export default async function LandingPage() {
       <LandingCalculator productos={lista.map(p => ({ nombre: p.nombre, precioMensual: parseFloat(String(p.precioMensual)) }))} />
 
       {/* CTA final */}
-      <div className="max-w-[1180px] mx-auto px-8 py-[84px]">
-        <div className="bg-[#0E6BA8] rounded-[28px] p-16 text-center relative overflow-hidden">
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-[56px] sm:py-[84px]">
+        <div className="bg-[#0E6BA8] rounded-[28px] px-6 py-10 md:p-16 text-center relative overflow-hidden">
           <div className="absolute -top-[80px] -left-[40px] w-[280px] h-[280px] rounded-full"
             style={{ background: "radial-gradient(circle,rgba(250,218,221,.3),transparent 70%)" }} />
           <div className="relative">
-            <h2 className="font-extrabold text-[44px] text-white m-0" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
+            <h2 className="font-extrabold text-[28px] sm:text-[36px] md:text-[44px] text-white m-0" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
               Tu código de ventas te espera
             </h2>
             <p className="text-[17px] text-[#DCEAF4] max-w-[480px] mx-auto mt-4 mb-0 leading-relaxed">

@@ -115,7 +115,7 @@ export default function RegistroPage() {
             <hr className="border-[#F0F2F5]" />
 
             {/* DNI y fecha de nacimiento */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>DNI</label>
                 <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value.replace(/\D/g, ""))}

@@ -11,8 +11,8 @@ export default function TerminosPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0C2A45]">
       <PublicNav />
-      <div className="max-w-[760px] mx-auto px-8 py-14">
-        <h1 className="font-extrabold text-[34px] m-0" style={{ letterSpacing: "-0.03em" }}>
+      <div className="max-w-[760px] mx-auto px-4 sm:px-8 py-14">
+        <h1 className="font-extrabold text-[26px] sm:text-[34px] m-0" style={{ letterSpacing: "-0.03em" }}>
           Términos y Condiciones
         </h1>
         <p className="text-[13.5px] text-[#9AA3B2] mt-2 mb-10">
