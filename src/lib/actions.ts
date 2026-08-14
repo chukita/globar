@@ -2,7 +2,7 @@
 
 import { signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users, contactos } from "@/db/schema";
+import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users, contactos, productos } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
@@ -134,6 +134,27 @@ export async function enviarMensajeRevendedorAction(revendedorId: string, asunto
 
   const { subject, html } = emailMensajeRevendedor(asunto.trim(), mensaje.trim());
   await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html, replyTo: "hola@glob.ar" });
+}
+
+export async function actualizarProductoAction(productoId: string, values: {
+  dominio: string;
+  urlRegistro: string;
+  tag: string;
+  descripcion: string;
+  precioMensual: number;
+  status: "activo" | "inactivo";
+}) {
+  await requireSuperadmin();
+  await db.update(productos).set({
+    dominio: values.dominio.trim(),
+    urlRegistro: values.urlRegistro.trim(),
+    tag: values.tag.trim(),
+    descripcion: values.descripcion.trim(),
+    precioMensual: String(values.precioMensual),
+    status: values.status,
+  }).where(eq(productos.id, productoId));
+  revalidatePath("/admin/productos");
+  revalidatePath("/");
 }
 
 export async function marcarFacturaPagadaAction(facturaId: string) {

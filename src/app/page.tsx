@@ -5,6 +5,7 @@ import { STEPS, fmtARS } from "@/lib/constants";
 import { db } from "@/db";
 import { productos } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getConfiguracion } from "@/lib/configuracion";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
 
@@ -21,6 +22,11 @@ export default async function LandingPage() {
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, descripcion: productos.descripcion, precioMensual: productos.precioMensual })
     .from(productos)
     .where(eq(productos.status, "activo"));
+
+  const config = await getConfiguracion();
+  const comisionMonto = parseFloat(String(config.comisionMonto));
+  const comisionMeses = config.comisionMeses;
+  const comisionTotalPorVenta = comisionMonto * comisionMeses;
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0C2A45]"
@@ -85,7 +91,7 @@ export default async function LandingPage() {
                 <div>
                   <div className="text-[10.5px] text-[#5B6577] font-semibold uppercase tracking-[.04em]">Comisión / venta</div>
                   <div className="font-extrabold text-[18px] text-[#0C2A45] leading-tight">
-                    {lista[0] ? fmtARS(parseFloat(String(lista[0].precioMensual)) * 0.5 * 6) : "$27.000"}
+                    {fmtARS(comisionTotalPorVenta)}
                   </div>
                 </div>
               </div>
@@ -148,7 +154,11 @@ export default async function LandingPage() {
               <div className="w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold text-[15px]"
                 style={{ background: s.tint, color: s.accent }}>{s.n}</div>
               <h3 className="font-semibold text-[21px] mt-5 mb-0" style={{ letterSpacing: "-0.02em" }}>{s.title}</h3>
-              <p className="text-[15px] text-[#5B6577] leading-[1.55] mt-2.5 mb-0">{s.desc}</p>
+              <p className="text-[15px] text-[#5B6577] leading-[1.55] mt-2.5 mb-0">
+                {s.n === "03"
+                  ? `Cada suscripción se registra sola y cobrás tu comisión en ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""} mensuales mientras el cliente siga activo.`
+                  : s.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -166,8 +176,6 @@ export default async function LandingPage() {
             {lista.map((p) => {
               const c = PRODUCT_COLORS[p.nombre] ?? DEFAULT_COLOR;
               const precio = parseFloat(String(p.precioMensual));
-              const comisionMes = precio * 0.5;
-              const comisionTotal = comisionMes * 6;
               return (
                 <div key={p.id} className="bg-white border border-[#E9ECEF] rounded-[22px] p-[30px]">
                   <div className="aspect-[560/180] rounded-[14px] overflow-hidden">
@@ -183,12 +191,12 @@ export default async function LandingPage() {
                   <div className="flex justify-between items-end border-t border-[#EEF0F2] pt-4">
                     <div>
                       <div className="text-xs text-[#9AA3B2]">Suscripción</div>
-                      <div className="font-bold text-2xl">{fmtARS(precio)}<span className="text-[13px] text-[#9AA3B2] font-medium">/mes</span></div>
+                      <div className="font-bold text-2xl">Desde {fmtARS(precio)}<span className="text-[13px] text-[#9AA3B2] font-medium">/mes</span></div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-[#9AA3B2]">Tu comisión total</div>
-                      <div className="font-bold text-2xl text-[#0B5A8F]">{fmtARS(comisionTotal)}</div>
-                      <div className="text-[11px] text-[#9AA3B2]">{fmtARS(comisionMes)}/mes × 6 cuotas</div>
+                      <div className="font-bold text-2xl text-[#0B5A8F]">{fmtARS(comisionTotalPorVenta)}</div>
+                      <div className="text-[11px] text-[#9AA3B2]">{fmtARS(comisionMonto)}/mes × {comisionMeses} cuota{comisionMeses !== 1 ? "s" : ""}</div>
                     </div>
                   </div>
                 </div>
@@ -199,7 +207,11 @@ export default async function LandingPage() {
       </div>
 
       {/* Calculadora */}
-      <LandingCalculator productos={lista.map(p => ({ nombre: p.nombre, precioMensual: parseFloat(String(p.precioMensual)) }))} />
+      <LandingCalculator
+        productos={lista.map(p => ({ nombre: p.nombre }))}
+        comisionMonto={comisionMonto}
+        comisionMeses={comisionMeses}
+      />
 
       {/* CTA final */}
       <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-[56px] sm:py-[84px]">
