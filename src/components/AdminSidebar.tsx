@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/comisiones",   label: "Comisiones",     icon: "▪" },
   { href: "/admin/facturas",     label: "Facturas",       icon: "▪" },
   { href: "/admin/revendedores", label: "Revendedores",   icon: "▪" },
+  { href: "/admin/contacto",     label: "Contacto",       icon: "▪" },
   { href: "/admin/configuracion", label: "Configuración", icon: "▪" },
 ];
 

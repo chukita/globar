@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { revendedores, users, productos, habilitaciones, ventas, cuotas, facturas, cuotasFacturas } from "@/db/schema";
+import { revendedores, users, productos, habilitaciones, ventas, cuotas, facturas, cuotasFacturas, contactos } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 
 export async function getDashboardStats() {
@@ -176,6 +176,10 @@ export async function getTodosLosRevendedores() {
       habilitado: habilitacionesPorRevendedor.get(r.id)?.has(p.id) ?? false,
     })),
   }));
+}
+
+export async function getContactos() {
+  return db.select().from(contactos).orderBy(desc(contactos.creadoEn));
 }
 
 export async function getRevendedorDetalle(id: string) {

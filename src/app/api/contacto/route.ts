@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { esEmailValido } from "@/lib/validacion";
 import { sendEmail, emailContacto } from "@/lib/email";
+import { db } from "@/db";
+import { contactos } from "@/db/schema";
 
 interface ContactoBody {
   nombre?: string;
@@ -33,6 +35,8 @@ export async function POST(req: NextRequest) {
   if (!esEmailValido(email)) {
     return NextResponse.json({ error: "Ingresá un email válido." }, { status: 400 });
   }
+
+  await db.insert(contactos).values({ nombre: nombre.trim(), email: email.trim(), mensaje: mensaje.trim() });
 
   const { subject, html } = emailContacto(nombre.trim(), email.trim(), mensaje.trim());
   await sendEmail({ to: "hola@glob.ar", subject, html, replyTo: email.trim() });

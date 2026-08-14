@@ -2,10 +2,10 @@
 
 import { signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users } from "@/db/schema";
+import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users, contactos } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada } from "@/lib/email";
+import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
 
 export async function logoutAction() {
   const session = await auth();
@@ -105,6 +105,35 @@ export async function eliminarMiCuentaAction() {
 
   await borrarRevendedorPorId(rev.id);
   await signOut({ redirectTo: "/" });
+}
+
+export async function responderContactoAction(contactoId: string, mensaje: string) {
+  await requireSuperadmin();
+  if (!mensaje.trim()) throw new Error("El mensaje no puede estar vacío");
+
+  const [contacto] = await db.select().from(contactos).where(eq(contactos.id, contactoId));
+  if (!contacto) throw new Error("Consulta no encontrada");
+
+  const { subject, html } = emailRespuestaContacto(mensaje.trim());
+  await sendEmail({ to: contacto.email, toName: contacto.nombre, subject, html, replyTo: "hola@glob.ar" });
+
+  await db.update(contactos).set({ respondido: true, respondidoEn: new Date() }).where(eq(contactos.id, contactoId));
+  revalidatePath("/admin/contacto");
+}
+
+export async function enviarMensajeRevendedorAction(revendedorId: string, asunto: string, mensaje: string) {
+  await requireSuperadmin();
+  if (!asunto.trim() || !mensaje.trim()) throw new Error("Completá asunto y mensaje");
+
+  const [rev] = await db
+    .select({ email: users.email, nombre: users.name })
+    .from(revendedores)
+    .innerJoin(users, eq(revendedores.userId, users.id))
+    .where(eq(revendedores.id, revendedorId));
+  if (!rev) throw new Error("Revendedor no encontrado");
+
+  const { subject, html } = emailMensajeRevendedor(asunto.trim(), mensaje.trim());
+  await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html, replyTo: "hola@glob.ar" });
 }
 
 export async function marcarFacturaPagadaAction(facturaId: string) {

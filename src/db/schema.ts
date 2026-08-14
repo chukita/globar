@@ -179,6 +179,18 @@ export const cuotasFacturas = pgTable("cuotas_facturas", {
   facturaId:  text("factura_id").notNull().references(() => facturas.id),
 }, (t) => [primaryKey({ columns: [t.cuotaId, t.facturaId] })]);
 
+// ─── Contactos (formulario público de la landing) ─────────────────────────────
+
+export const contactos = pgTable("contactos", {
+  id:           text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  nombre:       text("nombre").notNull(),
+  email:        text("email").notNull(),
+  mensaje:      text("mensaje").notNull(),
+  respondido:   boolean("respondido").notNull().default(false),
+  respondidoEn: timestamp("respondido_en"),
+  creadoEn:     timestamp("creado_en").defaultNow().notNull(),
+});
+
 // ─── Configuración global ──────────────────────────────────────────────────────
 // Fila única (id fijo = 1) con las reglas de negocio editables desde el panel
 // de superadmin, para no tener que hardcodear/redeployar cada vez que cambian.

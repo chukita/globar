@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getRevendedorDetalle } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
 import { waLink } from "@/lib/telefono";
+import { MensajeRevendedorForm } from "@/components/MensajeRevendedorForm";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,8 @@ export default async function RevendedorDetallePage({ params }: { params: Promis
           ))}
         </div>
       </div>
+
+      <MensajeRevendedorForm revendedorId={rev.id} />
     </div>
   );
 }

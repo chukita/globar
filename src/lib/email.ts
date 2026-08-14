@@ -126,6 +126,26 @@ export function emailCuentaDesactivada() {
   };
 }
 
+export function emailRespuestaContacto(mensaje: string) {
+  return {
+    subject: "Re: tu consulta a glob.ar",
+    html: wrapHtml("Respuesta a tu consulta", `
+      <p style="white-space:pre-wrap;">${mensaje}</p>
+      <p style="margin-top:20px;">— Equipo glob.ar</p>
+    `),
+  };
+}
+
+export function emailMensajeRevendedor(asunto: string, mensaje: string) {
+  return {
+    subject: asunto,
+    html: wrapHtml(asunto, `
+      <p style="white-space:pre-wrap;">${mensaje}</p>
+      <p style="margin-top:20px;">— Equipo glob.ar</p>
+    `),
+  };
+}
+
 export function emailContacto(nombre: string, email: string, mensaje: string) {
   return {
     subject: `Nuevo mensaje de contacto de ${nombre}`,
