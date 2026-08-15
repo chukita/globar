@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { getRevendedorByUserId } from "@/lib/revendedor";
 import { redirect } from "next/navigation";
+import { ImpersonandoBanner } from "@/components/ImpersonandoBanner";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -32,9 +33,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
-      <Sidebar resellerName={name} resellerInitials={initials || "R"} role={role} />
-      <div className="flex-1 min-w-0">{children}</div>
+    <div className="flex flex-col min-h-screen">
+      {session?.user?.impersonated && <ImpersonandoBanner nombreRevendedor={name} />}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+        <Sidebar resellerName={name} resellerInitials={initials || "R"} role={role} />
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
     </div>
   );
 }

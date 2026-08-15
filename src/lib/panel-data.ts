@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { cuotas, ventas, productos, habilitaciones, facturas } from "@/db/schema";
+import { cuotas, ventas, productos, habilitaciones, facturas, registros } from "@/db/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 
 export async function getRevendedorStats(revendedorId: string) {
@@ -64,6 +64,32 @@ export async function getClientesDelRevendedor(revendedorId: string) {
     .innerJoin(productos, eq(ventas.productoId, productos.id))
     .where(eq(ventas.revendedorId, revendedorId))
     .orderBy(sql`${ventas.vendidoEn} desc`);
+}
+
+/**
+ * Registros (leads) que llegaron con el link del revendedor pero todavía no
+ * pagaron nada — señal aparte de `getClientesDelRevendedor` (suscriptos).
+ * `yaSuscribio` matchea por email+producto contra `ventas`, mismo criterio
+ * best-effort que ya usa el webhook de pago para relacionar ambas señales.
+ */
+export async function getRegistrosDelRevendedor(revendedorId: string) {
+  return db
+    .select({
+      id: registros.id,
+      cliente: registros.clienteNombre,
+      clienteEmail: registros.clienteEmail,
+      producto: productos.nombre,
+      registradoEn: registros.registradoEn,
+      yaSuscribio: sql<boolean>`exists (
+        select 1 from ${ventas}
+        where ${ventas.clienteEmail} = ${registros.clienteEmail}
+          and ${ventas.productoId} = ${registros.productoId}
+      )`,
+    })
+    .from(registros)
+    .innerJoin(productos, eq(registros.productoId, productos.id))
+    .where(eq(registros.revendedorId, revendedorId))
+    .orderBy(sql`${registros.registradoEn} desc`);
 }
 
 export async function getProductosConHabilitacion(revendedorId: string) {

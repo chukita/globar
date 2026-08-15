@@ -6,6 +6,7 @@ import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas,
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
+import { signImpersonationToken } from "@/lib/impersonar";
 
 export async function logoutAction() {
   const session = await auth();
@@ -25,6 +26,23 @@ export async function updateZonaAction(formData: FormData) {
 async function requireSuperadmin() {
   const session = await auth();
   if (session?.user?.role !== "superadmin") throw new Error("No autorizado");
+}
+
+/** Genera el token de un solo uso que abre el panel del revendedor en /impersonar. */
+export async function impersonarRevendedorAction(revendedorId: string): Promise<{ token: string }> {
+  await requireSuperadmin();
+  const [rev] = await db.select({ userId: revendedores.userId }).from(revendedores).where(eq(revendedores.id, revendedorId));
+  if (!rev) throw new Error("Revendedor no encontrado");
+  return { token: signImpersonationToken(rev.userId) };
+}
+
+/**
+ * Corta la sesión impersonada y vuelve a /admin/login. A diferencia de
+ * `logoutAction`, no mira el rol de la sesión: una sesión impersonada tiene
+ * `role: "revendedor"`, así que `logoutAction` mandaría a /login.
+ */
+export async function salirDeImpersonacionAction() {
+  await signOut({ redirectTo: "/admin/login" });
 }
 
 export async function toggleRevendedorActivoAction(revendedorId: string, activo: boolean) {

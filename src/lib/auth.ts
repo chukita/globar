@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { ensureRevendedor } from "./revendedor";
+import { verifyImpersonationToken } from "./impersonar";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -86,6 +87,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const ok = await bcrypt.compare(credentials.password as string, hash);
         if (!ok) return null;
         return { id: "superadmin", email: "superadmin@glob.ar", name: "Superadmin", role: "superadmin" };
+      },
+    }),
+    // Impersonación: ver src/lib/impersonar.ts. El token solo lo emite
+    // impersonarRevendedorAction (protegida con requireSuperadmin), dura 60s
+    // y se consume acá una única vez.
+    Credentials({
+      id: "impersonate",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (typeof token !== "string") return null;
+        const userId = verifyImpersonationToken(token);
+        if (!userId) return null;
+
+        const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        if (!user || user.role !== "revendedor") return null;
+        return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
   ],

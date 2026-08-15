@@ -135,6 +135,22 @@ export const ventas = pgTable("ventas", {
   activa:         boolean("activa").notNull().default(true),
 });
 
+// ─── Registros ────────────────────────────────────────────────────────────────
+// Alguien se registró en un producto con el link `?vendedor=` de un
+// revendedor, todavía sin pagar. Señal aparte de `ventas` (que recién se
+// crea cuando llega el primer pago) — sirve para que el revendedor vea
+// "registrados" (leads) además de "suscriptos" (clientes pagos) en su panel.
+
+export const registros = pgTable("registros", {
+  id:             text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  revendedorId:   text("revendedor_id").references(() => revendedores.id),  // null si el código venía inválido/inactivo
+  productoId:     text("producto_id").notNull().references(() => productos.id),
+  clienteNombre:  text("cliente_nombre").notNull(),
+  clienteEmail:   text("cliente_email").notNull(),
+  externoId:      text("externo_id").notNull(),  // id del registro en el producto (ej. shopId) — idempotencia
+  registradoEn:   timestamp("registrado_en").defaultNow().notNull(),
+}, (t) => [unique().on(t.productoId, t.externoId)]);
+
 // ─── Cuotas de comisión ───────────────────────────────────────────────────────
 // La cantidad de cuotas por venta y el monto de cada una salen de la tabla
 // `configuracion` (no están hardcodeados acá). Cada mes, si el cliente pagó,

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { fmtARS } from "@/lib/constants";
-import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction } from "@/lib/actions";
+import { toggleRevendedorActivoAction, toggleHabilitacionAction, eliminarRevendedorAction, impersonarRevendedorAction } from "@/lib/actions";
 import { ConfirmarEliminacionModal } from "@/components/ConfirmarEliminacionModal";
 import { ConfirmarModal } from "@/components/ConfirmarModal";
 
@@ -29,6 +29,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
   const [revendedores, setRevendedores] = useState(revendedoresIniciales);
   const [eliminando, setEliminando] = useState<Revendedor | null>(null);
   const [cambiandoActivo, setCambiandoActivo] = useState<Revendedor | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function confirmarToggleActivo() {
@@ -56,6 +57,22 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
     startTransition(() => { eliminarRevendedorAction(r.id); });
   }
 
+  /** Abre el panel del revendedor en una pestaña nueva, autenticado por impersonación. */
+  async function entrarComo(r: Revendedor) {
+    setError(null);
+    // Abrimos la pestaña ya (sincrónico) para no gatillar el bloqueo de pop-ups.
+    const tab = window.open("", "_blank");
+    try {
+      const { token } = await impersonarRevendedorAction(r.id);
+      const url = `${window.location.origin}/impersonar?token=${encodeURIComponent(token)}`;
+      if (tab) tab.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      if (tab) tab.close();
+      setError(e instanceof Error ? e.message : "No se pudo abrir el panel del revendedor");
+    }
+  }
+
   return (
     <div className="p-10">
       <div className="flex items-end justify-between flex-wrap gap-3">
@@ -66,6 +83,12 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-[#FCE6E9] border border-[#E7A9B3] rounded-xl px-4 py-3 mt-4 text-[13.5px] text-[#9B4A57] font-medium">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-4 mt-6">
         {[
@@ -87,8 +110,8 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
       ) : (
         <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-5 overflow-hidden">
           <div className="overflow-x-auto">
-          <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[760px]"
-            style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
+          <div className="px-6 py-3 bg-[#F8FAFB] text-xs font-semibold uppercase tracking-[.04em] text-[#9AA3B2] min-w-[860px]"
+            style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr 1fr" }}>
             <span>Revendedor</span>
             <span>Código</span>
             <span>Ventas</span>
@@ -98,8 +121,8 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
             <span className="text-right"></span>
           </div>
           {revendedores.map((r) => (
-            <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px] min-w-[760px]"
-              style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr .6fr" }}>
+            <div key={r.id} className="px-6 py-4 border-t border-[#F1F3F5] items-center text-[14px] min-w-[860px]"
+              style={{ display: "grid", gridTemplateColumns: "1.3fr .9fr .8fr .8fr 1.3fr .7fr 1fr" }}>
               <div>
                 <Link href={`/admin/revendedores/${r.id}`} className="font-semibold text-[#0C2A45] hover:text-[#0B5A8F] hover:underline">
                   {r.nombre ?? "—"}
@@ -137,7 +160,14 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
                   {r.activo ? "Activo" : "Inactivo"}
                 </button>
               </span>
-              <span className="text-right">
+              <span className="text-right flex gap-1.5 justify-end">
+                <button
+                  onClick={() => entrarComo(r)}
+                  className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0 bg-[#E1EFF8] text-[#0B5A8F]"
+                  title="Entrar al panel de este revendedor"
+                >
+                  Entrar como
+                </button>
                 <button
                   onClick={() => setEliminando(r)}
                   className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block cursor-pointer border-0 bg-[#FCE6E9] text-[#9B4A57]"

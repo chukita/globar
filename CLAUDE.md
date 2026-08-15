@@ -10,10 +10,11 @@ glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonlin
 
 1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único** (ej. `GLOBMQ-7K2`, generado en `lib/revendedor.ts`).
 2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?vendedor={codigoVentas}` (armado en `/panel/perfil` y `/panel/productos`).
-3. Cuando el cliente se registra con ese link y paga, el producto le pega a `POST /api/webhooks/pago` (JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. **Implementado y en producción del lado de agendaonline** (repo `barber-turnos`, ver `server/src/globarReferral.ts` y la sección "Programa de revendedores" de su CLAUDE.md) desde el 12/08/2026. **nume todavía no lo tiene** — Cynthia está trabajando en ese repo, coordinar antes de tocarlo.
-4. Cuando ese webhook llega con un `codigoRevendedor` válido, glob.ar genera una cuota de comisión (monto y cantidad de meses configurables, ver abajo).
-5. El revendedor ve sus cuotas "generadas" en `/panel/facturas` **de inmediato** (no hay ventana de espera — como el reembolso por derecho de arrepentimiento del lado de agendaonline es 100% manual, ver punto 6, no hay riesgo de pagarle una comisión al revendedor por una venta que después se cae), sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
-6. `POST /api/webhooks/pago/anular` sigue existiendo (recibe `{pagoId}`, anula la cuota solo si sigue en `generada`, no toca nada si ya está `facturada`/`pagada`), pero **hoy nadie lo llama automáticamente** — del lado de agendaonline el reembolso por derecho de arrepentimiento (baja + reembolso dentro de los 10 días de Ley 24.240) pasó a ser 100% manual (el cliente pide la devolución por mail y el superadmin la procesa a mano en Mercado Pago, ver la sección "Derecho de arrepentimiento" del `CLAUDE.md` de `barber-turnos`). Si eso pasa y la cuota de comisión de esa venta todavía no fue facturada ni pagada, hay que anularla a mano acá (tabla `cuotas`, `status='anulada'`) — no hay tooling para esto todavía, se hace por SQL directo.
+3. Cuando el cliente se registra con ese link (todavía sin pagar), el producto le pega a `POST /api/webhooks/registro` (JSDoc del payload en `src/app/api/webhooks/registro/route.ts`, campo `codigoRevendedor` opcional) con el mismo header `x-webhook-secret: $WEBHOOK_SECRET`. Eso crea una fila en `registros` (idempotente por `productoId`+`externoId`) — es la señal de "lead", separada de `ventas`. El revendedor ve estos registros en `/panel/clientes`, tab "Registrados", junto a los "Suscriptos" (los que además pagaron). **Implementado y en producción del lado de agendaonline** desde el 15/08/2026 (repo `barber-turnos`, ver `server/src/globarReferral.ts` → `notifyGlobarRegistroSafe` y la sección "Programa de revendedores" de su CLAUDE.md), env var `GLOBAR_REGISTRO_WEBHOOK_URL` del lado de `barber-turnos`. **nume todavía no lo tiene**.
+4. Cuando el cliente se registra con ese link y paga, el producto le pega a `POST /api/webhooks/pago` (JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. **Implementado y en producción del lado de agendaonline** (repo `barber-turnos`, ver `server/src/globarReferral.ts` y la sección "Programa de revendedores" de su CLAUDE.md) desde el 12/08/2026. **nume todavía no lo tiene** — Cynthia está trabajando en ese repo, coordinar antes de tocarlo.
+5. Cuando ese webhook de pago llega con un `codigoRevendedor` válido, glob.ar genera una cuota de comisión (monto y cantidad de meses configurables, ver abajo).
+6. El revendedor ve sus cuotas "generadas" en `/panel/facturas` **de inmediato** (no hay ventana de espera — como el reembolso por derecho de arrepentimiento del lado de agendaonline es 100% manual, ver punto 7, no hay riesgo de pagarle una comisión al revendedor por una venta que después se cae), sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
+7. `POST /api/webhooks/pago/anular` sigue existiendo (recibe `{pagoId}`, anula la cuota solo si sigue en `generada`, no toca nada si ya está `facturada`/`pagada`), pero **hoy nadie lo llama automáticamente** — del lado de agendaonline el reembolso por derecho de arrepentimiento (baja + reembolso dentro de los 10 días de Ley 24.240) pasó a ser 100% manual (el cliente pide la devolución por mail y el superadmin la procesa a mano en Mercado Pago, ver la sección "Derecho de arrepentimiento" del `CLAUDE.md` de `barber-turnos`). Si eso pasa y la cuota de comisión de esa venta todavía no fue facturada ni pagada, hay que anularla a mano acá (tabla `cuotas`, `status='anulada'`) — no hay tooling para esto todavía, se hace por SQL directo.
 
 ### Reglas de negocio configurables
 
@@ -75,23 +76,32 @@ src/app/
     auth/[...nextauth]/
     panel/facturas/         # subida de factura + listado, real desde el día 1
     webhooks/pago/          # recibe pagos de agendaonline/nume, genera cuotas de comisión
+    webhooks/registro/      # recibe registros (leads) de agendaonline/nume, antes del pago
   identidad/        # sistema de diseño interno — NO tiene lógica de negocio, es documentación visual
+  impersonar/        # puente para "Entrar como" (ver Feature de impersonación abajo) — fuera de /panel y /admin a propósito
   login/             # login de revendedores
-  panel/             # panel del revendedor (productos, comisiones, facturas, perfil, capacitación)
+  panel/             # panel del revendedor (productos, clientes, comisiones, facturas, perfil, capacitación)
   revendedores/      # landing pública de requisitos para sumarse
 src/db/              # schema Drizzle (incluye tabla singleton `configuracion`)
 src/lib/
   auth.ts / auth.config.ts   # NextAuth — auth.config.ts es edge-safe (usado por middleware), auth.ts tiene la lógica real (bcrypt, DB)
+  impersonar.ts                # token HMAC de un solo uso para "Entrar como" (ver abajo)
   revendedor.ts                # ensureRevendedor() — alta automática al loguearse
   configuracion.ts             # getConfiguracion() / updateConfiguracion() — singleton
   panel-data.ts                # queries del panel del revendedor
   admin-data.ts                # queries del panel de superadmin
-  actions.ts                   # server actions (logout, marcar factura pagada, toggles de admin, etc.)
+  actions.ts                   # server actions (logout, marcar factura pagada, toggles de admin, impersonarRevendedorAction, etc.)
 src/components/
 scripts/
   seed-admin.ts
   seed-productos.ts
 ```
+
+### Impersonación ("Entrar como")
+
+El superadmin puede entrar al panel de un revendedor puntual sin conocer su contraseña, desde `/admin/revendedores` (lista) o `/admin/revendedores/[id]` (detalle), botón "Entrar como" — mismo espíritu que la impersonación de `barber-turnos` (`/system` → `admin-token`), pero implementada reusando NextAuth en vez de un JWT paralelo: `impersonarRevendedorAction` (protegida con `requireSuperadmin`) emite un token HMAC de un solo uso (`src/lib/impersonar.ts`, 60s de vida, firmado con `AUTH_SECRET`), la UI abre `/impersonar?token=...` en una pestaña nueva, que llama `signIn("impersonate", {...})` — un tercer `Credentials` provider (`auth.config.ts` + `auth.ts`) que valida el token y arranca una sesión NextAuth normal para ese revendedor.
+
+**Trade-off asumido a propósito**: la cookie de sesión de NextAuth es una sola por navegador, no por pestaña — así que "Entrar como" reemplaza la sesión del superadmin en *todas* las pestañas del navegador hasta que se cierra esa vista. Por eso `/panel` muestra un banner fijo (`ImpersonandoBanner`) cuando `session.user.impersonated` es `true`, con un botón que llama `salirDeImpersonacionAction` (`signOut` + redirect a `/admin/login`, sin mirar el rol de la sesión actual porque es `revendedor`). Evitar tener `/admin` abierto en otra pestaña mientras se usa esto.
 
 ## Estado actual (2026-08-08)
 

@@ -186,7 +186,11 @@ export default async function LandingPage() {
                     <span className="text-xs font-semibold rounded-full px-3 py-1.5"
                       style={{ background: c.bg, color: c.text }}>{c.tag}</span>
                   </div>
-                  <div className="text-[13px] text-[#9AA3B2] mt-0.5">{p.dominio}</div>
+                  <div className="text-[13px] text-[#9AA3B2] mt-0.5">
+                    <a href={`https://${p.dominio}`} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#0B5A8F]">
+                      {p.dominio}
+                    </a>
+                  </div>
                   <p className="text-[15px] text-[#5B6577] leading-[1.55] mt-3.5 mb-5">{p.descripcion}</p>
                   <div className="flex justify-between items-end border-t border-[#EEF0F2] pt-4">
                     <div>
@@ -199,6 +203,11 @@ export default async function LandingPage() {
                       <div className="text-[11px] text-[#9AA3B2]">{fmtARS(comisionMonto)}/mes × {comisionMeses} cuota{comisionMeses !== 1 ? "s" : ""}</div>
                     </div>
                   </div>
+                  <a href={`https://${p.dominio}`} target="_blank" rel="noopener noreferrer"
+                    className="mt-4 flex items-center justify-center gap-1.5 border border-[#DCE0E5] rounded-xl py-2.5 text-[13.5px] font-semibold text-[#0C2A45] hover:bg-[#F7F8FA] transition-colors">
+                    Ver {p.nombre}
+                    <span aria-hidden="true">→</span>
+                  </a>
                 </div>
               );
             })}

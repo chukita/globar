@@ -4,6 +4,7 @@ import { getRevendedorDetalle } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
 import { waLink } from "@/lib/telefono";
 import { MensajeRevendedorForm } from "@/components/MensajeRevendedorForm";
+import { EntrarComoBoton } from "@/components/EntrarComoBoton";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,13 @@ export default async function RevendedorDetallePage({ params }: { params: Promis
           <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>{rev.nombre ?? "—"}</h1>
           <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">{rev.email}</p>
         </div>
-        <span className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block"
-          style={{ background: rev.activo ? "#E7F5EE" : "#EEF0F2", color: rev.activo ? "#0B6B47" : "#5B6577" }}>
-          {rev.activo ? "Activo" : "Inactivo"}
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[12px] font-semibold rounded-full px-3 py-1.5 inline-block"
+            style={{ background: rev.activo ? "#E7F5EE" : "#EEF0F2", color: rev.activo ? "#0B6B47" : "#5B6577" }}>
+            {rev.activo ? "Activo" : "Inactivo"}
+          </span>
+          <EntrarComoBoton revendedorId={rev.id} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
