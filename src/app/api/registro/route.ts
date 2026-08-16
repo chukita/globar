@@ -5,15 +5,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { esDniValido } from "@/lib/validacion";
 import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
-
-function generarCodigo(nombre: string): string {
-  const prefix = nombre
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toUpperCase().replace(/[^A-Z]/g, "")
-    .slice(0, 4).padEnd(4, "X");
-  const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
-  return `GLOB${prefix}-${suffix}`;
-}
+import { generarCodigoVendedor } from "@/lib/codigoVendedor";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,9 +34,7 @@ export async function POST(req: NextRequest) {
     await db.transaction(async (tx) => {
       await tx.insert(users).values({ id: userId, name: nombre, email, password: hash, role: "revendedor" });
 
-      let codigo = generarCodigo(nombre);
-      const [dup] = await tx.select({ id: revendedores.id }).from(revendedores).where(eq(revendedores.codigoVentas, codigo)).limit(1);
-      if (dup) codigo = generarCodigo(nombre + Date.now());
+      const codigo = await generarCodigoVendedor(nombre);
 
       await tx.insert(revendedores).values({
         userId,

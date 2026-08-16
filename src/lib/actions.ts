@@ -2,7 +2,7 @@
 
 import { signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, users, contactos, productos } from "@/db/schema";
+import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, registros, users, contactos, productos } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
@@ -75,11 +75,12 @@ export async function toggleHabilitacionAction(revendedorId: string, productoId:
 
 /**
  * Borra un revendedor y todo lo asociado: cuotas, facturas, ventas,
- * habilitaciones, y el usuario (users → cascade a accounts/sessions/
- * revendedores/habilitaciones). cuotas/ventas/facturas no tienen onDelete
- * cascade desde revendedores (a propósito, para no perder historial de
- * plata por accidente en el uso normal) así que hay que borrarlas a mano,
- * en orden, antes de borrar el usuario.
+ * registros (leads), habilitaciones, y el usuario (users → cascade a
+ * accounts/sessions/revendedores/habilitaciones). cuotas/ventas/facturas/
+ * registros no tienen onDelete cascade desde revendedores (a propósito,
+ * para no perder historial de plata ni de leads por accidente en el uso
+ * normal) así que hay que borrarlas a mano, en orden, antes de borrar el
+ * usuario.
  *
  * Pensado para limpiar cuentas de prueba mientras glob.ar no tiene
  * revendedores reales — si el negocio ya tiene ventas/comisiones reales en
@@ -101,6 +102,7 @@ async function borrarRevendedorPorId(revendedorId: string) {
     await tx.delete(facturas).where(eq(facturas.revendedorId, revendedorId));
     await tx.delete(cuotas).where(eq(cuotas.revendedorId, revendedorId));
     await tx.delete(ventas).where(eq(ventas.revendedorId, revendedorId));
+    await tx.delete(registros).where(eq(registros.revendedorId, revendedorId));
 
     // Cascada automática: users → accounts, sessions, revendedores, habilitaciones.
     await tx.delete(users).where(eq(users.id, rev.userId));

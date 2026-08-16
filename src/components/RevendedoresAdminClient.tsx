@@ -53,8 +53,15 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
     if (!eliminando) return;
     const r = eliminando;
     setEliminando(null);
-    setRevendedores(prev => prev.filter(x => x.id !== r.id));
-    startTransition(() => { eliminarRevendedorAction(r.id); });
+    setError(null);
+    startTransition(async () => {
+      try {
+        await eliminarRevendedorAction(r.id);
+        setRevendedores(prev => prev.filter(x => x.id !== r.id));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "No se pudo eliminar el revendedor");
+      }
+    });
   }
 
   /** Abre el panel del revendedor en una pestaña nueva, autenticado por impersonación. */

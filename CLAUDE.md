@@ -8,7 +8,7 @@ Panel de gestión de revendedores (superadmin, login, panel, revendedores) sobre
 
 glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonline** (agendaonline.com.ar) y **nume** (nume.com.ar).
 
-1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único** (ej. `GLOBMQ-7K2`, generado en `lib/revendedor.ts`).
+1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único**: iniciales del nombre + número de una secuencia de Postgres (ej. `CC608` para Carlos Costantino), generado por `generarCodigoVendedor()` en `lib/codigoVendedor.ts` y usado tanto por `lib/revendedor.ts` (alta por Google) como por `app/api/registro/route.ts` (alta por email+password). Los vendedores dados de alta antes de este cambio conservan su código viejo (formatos previos: puramente numérico o `GLOBMQ-7K2`) — no se migran retroactivamente.
 2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?vendedor={codigoVentas}` (armado en `/panel/perfil` y `/panel/productos`).
 3. Cuando el cliente se registra con ese link (todavía sin pagar), el producto le pega a `POST /api/webhooks/registro` (JSDoc del payload en `src/app/api/webhooks/registro/route.ts`, campo `codigoRevendedor` opcional) con el mismo header `x-webhook-secret: $WEBHOOK_SECRET`. Eso crea una fila en `registros` (idempotente por `productoId`+`externoId`) — es la señal de "lead", separada de `ventas`. El revendedor ve estos registros en `/panel/clientes`, tab "Registrados", junto a los "Suscriptos" (los que además pagaron). **Implementado y en producción del lado de agendaonline** desde el 15/08/2026 (repo `barber-turnos`, ver `server/src/globarReferral.ts` → `notifyGlobarRegistroSafe` y la sección "Programa de revendedores" de su CLAUDE.md), env var `GLOBAR_REGISTRO_WEBHOOK_URL` del lado de `barber-turnos`. **nume todavía no lo tiene**.
 4. Cuando el cliente se registra con ese link y paga, el producto le pega a `POST /api/webhooks/pago` (JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. **Implementado y en producción del lado de agendaonline** (repo `barber-turnos`, ver `server/src/globarReferral.ts` y la sección "Programa de revendedores" de su CLAUDE.md) desde el 12/08/2026. **nume todavía no lo tiene** — Cynthia está trabajando en ese repo, coordinar antes de tocarlo.
@@ -87,6 +87,7 @@ src/lib/
   auth.ts / auth.config.ts   # NextAuth — auth.config.ts es edge-safe (usado por middleware), auth.ts tiene la lógica real (bcrypt, DB)
   impersonar.ts                # token HMAC de un solo uso para "Entrar como" (ver abajo)
   revendedor.ts                # ensureRevendedor() — alta automática al loguearse
+  codigoVendedor.ts             # generarCodigoVendedor() — código "iniciales + secuencia" (ej. CC608)
   configuracion.ts             # getConfiguracion() / updateConfiguracion() — singleton
   panel-data.ts                # queries del panel del revendedor
   admin-data.ts                # queries del panel de superadmin

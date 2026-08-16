@@ -1,20 +1,24 @@
 import { db } from "@/db";
-import { revendedores } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { revendedores, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { generarCodigoVendedor } from "./codigoVendedor";
 
 /** Devuelve la fila `revendedores` del usuario, creándola si es la primera vez que se loguea. */
 export async function ensureRevendedor(userId: string) {
   const [existing] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
   if (existing) return existing;
 
-  // El código sale de una secuencia de Postgres (única por diseño, arranca en
-  // 600 — ver drizzle/0003_revendedor_codigo_seq.sql). onConflictDoNothing
-  // cubre únicamente la carrera con otro request concurrente que ya insertó
-  // la fila para este userId (userId también es unique); el código en sí
-  // nunca puede colisionar.
+  // El código sale de iniciales del nombre + una secuencia de Postgres
+  // (única por diseño, arranca en 600 — ver drizzle/0003_revendedor_codigo_seq.sql,
+  // codigoVendedor.ts). onConflictDoNothing cubre únicamente la carrera con
+  // otro request concurrente que ya insertó la fila para este userId (userId
+  // también es unique); el código en sí nunca puede colisionar.
+  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+  const codigoVentas = await generarCodigoVendedor(user?.name ?? "Revendedor");
+
   const [created] = await db
     .insert(revendedores)
-    .values({ userId, codigoVentas: sql`nextval('revendedor_codigo_seq')::text` })
+    .values({ userId, codigoVentas })
     .onConflictDoNothing()
     .returning();
   if (created) return created;
