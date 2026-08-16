@@ -8,11 +8,10 @@ export async function ensureRevendedor(userId: string) {
   const [existing] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
   if (existing) return existing;
 
-  // El código sale de iniciales del nombre + una secuencia de Postgres
-  // (única por diseño, arranca en 600 — ver drizzle/0003_revendedor_codigo_seq.sql,
-  // codigoVendedor.ts). onConflictDoNothing cubre únicamente la carrera con
-  // otro request concurrente que ya insertó la fila para este userId (userId
-  // también es unique); el código en sí nunca puede colisionar.
+  // El código sale de generarCodigoVendedor() (3 letras del nombre + número
+  // random, comprobando que no exista). onConflictDoNothing cubre la carrera
+  // con otro request concurrente que ya insertó la fila para este userId
+  // (userId también es unique).
   const [user] = await db.select({ name: users.name, emailVerified: users.emailVerified }).from(users).where(eq(users.id, userId)).limit(1);
   const codigoVentas = await generarCodigoVendedor(user?.name ?? "Revendedor");
 

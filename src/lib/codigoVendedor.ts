@@ -1,26 +1,33 @@
+import crypto from "crypto";
 import { db } from "@/db";
-import { sql } from "drizzle-orm";
+import { revendedores } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-function iniciales(nombre: string): string {
-  const palabras = nombre
+function prefijo(nombre: string): string {
+  const letras = nombre
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (palabras.length >= 2) {
-    return (palabras[0][0] + palabras[1][0]).toUpperCase();
-  }
-  return (palabras[0] ?? "XX").slice(0, 2).toUpperCase().padEnd(2, "X");
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase();
+  return (letras || "XXX").slice(0, 3).padEnd(3, "X");
 }
 
+function numeroAleatorio(): string {
+  return String(crypto.randomInt(0, 1000)).padStart(3, "0");
+}
+
+const MAX_INTENTOS = 20;
+
 /**
- * Código de vendedor: iniciales del nombre + número de secuencia único (ej.
- * "CC608" para Carlos Costantino). La secuencia (`revendedor_codigo_seq`,
- * ver drizzle/0003_revendedor_codigo_seq.sql, arranca en 600) es la fuente
- * de unicidad: como el número nunca se repite, el código completo tampoco
- * puede colisionar aunque dos vendedores compartan iniciales.
+ * Código de vendedor: 3 primeras letras del nombre + número random de 3
+ * cifras (ej. "CAR526" para Carlos Costantino). Se comprueba contra la DB
+ * que no exista ya — si colisiona, se prueba con otro número random.
  */
 export async function generarCodigoVendedor(nombre: string): Promise<string> {
-  const result = await db.execute<{ n: string }>(sql`select nextval('revendedor_codigo_seq')::text as n`);
-  return `${iniciales(nombre)}${result.rows[0].n}`;
+  const prefix = prefijo(nombre);
+  for (let intento = 0; intento < MAX_INTENTOS; intento++) {
+    const codigo = `${prefix}${numeroAleatorio()}`;
+    const [existente] = await db.select({ id: revendedores.id }).from(revendedores).where(eq(revendedores.codigoVentas, codigo)).limit(1);
+    if (!existente) return codigo;
+  }
+  throw new Error("No se pudo generar un código de vendedor único");
 }
