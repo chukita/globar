@@ -151,6 +151,23 @@ export const registros = pgTable("registros", {
   registradoEn:   timestamp("registrado_en").defaultNow().notNull(),
 }, (t) => [unique().on(t.productoId, t.externoId)]);
 
+// ─── Verificación de email ─────────────────────────────────────────────────────
+// Código de 6 dígitos + token de link (dos credenciales independientes, cada
+// una con su propia expiración) para confirmar el email en el alta por
+// email+contraseña. Google no la necesita (Google ya confirma el email).
+// Una fila por usuario: "reenviar" reemplaza código y token juntos.
+
+export const verificacionesEmail = pgTable("verificaciones_email", {
+  id:            text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:        text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  codigoHash:    text("codigo_hash").notNull(),
+  codigoExpiraEn: timestamp("codigo_expira_en").notNull(),
+  tokenHash:     text("token_hash").notNull(),
+  tokenExpiraEn: timestamp("token_expira_en").notNull(),
+  intentos:      integer("intentos").notNull().default(0),
+  creadoEn:      timestamp("creado_en").defaultNow().notNull(),
+});
+
 // ─── Cuotas de comisión ───────────────────────────────────────────────────────
 // La cantidad de cuotas por venta y el monto de cada una salen de la tabla
 // `configuracion` (no están hardcodeados acá). Cada mes, si el cliente pagó,

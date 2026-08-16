@@ -8,13 +8,25 @@ Panel de gestión de revendedores (superadmin, login, panel, revendedores) sobre
 
 glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonline** (agendaonline.com.ar) y **nume** (nume.com.ar).
 
-1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único**: iniciales del nombre + número de una secuencia de Postgres (ej. `CC608` para Carlos Costantino), generado por `generarCodigoVendedor()` en `lib/codigoVendedor.ts` y usado tanto por `lib/revendedor.ts` (alta por Google) como por `app/api/registro/route.ts` (alta por email+password). Los vendedores dados de alta antes de este cambio conservan su código viejo (formatos previos: puramente numérico o `GLOBMQ-7K2`) — no se migran retroactivamente.
+1. Alguien se registra en glob.ar (Google o email+password) → automáticamente se crea su fila en `revendedores` con un **código de ventas único**: iniciales del nombre + número de una secuencia de Postgres (ej. `CC608` para Carlos Costantino), generado por `generarCodigoVendedor()` en `lib/codigoVendedor.ts` y usado tanto por `lib/revendedor.ts` (alta por Google) como por `app/api/registro/route.ts` (alta por email+password). Los vendedores dados de alta antes de este cambio conservan su código viejo (formatos previos: puramente numérico o `GLOBMQ-7K2`) — no se migran retroactivamente. Ver "Registro en 2 pasos y verificación de email" más abajo para el detalle del alta por email+password.
 2. El revendedor comparte su link por producto: `https://{dominio-del-producto}/?vendedor={codigoVentas}` (armado en `/panel/perfil` y `/panel/productos`).
 3. Cuando el cliente se registra con ese link (todavía sin pagar), el producto le pega a `POST /api/webhooks/registro` (JSDoc del payload en `src/app/api/webhooks/registro/route.ts`, campo `codigoRevendedor` opcional) con el mismo header `x-webhook-secret: $WEBHOOK_SECRET`. Eso crea una fila en `registros` (idempotente por `productoId`+`externoId`) — es la señal de "lead", separada de `ventas`. El revendedor ve estos registros en `/panel/clientes`, tab "Registrados", junto a los "Suscriptos" (los que además pagaron). **Implementado y en producción del lado de agendaonline** desde el 15/08/2026 (repo `barber-turnos`, ver `server/src/globarReferral.ts` → `notifyGlobarRegistroSafe` y la sección "Programa de revendedores" de su CLAUDE.md), env var `GLOBAR_REGISTRO_WEBHOOK_URL` del lado de `barber-turnos`. **nume todavía no lo tiene**.
 4. Cuando el cliente se registra con ese link y paga, el producto le pega a `POST /api/webhooks/pago` (JSDoc del payload en `src/app/api/webhooks/pago/route.ts`, campo `codigoRevendedor`) con header `x-webhook-secret: $WEBHOOK_SECRET`. **Implementado y en producción del lado de agendaonline** (repo `barber-turnos`, ver `server/src/globarReferral.ts` y la sección "Programa de revendedores" de su CLAUDE.md) desde el 12/08/2026. **nume todavía no lo tiene** — Cynthia está trabajando en ese repo, coordinar antes de tocarlo.
 5. Cuando ese webhook de pago llega con un `codigoRevendedor` válido, glob.ar genera una cuota de comisión (monto y cantidad de meses configurables, ver abajo).
 6. El revendedor ve sus cuotas "generadas" en `/panel/facturas` **de inmediato** (no hay ventana de espera — como el reembolso por derecho de arrepentimiento del lado de agendaonline es 100% manual, ver punto 7, no hay riesgo de pagarle una comisión al revendedor por una venta que después se cae), sube una factura en PDF, y el superadmin la marca como pagada en `/admin/facturas` (eso marca la factura *y* las cuotas asociadas como `pagada`).
 7. `POST /api/webhooks/pago/anular` sigue existiendo (recibe `{pagoId}`, anula la cuota solo si sigue en `generada`, no toca nada si ya está `facturada`/`pagada`), pero **hoy nadie lo llama automáticamente** — del lado de agendaonline el reembolso por derecho de arrepentimiento (baja + reembolso dentro de los 10 días de Ley 24.240) pasó a ser 100% manual (el cliente pide la devolución por mail y el superadmin la procesa a mano en Mercado Pago, ver la sección "Derecho de arrepentimiento" del `CLAUDE.md` de `barber-turnos`). Si eso pasa y la cuota de comisión de esa venta todavía no fue facturada ni pagada, hay que anularla a mano acá (tabla `cuotas`, `status='anulada'`) — no hay tooling para esto todavía, se hace por SQL directo.
+
+### Registro en 2 pasos y verificación de email
+
+El alta por email+contraseña (`/registro`) es solo el **paso 1**: nombre, email, contraseña. Los datos propios del vendedor (DNI, fecha de nacimiento, provincia/localidad, teléfono, "puede facturar") se piden en un **paso 2** separado, `/panel/completar-perfil` — que ya existía de antes para las altas por Google (que no traen esos datos) y ahora también cubre el alta por email. El layout del panel (`src/app/panel/(app)/layout.tsx`) redirige ahí automáticamente a cualquier revendedor con esos campos incompletos, en cada request — no hace falta "recordar" si alguien lo completó o no.
+
+El alta por email+contraseña además requiere **verificar el email** antes de poder loguearse (Google no lo necesita — Google ya lo confirma):
+
+1. `POST /api/registro` crea `users`+`revendedores` igual que antes, pero con `emailVerified: null`, y manda un mail (`emailVerificarCuenta` en `lib/email.ts`) con un código de 6 dígitos (vence en 15 min) y un link mágico (vence en 24 h) — ambos guardados hasheados en la tabla `verificaciones_email` (una fila por usuario; "reenviar" reemplaza los dos juntos).
+2. El usuario confirma en `/registro/verificar` (tipeando el código) o abriendo el link (`/registro/confirmar`) — ambos caminos pegan a `POST /api/registro/verificar`, que valida, marca `users.emailVerified`, borra la fila de verificación, y devuelve un token de un solo uso para loguear automáticamente sin re-pedir la contraseña (`signIn("email-verificado", {token})` — mismo mecanismo HMAC que la impersonación de superadmin, ver `lib/impersonar.ts`, con un `purpose` distinto para que un token no sirva para el otro caso).
+3. El Credentials provider por defecto (`lib/auth.ts`) rechaza el login si `!user.emailVerified` — mismo error genérico que contraseña incorrecta, para no revelar el estado de verificación por email (anti-enumeración). `/login` tiene un link "Reenviar código" hacia `/registro/verificar` para quien se registró y no llegó a confirmar.
+4. Lockout: 6 códigos incorrectos seguidos borran la verificación pendiente (hay que pedir un reenvío). Rate limiting liviano en memoria en los 3 endpoints de registro (`lib/rateLimit.ts`) — no hay Turnstile/captcha en este flujo.
+5. **Cuentas creadas antes de este cambio no quedan bloqueadas**: la migración que agregó `verificaciones_email` incluyó un backfill (`UPDATE users SET email_verified = created_at WHERE email_verified IS NULL`).
 
 ### Reglas de negocio configurables
 
@@ -85,9 +97,11 @@ src/app/
 src/db/              # schema Drizzle (incluye tabla singleton `configuracion`)
 src/lib/
   auth.ts / auth.config.ts   # NextAuth — auth.config.ts es edge-safe (usado por middleware), auth.ts tiene la lógica real (bcrypt, DB)
-  impersonar.ts                # token HMAC de un solo uso para "Entrar como" (ver abajo)
+  impersonar.ts                # token HMAC de un solo uso (impersonación y sign-in post-verificación)
   revendedor.ts                # ensureRevendedor() — alta automática al loguearse
   codigoVendedor.ts             # generarCodigoVendedor() — código "iniciales + secuencia" (ej. CC608)
+  verificacionEmail.ts          # código + link de verificación de email (registro por email+password)
+  rateLimit.ts                  # rate limiter mínimo en memoria (endpoints de registro)
   configuracion.ts             # getConfiguracion() / updateConfiguracion() — singleton
   panel-data.ts                # queries del panel del revendedor
   admin-data.ts                # queries del panel de superadmin

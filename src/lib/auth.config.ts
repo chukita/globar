@@ -38,6 +38,18 @@ export const authConfig: NextAuthConfig = {
       },
       authorize: () => null,
     }),
+    // Sign-in automático tras confirmar el email en el registro (ver
+    // src/lib/impersonar.ts) — mismo mecanismo de token de un solo uso que
+    // "impersonate", pero con su propio purpose así uno no sirve para el otro,
+    // y sin marcar la sesión como impersonada.
+    Credentials({
+      id: "email-verificado",
+      name: "Email verificado",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      authorize: () => null,
+    }),
   ],
   callbacks: {
     async jwt({ token, user, account }) {

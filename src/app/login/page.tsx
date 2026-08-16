@@ -114,6 +114,12 @@ export default function LoginPage() {
             Registrate acá
           </a>
         </p>
+        <p className="text-center text-[12.5px] text-[#9AA3B2] mt-2">
+          ¿No verificaste tu cuenta?{" "}
+          <a href="/registro/verificar" className="text-[#0E6BA8] font-semibold">
+            Reenviar código
+          </a>
+        </p>
       </div>
     </div>
   );

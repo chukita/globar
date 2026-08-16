@@ -5,63 +5,36 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { ProvinciaLocalidadFields } from "@/components/ProvinciaLocalidadFields";
-
-// Calculado una sola vez al cargar el módulo (no en cada render: Date.now()
-// es impuro y React 19 rechaza llamarlo durante el render, incluso en useMemo).
-const MAX_FECHA_NACIMIENTO = new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10);
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function RegistroPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    nombre: "", email: "", password: "",
-    provincia: "", localidad: "",
-    dni: "", fechaNacimiento: "", telefono: "",
-    puedeFacturar: false,
-  });
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  function set(field: string, value: string | boolean) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
-
-  function camposFaltantes() {
-    const faltan: string[] = [];
-    if (!form.nombre) faltan.push("Nombre completo");
-    if (!form.email) faltan.push("Email");
-    if (!form.password) faltan.push("Contraseña");
-    if (!form.provincia) faltan.push("Provincia");
-    if (!form.localidad) faltan.push("Localidad");
-    if (!form.dni) faltan.push("DNI");
-    if (!form.fechaNacimiento) faltan.push("Fecha de nacimiento");
-    if (!form.telefono) faltan.push("Teléfono");
-    return faltan;
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    const faltan = camposFaltantes();
-    if (faltan.length > 0) {
-      setError(`Completá: ${faltan.join(", ")}.`);
-      return;
-    }
     if (!termsAccepted) {
       setError("Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para continuar.");
       return;
     }
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
 
     setLoading(true);
-
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ nombre, email, password }),
     });
-
     const text = await res.text();
     const data = text ? JSON.parse(text) : {};
 
@@ -71,8 +44,11 @@ export default function RegistroPage() {
       return;
     }
 
-    await signIn("credentials", { email: form.email, password: form.password, redirect: false });
-    router.push("/panel/productos");
+    router.push(`/registro/verificar?email=${encodeURIComponent(email)}`);
+  }
+
+  async function handleGoogle() {
+    await signIn("google", { callbackUrl: "/panel/completar-perfil" });
   }
 
   const inputClass = "w-full border border-[#DCE0E5] rounded-xl px-4 py-3 text-[14.5px] text-[#0C2A45] placeholder-[#B0B8C4] outline-none focus:border-[#0E6BA8] focus:ring-2 focus:ring-[#0E6BA8]/10 transition-colors bg-white";
@@ -80,7 +56,7 @@ export default function RegistroPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-[500px]">
+      <div className="w-full max-w-[420px]">
         <div className="flex justify-center mb-8">
           <Link href="/">
             <Logo size="md" darkText />
@@ -92,93 +68,44 @@ export default function RegistroPage() {
             Crear cuenta de revendedor
           </h1>
           <p className="text-[14px] text-[#5B6577] mb-6">
-            Completá tus datos para empezar a vender productos de glob.ar.
+            Empezá con lo básico — el resto de tus datos lo completás después.
           </p>
 
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          {/* Google */}
+          <button
+            onClick={handleGoogle}
+            type="button"
+            className="w-full flex items-center justify-center gap-3 border border-[#DCE0E5] rounded-xl py-3 text-[14.5px] font-semibold text-[#0C2A45] bg-white hover:bg-[#F7F8FA] transition-colors cursor-pointer mb-5"
+          >
+            <GoogleIcon />
+            Continuar con Google
+          </button>
 
-            {/* Nombre */}
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-[#E9ECEF]" />
+            <span className="text-[12px] text-[#9AA3B2] font-medium">o registrate con email</span>
+            <div className="flex-1 h-px bg-[#E9ECEF]" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Nombre completo</label>
-              <input type="text" value={form.nombre} onChange={(e) => set("nombre", e.target.value)}
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
                 required placeholder="Martina Quiroga" className={inputClass} />
             </div>
 
-            {/* Email */}
             <div>
               <label className={labelClass}>Email</label>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)}
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 required placeholder="tu@email.com" className={inputClass} />
             </div>
 
-            {/* Contraseña */}
             <div>
               <label className={labelClass}>Contraseña</label>
-              <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)}
-                required minLength={8} placeholder="Mínimo 8 caracteres" className={inputClass} />
+              <PasswordInput value={password} onChange={setPassword} required placeholder="Mínimo 8 caracteres" />
             </div>
 
-            <hr className="border-[#F0F2F5]" />
-
-            {/* País — solo Argentina */}
-            <div>
-              <label className={labelClass}>País</label>
-              <div className={`${inputClass} bg-[#F7F8FA] text-[#5B6577] cursor-not-allowed`}>
-                Argentina
-              </div>
-            </div>
-
-            <ProvinciaLocalidadFields
-              provincia={form.provincia}
-              localidad={form.localidad}
-              onProvinciaChange={(v) => set("provincia", v)}
-              onLocalidadChange={(v) => set("localidad", v)}
-              required
-              inputClass={inputClass}
-              labelClass={labelClass}
-            />
-
-            <hr className="border-[#F0F2F5]" />
-
-            {/* DNI y fecha de nacimiento */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>DNI</label>
-                <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value.replace(/\D/g, ""))}
-                  required maxLength={8} placeholder="12345678" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Fecha de nacimiento</label>
-                <input type="date" value={form.fechaNacimiento} onChange={(e) => set("fechaNacimiento", e.target.value)}
-                  required max={MAX_FECHA_NACIMIENTO}
-                  className={inputClass} />
-              </div>
-            </div>
-
-            {/* Teléfono */}
-            <div>
-              <label className={labelClass}>Teléfono</label>
-              <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)}
-                required placeholder="11 2345-6789" className={inputClass} />
-            </div>
-
-            <hr className="border-[#F0F2F5]" />
-
-            {/* Puede facturar */}
-            <label className="flex items-start gap-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={form.puedeFacturar}
-                onChange={(e) => set("puedeFacturar", e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
-              />
-              <span className="text-[13.5px] text-[#0C2A45] leading-snug">
-                Puedo emitir facturas por mis comisiones de venta{" "}
-                <span className="text-[#9AA3B2] font-normal">(monotributo u otro régimen)</span>
-              </span>
-            </label>
-
-            {/* Términos y privacidad */}
             <label className="flex items-start gap-3 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -218,5 +145,16 @@ export default function RegistroPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
   );
 }

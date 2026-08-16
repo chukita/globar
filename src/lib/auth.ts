@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { ensureRevendedor } from "./revendedor";
-import { verifyImpersonationToken } from "./impersonar";
+import { verifyImpersonationToken, verifyEmailVerificadoToken } from "./impersonar";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -65,6 +65,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const ok = await bcrypt.compare(credentials.password as string, user.password);
           console.log("[authorize] bcrypt ok:", ok);
           if (!ok) return null;
+          // Mismo error genérico que contraseña incorrecta — no revelar si el
+          // problema es la verificación pendiente (evita enumeración de emails).
+          if (!user.emailVerified) return null;
           return { id: user.id, email: user.email, name: user.name, role: user.role };
         } catch (e) {
           console.error("[authorize] error:", e);
@@ -101,6 +104,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const token = credentials?.token;
         if (typeof token !== "string") return null;
         const userId = verifyImpersonationToken(token);
+        if (!userId) return null;
+
+        const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        if (!user || user.role !== "revendedor") return null;
+        return { id: user.id, email: user.email, name: user.name, role: user.role };
+      },
+    }),
+    // Sign-in automático tras confirmar el email del registro (ver
+    // src/app/api/registro/verificar/route.ts). El token solo lo emite ese
+    // endpoint, dura 60s y se consume acá una única vez.
+    Credentials({
+      id: "email-verificado",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (typeof token !== "string") return null;
+        const userId = verifyEmailVerificadoToken(token);
         if (!userId) return null;
 
         const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);

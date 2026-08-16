@@ -3,24 +3,25 @@ import { db } from "@/db";
 import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { esDniValido } from "@/lib/validacion";
-import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
 import { generarCodigoVendedor } from "@/lib/codigoVendedor";
+import { crearVerificacion } from "@/lib/verificacionEmail";
+import { sendEmail, emailVerificarCuenta } from "@/lib/email";
+import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    console.log("[registro] body:", body);
-    const { nombre, email, password, provincia, localidad, dni, fechaNacimiento, telefono, puedeFacturar } = body;
+    if (!checkRateLimit(`registro:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Demasiados intentos. Probá de nuevo más tarde." }, { status: 429 });
+    }
 
-    if (!nombre || !email || !password || !provincia || !localidad || !dni || !fechaNacimiento || !telefono) {
+    const body = await req.json();
+    const { nombre, email, password } = body;
+
+    if (!nombre || !email || !password) {
       return NextResponse.json({ error: "Completá todos los campos obligatorios." }, { status: 400 });
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres." }, { status: 400 });
-    }
-    if (!esDniValido(dni)) {
-      return NextResponse.json({ error: "El DNI debe tener 7 u 8 dígitos." }, { status: 400 });
     }
 
     const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
@@ -34,24 +35,17 @@ export async function POST(req: NextRequest) {
     await db.transaction(async (tx) => {
       await tx.insert(users).values({ id: userId, name: nombre, email, password: hash, role: "revendedor" });
 
-      const codigo = await generarCodigoVendedor(nombre);
-
-      await tx.insert(revendedores).values({
-        userId,
-        codigoVentas: codigo,
-        pais: "Argentina",
-        provincia,
-        localidad,
-        zona: `${provincia} · ${localidad}`,
-        dni,
-        fechaNacimiento,
-        telefono: telefono || null,
-        puedeFacturar: !!puedeFacturar,
-      });
+      // Datos de vendedor (DNI, provincia, teléfono, etc.) se completan en
+      // /panel/completar-perfil, después de verificar el email — mismo shape
+      // que ensureRevendedor() ya usa para las altas por Google.
+      const codigoVentas = await generarCodigoVendedor(nombre);
+      await tx.insert(revendedores).values({ userId, codigoVentas });
     });
 
-    const { subject, html } = emailRevendedorNuevo(nombre, email);
-    await notifyAdmins(subject, html, "revendedorNuevo");
+    const { codigo, token } = await crearVerificacion(userId);
+    const verifyUrl = `${process.env.AUTH_URL || new URL(req.url).origin}/registro/confirmar?token=${token}`;
+    const { subject, html } = emailVerificarCuenta(codigo, verifyUrl);
+    await sendEmail({ to: email, toName: nombre, subject, html });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

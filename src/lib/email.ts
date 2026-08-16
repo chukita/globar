@@ -88,10 +88,26 @@ export function emailComisionGenerada(monto: number, numeroCuota: number, comisi
 
 export function emailRevendedorNuevo(nombre: string, email: string) {
   return {
-    subject: "Nuevo revendedor completó su perfil",
+    subject: "Se registró un nuevo revendedor",
     html: wrapHtml("Nuevo revendedor en glob.ar", `
-      <p><strong>${nombre}</strong> (${email}) completó su perfil de revendedor.</p>
-      <p>Podés ver sus datos completos en el panel de superadmin, sección Revendedores.</p>
+      <p><strong>${nombre}</strong> (${email}) confirmó su email y se registró como revendedor.</p>
+      <p>Podés ver sus datos en el panel de superadmin, sección Revendedores.</p>
+    `),
+  };
+}
+
+export function emailVerificarCuenta(codigo: string, verifyUrl: string) {
+  return {
+    subject: "Confirmá tu cuenta — glob.ar",
+    html: wrapHtml("Confirmá tu cuenta", `
+      <p>Para activar tu cuenta de revendedor, confirmá tu email:</p>
+      <p style="text-align:center; margin: 24px 0;">
+        <a href="${verifyUrl}" style="display:inline-block; background:#0E6BA8; color:#fff; text-decoration:none; font-weight:700; font-size:14.5px; padding:12px 28px; border-radius:10px;">Confirmar mi cuenta</a>
+      </p>
+      <p style="font-size:13px; color:#5B6577;">Si el botón no funciona, entrá a <a href="${verifyUrl}" style="color:#0E6BA8;">este enlace</a>.</p>
+      <p style="margin-top:20px;">También podés ingresar este código en la página de verificación:</p>
+      <p style="text-align:center; font-family: ui-monospace, monospace; font-size:26px; font-weight:800; letter-spacing:0.2em; color:#0C2A45;">${codigo}</p>
+      <p style="font-size:12px; color:#9AA3B2; margin-top:20px;">El código vence en 15 minutos, el enlace en 24 horas. Si no creaste esta cuenta, ignorá este mensaje.</p>
     `),
   };
 }

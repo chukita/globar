@@ -120,6 +120,13 @@
       "when": 1786808546226,
       "tag": "0016_open_mentallo",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786897743750,
+      "tag": "0017_add_verificaciones_email",
+      "breakpoints": true
     }
   ]
 }

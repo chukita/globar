@@ -13,8 +13,14 @@ export async function ensureRevendedor(userId: string) {
   // codigoVendedor.ts). onConflictDoNothing cubre únicamente la carrera con
   // otro request concurrente que ya insertó la fila para este userId (userId
   // también es unique); el código en sí nunca puede colisionar.
-  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+  const [user] = await db.select({ name: users.name, emailVerified: users.emailVerified }).from(users).where(eq(users.id, userId)).limit(1);
   const codigoVentas = await generarCodigoVendedor(user?.name ?? "Revendedor");
+
+  // Google ya confirmó el email — no depender de que el adapter de NextAuth
+  // lo setee solo, marcarlo acá explícitamente.
+  if (user && !user.emailVerified) {
+    await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, userId));
+  }
 
   const [created] = await db
     .insert(revendedores)
