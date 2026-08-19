@@ -33,12 +33,48 @@ export default async function ProductosPage() {
     return { producto: p, link, qrSvg };
   }));
 
+  const linkGeneral = codigo ? `${process.env.AUTH_URL || "http://localhost:3000"}/r/${codigo}` : null;
+  const qrGeneral = linkGeneral ? await QRCode.toString(linkGeneral, { type: "svg", margin: 1, width: 160 }) : null;
+
   return (
     <div className="p-10 max-w-[920px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Mis productos</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-6">
         Compartí tu link de referido — o mostrale el código QR — para que tus clientes se registren. Las ventas se asocian automáticamente a tu cuenta.
       </p>
+
+      {linkGeneral && qrGeneral && (
+        <div className="bg-white border border-[#E9ECEF] rounded-[22px] p-7 mb-6">
+          <h2 className="font-extrabold text-[18px] mb-0.5" style={{ letterSpacing: "-0.02em" }}>Tu link general</h2>
+          <p className="text-[13.5px] text-[#5B6577] mb-4">
+            Un solo link o QR con todos tus productos — el cliente entra y elige cuál le interesa. Ideal para compartir una sola vez o imprimir un QR.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <div className="flex-1 flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-2 bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-3 py-2.5">
+                <span className="text-[12.5px] text-[#0C2A45] font-medium overflow-hidden text-ellipsis whitespace-nowrap flex-1">
+                  {linkGeneral}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <CopyButton
+                  text={linkGeneral}
+                  label="Copiar link"
+                  labelDone="¡Copiado!"
+                  className="flex-1 font-semibold text-[13.5px] bg-[#0E6BA8] text-white border-0 rounded-xl py-2.5 cursor-pointer"
+                />
+                <a href={linkGeneral} target="_blank" rel="noreferrer"
+                  className="font-semibold text-[13.5px] bg-white text-[#0C2A45] border border-[#DCE0E5] rounded-xl px-4 py-2.5 whitespace-nowrap no-underline">
+                  Abrir
+                </a>
+              </div>
+            </div>
+            <div className="w-full sm:w-[180px]">
+              <QrToggle svg={qrGeneral} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-10 text-center text-[#9AA3B2] text-[15px]">
