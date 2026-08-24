@@ -67,8 +67,16 @@ export async function toggleRevendedorActivoAction(revendedorId: string, activo:
  * el quiz sin pasar por el superadmin. Las respuestas se corrigen acá (no en
  * el cliente) — `validarQuiz` compara contra la respuesta correcta, que
  * nunca viaja al browser (ver `lib/capacitacionQuiz.ts`).
+ *
+ * Devuelve `{ ok: false, error }` en vez de lanzar una excepción para el
+ * caso esperado (respuesta incorrecta): en producción, Next.js oculta el
+ * mensaje real de cualquier `throw` en una server action y lo reemplaza por
+ * un texto genérico en inglés (por seguridad, para no filtrar detalles de
+ * errores no controlados) — así que un `throw` acá nunca le habría llegado
+ * en español al usuario fuera de dev. Los casos de sesión/datos inconsistentes
+ * (no debería pasar en el uso normal) sí quedan como `throw`.
  */
-export async function completarCapacitacionAction(productoNombre: string, respuestas: Record<string, number>) {
+export async function completarCapacitacionAction(productoNombre: string, respuestas: Record<string, number>): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("No autorizado");
 
@@ -79,12 +87,13 @@ export async function completarCapacitacionAction(productoNombre: string, respue
   if (!producto) throw new Error("Producto no encontrado");
 
   if (!validarQuiz(productoNombre, respuestas)) {
-    throw new Error("No aprobaste todas las preguntas — revisá y volvé a intentar");
+    return { ok: false, error: "No aprobaste todas las preguntas — revisá y volvé a intentar" };
   }
 
   await db.insert(habilitaciones).values({ revendedorId: rev.id, productoId: producto.id }).onConflictDoNothing();
   revalidatePath("/panel/capacitacion");
   revalidatePath("/panel/productos");
+  return { ok: true };
 }
 
 export async function toggleHabilitacionAction(revendedorId: string, productoId: string, habilitar: boolean) {

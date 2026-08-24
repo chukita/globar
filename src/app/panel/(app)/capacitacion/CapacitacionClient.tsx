@@ -196,10 +196,17 @@ function EvaluacionStepper({ productoNombre, videoUrl, quiz }: { productoNombre:
     setSubmitting(true);
     setErrorMsg(null);
     try {
-      await completarCapacitacionAction(productoNombre, answers);
-      setDone(true);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "No se pudo procesar la evaluación");
+      const result = await completarCapacitacionAction(productoNombre, answers);
+      if (result.ok) {
+        setDone(true);
+      } else {
+        setErrorMsg(result.error);
+      }
+    } catch {
+      // Un `throw` real acá es un caso inesperado (sesión caída, etc.) — en
+      // producción Next.js reemplaza el mensaje real por uno genérico en
+      // inglés, así que no lo mostramos, mensaje fijo en español.
+      setErrorMsg("No se pudo procesar la evaluación. Probá de nuevo en unos segundos.");
     } finally {
       setSubmitting(false);
     }

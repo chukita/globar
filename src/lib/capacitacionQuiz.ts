@@ -2,6 +2,12 @@ export type QuizQuestion = { id: string; q: string; options: string[] };
 
 type QuizInterno = QuizQuestion & { correct: number };
 
+// Placeholder reemplazado en getQuizPublico() por la cantidad de cuotas
+// vigente (tabla `configuracion`, editable en /admin/configuracion) — así
+// el quiz no queda con un número de meses hardcodeado que se desactualiza
+// cada vez que el superadmin cambia esa regla de negocio.
+const MESES_PLACEHOLDER = "{{comisionMeses}}";
+
 // Las respuestas correctas (`correct`) nunca deben llegar al cliente — usar
 // siempre `getQuizPublico()` para lo que se renderiza en el browser, y
 // `validarQuiz()` (server-side, en la action) para corregir.
@@ -32,7 +38,7 @@ const QUIZZES: Record<string, QuizInterno[]> = {
       q: "¿Cómo cobra la comisión el revendedor por una venta?",
       options: [
         "Un pago único apenas se registra el cliente",
-        "En varias cuotas mensuales, hasta un máximo de meses, mientras el cliente siga pagando su suscripción",
+        `En cuotas mensuales — hasta ${MESES_PLACEHOLDER} meses — mientras el cliente siga pagando su suscripción`,
         "De por vida, mientras el cliente siga siendo suscriptor",
       ],
       correct: 1,
@@ -46,10 +52,14 @@ const QUIZZES: Record<string, QuizInterno[]> = {
 // (capacitación, mis productos, landing pública del revendedor).
 export const PRODUCTOS_CON_EVALUACION = new Set(Object.keys(QUIZZES));
 
-export function getQuizPublico(productoNombre: string): QuizQuestion[] | null {
+export function getQuizPublico(productoNombre: string, comisionMeses: number): QuizQuestion[] | null {
   const quiz = QUIZZES[productoNombre];
   if (!quiz) return null;
-  return quiz.map(({ id, q, options }) => ({ id, q, options }));
+  return quiz.map(({ id, q, options }) => ({
+    id,
+    q,
+    options: options.map((o) => o.replaceAll(MESES_PLACEHOLDER, String(comisionMeses))),
+  }));
 }
 
 export function validarQuiz(productoNombre: string, respuestas: Record<string, number>): boolean {

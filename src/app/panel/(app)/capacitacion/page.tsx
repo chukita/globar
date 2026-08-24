@@ -6,6 +6,7 @@ import { CapacitacionClient } from "./CapacitacionClient";
 import { getRevendedorByUserId } from "@/lib/revendedor";
 import { getProductosConHabilitacion } from "@/lib/panel-data";
 import { getQuizPublico, PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
+import { getConfiguracion } from "@/lib/configuracion";
 
 type Material = { tipo: "video" | "pdf" | "link"; titulo: string; duracion?: string; url: string };
 
@@ -31,6 +32,8 @@ export default async function CapacitacionPage() {
     .from(productos)
     .where(eq(productos.status, "activo"));
 
+  const { comisionMeses } = await getConfiguracion();
+
   let habilitadosSet = new Set<string>();
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
@@ -48,7 +51,7 @@ export default async function CapacitacionPage() {
     materiales:       MATERIALES[p.nombre] ?? [],
     habilitado:       habilitadosSet.has(p.id),
     requiereEvaluacion: PRODUCTOS_CON_EVALUACION.has(p.nombre),
-    quiz:             getQuizPublico(p.nombre),
+    quiz:             getQuizPublico(p.nombre, comisionMeses),
   }));
 
   return (
