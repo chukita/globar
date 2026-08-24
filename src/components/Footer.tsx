@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { SOPORTE_WHATSAPP } from "@/lib/constants";
+import { waLink } from "@/lib/telefono";
 
 export function Footer() {
   return (
@@ -33,6 +35,7 @@ export function Footer() {
             <Link href="/terminos" className="hover:text-white">Términos</Link>
             <Link href="/privacidad" className="hover:text-white">Privacidad</Link>
             <a href="mailto:hola@glob.ar" className="hover:text-white">Contacto</a>
+            <a href={waLink(SOPORTE_WHATSAPP)} target="_blank" rel="noreferrer" className="hover:text-white">WhatsApp</a>
           </div>
         </div>
       </div>

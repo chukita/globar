@@ -8,6 +8,10 @@ export function fmtARS(n: number): string {
   return "$" + Math.round(n).toLocaleString("es-AR");
 }
 
+// Línea de WhatsApp de soporte para revendedores (chip propio de glob.ar,
+// separado de los celulares personales del equipo).
+export const SOPORTE_WHATSAPP = "+54 9 11 7280-5803";
+
 export const PRODUCTS = [
   {
     key: "agendaonline",

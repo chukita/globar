@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Logo } from "./Logo";
+import { SOPORTE_WHATSAPP } from "@/lib/constants";
+import { waLink } from "@/lib/telefono";
 
 const NAV = [
   { href: "/panel/productos",    label: "Mis productos" },
@@ -113,6 +115,18 @@ export function Sidebar({ resellerName = "Martina Quiroga", resellerInitials = "
       )}
 
       <div className="mt-auto flex flex-col gap-2">
+        <a
+          href={`${waLink(SOPORTE_WHATSAPP)}?text=${encodeURIComponent("Hola! Tengo una consulta sobre glob.ar")}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#8595A8] hover:text-[#C0CDD8] hover:bg-white/5 transition-colors no-underline"
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5a6.5 6.5 0 0 0-5.6 9.77L1.5 14.5l3.33-.87A6.5 6.5 0 1 0 8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+            <path d="M5.6 5.4c.15-.33.4-.33.63-.33h.5c.15 0 .35 0 .5.4.2.5.6 1.4.65 1.5.05.1.08.22.02.35-.06.13-.1.2-.2.32-.1.12-.2.22-.3.3-.1.1-.2.2-.1.4.1.2.5.9 1.1 1.4.75.7 1.35.9 1.55 1 .2.1.32.08.44-.05.13-.13.5-.58.63-.78.13-.2.26-.16.44-.1.18.07 1.14.54 1.34.64.2.1.33.15.38.23.05.1.05.5-.1.98-.16.5-.9.9-1.3.98-.44.1-.86.13-1.9-.35-1.6-.7-2.6-2.3-2.7-2.4-.1-.13-.8-1.05-.8-2 0-.94.5-1.4.66-1.6Z" fill="currentColor"/>
+          </svg>
+          Escribinos por WhatsApp
+        </a>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#8595A8] hover:text-[#C0CDD8] hover:bg-white/5 transition-colors border-0 bg-transparent cursor-pointer text-left"
