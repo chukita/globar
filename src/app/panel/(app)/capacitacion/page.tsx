@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { CapacitacionClient } from "./CapacitacionClient";
 import { getRevendedorByUserId } from "@/lib/revendedor";
 import { getProductosConHabilitacion } from "@/lib/panel-data";
-import { getQuizPublico } from "@/lib/capacitacionQuiz";
+import { getQuizPublico, PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
 
 type Material = { tipo: "video" | "pdf" | "link"; titulo: string; duracion?: string; url: string };
 
@@ -22,11 +22,6 @@ const MATERIALES: Record<string, Material[]> = {
     { tipo: "link",  titulo: "Demo del producto", url: "https://nume.com.ar" },
   ],
 };
-
-// Productos cuya activación exige aprobar el video+quiz (no solo un toggle
-// manual del superadmin) — hoy solo agendaonline. El resto (nume) sigue sin
-// requisito, ver CLAUDE.md sección "Estado actual".
-const REQUIERE_EVALUACION = new Set(["agendaonline"]);
 
 export default async function CapacitacionPage() {
   const session = await auth();
@@ -52,7 +47,7 @@ export default async function CapacitacionPage() {
     dominio:          p.dominio,
     materiales:       MATERIALES[p.nombre] ?? [],
     habilitado:       habilitadosSet.has(p.id),
-    requiereEvaluacion: REQUIERE_EVALUACION.has(p.nombre),
+    requiereEvaluacion: PRODUCTOS_CON_EVALUACION.has(p.nombre),
     quiz:             getQuizPublico(p.nombre),
   }));
 

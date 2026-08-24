@@ -5,6 +5,8 @@ import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { fmtARS } from "@/lib/constants";
 import { AgendaIllustration, NumeIllustration } from "@/components/ProductIllustrations";
+import { getProductosConHabilitacion } from "@/lib/panel-data";
+import { PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
 
 const PRODUCT_COLORS: Record<string, { bg: string; text: string; tag: string }> = {
   agendaonline: { bg: "#E1EFF8", text: "#0B5A8F", tag: "Turnos & reservas" },
@@ -25,13 +27,24 @@ export const dynamic = "force-dynamic";
 export default async function LandingPorVendedorPage({ params }: { params: Promise<{ codigo: string }> }) {
   const { codigo } = await params;
 
-  const [rev] = await db.select({ activo: revendedores.activo }).from(revendedores).where(eq(revendedores.codigoVentas, codigo)).limit(1);
+  const [rev] = await db.select({ id: revendedores.id, activo: revendedores.activo }).from(revendedores).where(eq(revendedores.codigoVentas, codigo)).limit(1);
   const codigoValido = !!rev?.activo;
 
-  const lista = await db
+  // Productos que exigen aprobar la capacitación (video+quiz) antes de
+  // poder venderse — mientras el revendedor no la aprobó, no tiene sentido
+  // mostrárselo al cliente final en su propia landing. Con código
+  // inválido/inactivo tampoco hay un revendedor habilitado detrás, así que
+  // se ocultan igual (el resto de productos sigue mostrándose, "fail open").
+  const habilitadosSet = rev
+    ? new Set((await getProductosConHabilitacion(rev.id)).filter(p => p.habilitado).map(p => p.id))
+    : new Set<string>();
+
+  const listaCompleta = await db
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, urlRegistro: productos.urlRegistro, descripcion: productos.descripcion, precioMensual: productos.precioMensual })
     .from(productos)
     .where(eq(productos.status, "activo"));
+
+  const lista = listaCompleta.filter(p => !PRODUCTOS_CON_EVALUACION.has(p.nombre) || habilitadosSet.has(p.id));
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0C2A45]">

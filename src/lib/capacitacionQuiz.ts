@@ -40,6 +40,12 @@ const QUIZZES: Record<string, QuizInterno[]> = {
   ],
 };
 
+// Único criterio de "requiere capacitación para activarse": tener un quiz
+// configurado acá. Se deriva de QUIZZES en vez de mantener una lista aparte,
+// para que no pueda desincronizarse entre las páginas que la usan
+// (capacitación, mis productos, landing pública del revendedor).
+export const PRODUCTOS_CON_EVALUACION = new Set(Object.keys(QUIZZES));
+
 export function getQuizPublico(productoNombre: string): QuizQuestion[] | null {
   const quiz = QUIZZES[productoNombre];
   if (!quiz) return null;

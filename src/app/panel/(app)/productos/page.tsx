@@ -11,10 +11,7 @@ import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 import { getRevendedorByUserId } from "@/lib/revendedor";
 import { getProductosConHabilitacion } from "@/lib/panel-data";
-
-// Mismo criterio que /panel/capacitacion: solo agendaonline exige aprobar
-// la capacitación (video+quiz) antes de poder compartir su link de venta.
-const REQUIERE_EVALUACION = new Set(["agendaonline"]);
+import { PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
 
 export default async function ProductosPage() {
   const session = await auth();
@@ -37,7 +34,7 @@ export default async function ProductosPage() {
     : new Set<string>();
 
   const items = await Promise.all(lista.map(async (p) => {
-    const bloqueado = REQUIERE_EVALUACION.has(p.nombre) && !habilitadosSet.has(p.id);
+    const bloqueado = PRODUCTOS_CON_EVALUACION.has(p.nombre) && !habilitadosSet.has(p.id);
     if (bloqueado) return { producto: p, link: null, qrSvg: null, bloqueado };
 
     const link = codigo ? `${p.urlRegistro}?vendedor=${codigo}` : p.urlRegistro;
