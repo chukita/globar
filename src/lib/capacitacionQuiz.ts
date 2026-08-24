@@ -32,8 +32,8 @@ const QUIZZES: Record<string, QuizInterno[]> = {
       q: "¿Cómo cobra la comisión el revendedor por una venta?",
       options: [
         "Un pago único apenas se registra el cliente",
-        "En cuotas mensuales mientras el cliente siga pagando su suscripción",
-        "No cobra comisión, solo bonos ocasionales",
+        "En varias cuotas mensuales, hasta un máximo de meses, mientras el cliente siga pagando su suscripción",
+        "De por vida, mientras el cliente siga siendo suscriptor",
       ],
       correct: 1,
     },
