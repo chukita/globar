@@ -7,6 +7,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
 import { signImpersonationToken } from "@/lib/impersonar";
+import { validarQuiz } from "@/lib/capacitacionQuiz";
 
 export async function logoutAction() {
   const session = await auth();
@@ -59,6 +60,31 @@ export async function toggleRevendedorActivoAction(revendedorId: string, activo:
     const { subject, html } = activo ? emailCuentaActivada() : emailCuentaDesactivada();
     await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html });
   }
+}
+
+/**
+ * Auto-habilitación: el revendedor mira el video de capacitación y aprueba
+ * el quiz sin pasar por el superadmin. Las respuestas se corrigen acá (no en
+ * el cliente) — `validarQuiz` compara contra la respuesta correcta, que
+ * nunca viaja al browser (ver `lib/capacitacionQuiz.ts`).
+ */
+export async function completarCapacitacionAction(productoNombre: string, respuestas: Record<string, number>) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("No autorizado");
+
+  const [rev] = await db.select({ id: revendedores.id }).from(revendedores).where(eq(revendedores.userId, session.user.id)).limit(1);
+  if (!rev) throw new Error("Revendedor no encontrado");
+
+  const [producto] = await db.select({ id: productos.id }).from(productos).where(eq(productos.nombre, productoNombre)).limit(1);
+  if (!producto) throw new Error("Producto no encontrado");
+
+  if (!validarQuiz(productoNombre, respuestas)) {
+    throw new Error("No aprobaste todas las preguntas — revisá y volvé a intentar");
+  }
+
+  await db.insert(habilitaciones).values({ revendedorId: rev.id, productoId: producto.id }).onConflictDoNothing();
+  revalidatePath("/panel/capacitacion");
+  revalidatePath("/panel/productos");
 }
 
 export async function toggleHabilitacionAction(revendedorId: string, productoId: string, habilitar: boolean) {
