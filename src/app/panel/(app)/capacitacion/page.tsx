@@ -14,7 +14,7 @@ type Material = { tipo: "video" | "pdf" | "link"; titulo: string; duracion?: str
 const MATERIALES: Record<string, Material[]> = {
   agendaonline: [
     { tipo: "video", titulo: "Introducción a agendaonline", duracion: "4:09 min", url: "/capacitacion/agendaonline-intro.mp4" },
-    { tipo: "pdf",   titulo: "Guía de ventas · agendaonline", url: "#" },
+    { tipo: "link",  titulo: "Guía de ventas · agendaonline", url: "/capacitacion/guia-ventas-agendaonline.html" },
     { tipo: "link",  titulo: "Demo del producto", url: "https://agendaonline.com.ar" },
   ],
   nume: [

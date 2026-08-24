@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de ventas · agendaonline</title>
+<style>
+  :root {
+    --navy: #0C2A45;
+    --blue: #0E6BA8;
+    --blue-tint: #E1EFF8;
+    --blue-dark: #0B5A8F;
+    --rose: #9B4A57;
+    --rose-tint: #FCE6E9;
+    --green: #1B9462;
+    --green-tint: #E7F5EE;
+    --ink: #0C2A45;
+    --muted: #5B6577;
+    --faint: #9AA3B2;
+    --line: #E9ECEF;
+    --bg: #F7F8FA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--rose);
+  }
+  h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin: 10px 0 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15.5px;
+    margin: 0 0 36px;
+    max-width: 560px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  section {
+    margin-bottom: 34px;
+  }
+  section > p:first-of-type { margin-top: 14px; }
+  p { color: var(--ink); font-size: 15px; }
+  .lead { color: var(--muted); }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .chip {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+    border: 1px solid #CFE3F2;
+  }
+  .benefit-list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .benefit-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 14.5px;
+  }
+  .benefit-list li .dot {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--green-tint);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .benefit-list b { color: var(--navy); }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .step {
+    display: flex;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .step .n {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step strong { color: var(--navy); display: block; margin-bottom: 2px; font-size: 14.5px; }
+  .step span { color: var(--muted); font-size: 14px; }
+  .objection {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-top: 12px;
+  }
+  .objection .q {
+    font-weight: 700;
+    color: var(--rose);
+    font-size: 14.5px;
+    margin-bottom: 6px;
+  }
+  .objection .q::before { content: "\201C"; }
+  .objection .q::after { content: "\201D"; }
+  .objection .a {
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .callout {
+    background: var(--blue-tint);
+    border: 1px solid #CFE3F2;
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--blue-dark);
+    margin-top: 14px;
+  }
+  .callout a { color: var(--blue-dark); font-weight: 700; }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 12.5px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  @media print {
+    body { background: #fff; }
+    .callout { border: 1px solid #999; }
+    .benefit-list li, .step, .objection { break-inside: avoid; }
+  }
+  @media (max-width: 560px) {
+    h1 { font-size: 27px; }
+    .page { padding: 32px 16px 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <span class="eyebrow">Guía de ventas</span>
+  <h1>Vendé agendaonline</h1>
+  <p class="subtitle">Referencia rápida para saber a quién ofrecerlo, qué destacar en la demo y cómo responder las dudas más comunes. Complementa al video de introducción — este es el material para tener a mano antes de una conversación de venta.</p>
+
+  <section>
+    <h2><span class="section-num">1</span>Qué es agendaonline</h2>
+    <p class="lead">Un sistema de reservas de turnos online para negocios que atienden con cita previa: el negocio arma su agenda (servicios, profesionales u horarios de cancha, y sus horarios de atención) y sus clientes reservan solos, desde el celular, sin llamar ni escribir por WhatsApp para coordinar.</p>
+  </section>
+
+  <section>
+    <h2><span class="section-num">2</span>A quién ofrecérselo</h2>
+    <p class="lead">Cualquier negocio que hoy agende turnos a mano — por WhatsApp, teléfono o cuaderno — es un cliente potencial. Los rubros con presets ya armados en el producto (arrancan con horarios y servicios sugeridos según el rubro):</p>
+    <div class="chip-row">
+      <span class="chip">Barberías y peluquerías</span>
+      <span class="chip">Estética y uñas</span>
+      <span class="chip">Spa</span>
+      <span class="chip">Tatuajes y piercing</span>
+      <span class="chip">Pestañas y maquillaje</span>
+      <span class="chip">Depilación</span>
+      <span class="chip">Consultorios médicos</span>
+      <span class="chip">Kinesiología</span>
+      <span class="chip">Estudios jurídicos y contables</span>
+      <span class="chip">Entrenadores personales</span>
+      <span class="chip">Canchas de pádel y fútbol</span>
+      <span class="chip">Veterinarias</span>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">3</span>Qué destacar</h2>
+    <ul class="benefit-list">
+      <li><span class="dot">✓</span><span><b>Reservas 24/7 sin que nadie atienda el teléfono</b> — el cliente reserva a la hora que le queda cómoda, incluso fuera de horario de atención.</span></li>
+      <li><span class="dot">✓</span><span><b>Recordatorios automáticos por WhatsApp</b> — bajan el ausentismo sin que el dueño tenga que acordarse de avisarle a cada cliente.</span></li>
+      <li><span class="dot">✓</span><span><b>Cobro de seña con Mercado Pago al momento de reservar</b> — filtra reservas que no van en serio y asegura una parte del cobro por adelantado.</span></li>
+      <li><span class="dot">✓</span><span><b>Un link y QR propios del negocio</b> — para poner en redes, WhatsApp Business o en el local, sin depender de una app que el cliente tenga que instalar.</span></li>
+      <li><span class="dot">✓</span><span><b>Panel simple para el dueño</b> — carga servicios, profesionales (o canchas), horarios y bloqueos de días puntuales sin ayuda técnica.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="section-num">4</span>Cómo hacer la demo</h2>
+    <p class="lead">Mismo recorrido que el video de introducción — mostralo en vivo, no solo lo cuentes:</p>
+    <div class="steps">
+      <div class="step">
+        <span class="n">1</span>
+        <div><strong>Armá la agenda del negocio</strong><span>Servicios, profesionales (o canchas) y horarios de atención — mostrá lo rápido que es dejarlo listo.</span></div>
+      </div>
+      <div class="step">
+        <span class="n">2</span>
+        <div><strong>Reservá un turno de prueba</strong><span>Desde la página pública, como lo haría un cliente real — es el momento que más convence, porque lo ven funcionar.</span></div>
+      </div>
+      <div class="step">
+        <span class="n">3</span>
+        <div><strong>Mostrá el panel del lado del dueño</strong><span>Cómo aparece ese turno reservado, y dónde vería sus turnos del día a día.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">5</span>Objeciones comunes</h2>
+    <div class="objection">
+      <div class="q">Ya coordino los turnos por WhatsApp, no necesito otra cosa</div>
+      <div class="a">WhatsApp funciona hasta que el negocio crece: cada turno significa ida y vuelta de mensajes, y algo se termina superponiendo. Acá el cliente reserva solo, sin que nadie tenga que estar respondiendo.</div>
+    </div>
+    <div class="objection">
+      <div class="q">Mis clientes no van a usar algo online, son grandes</div>
+      <div class="a">La reserva no requiere instalar nada ni crear cuenta — es una página web como cualquier otra. Y el negocio sigue pudiendo cargar turnos a mano por su cuenta para quien prefiera llamar.</div>
+    </div>
+    <div class="objection">
+      <div class="q">Es un gasto más</div>
+      <div class="a">Se paga solo con los ausentismos que evita: cada recordatorio de WhatsApp o seña cobrada de antemano representa un turno que probablemente se hubiera perdido.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">6</span>Tu comisión</h2>
+    <p class="lead">Cobrás una comisión fija por cada suscripción que generás, en cuotas mensuales mientras ese cliente siga pagando (con un tope de cuotas). El monto vigente y la cantidad de cuotas los ves siempre actualizados en tu panel.</p>
+    <div class="callout">
+      Revisá el monto exacto en <b>Mis productos</b> dentro de tu panel de glob.ar — se actualiza solo si cambia la regla de comisión, no hace falta memorizar un número fijo acá.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">7</span>Cómo compartís tu link</h2>
+    <p class="lead">Desde <b>Mis productos</b> en tu panel tenés el link y el QR de agendaonline con tu código ya cargado — cualquier negocio que se registre desde ahí queda asociado a tu cuenta automáticamente. Usá el QR para carteles o para mostrarlo en persona, y el link para compartir por redes o WhatsApp.</p>
+  </section>
+
+  <footer>
+    <span>glob.ar — Guía de ventas · agendaonline</span>
+    <span>Actualizá esta guía si el producto suma funciones nuevas.</span>
+  </footer>
+
+</div>
+</body>
+</html>
