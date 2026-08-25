@@ -9,6 +9,7 @@ import { getConfiguracion } from "@/lib/configuracion";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
 import { AgendaIllustration, NumeIllustration } from "@/components/ProductIllustrations";
+import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 
 const PRODUCT_COLORS: Record<string, { bg: string; text: string; tag: string }> = {
   agendaonline: { bg: "#E1EFF8", text: "#0B5A8F", tag: "Turnos & reservas" },
@@ -268,6 +269,8 @@ export default async function LandingPage() {
 
       <Footer />
       </div>
+
+      <FloatingWhatsApp />
     </div>
   );
 }
