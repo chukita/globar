@@ -55,6 +55,11 @@ export default async function PerfilPage() {
                 </div>
                 <CopyButton text={codigo} label="Copiar código" labelDone="¡Copiado!"
                   className="mt-4 font-semibold text-[14.5px] bg-[#0E6BA8] text-white border-0 rounded-xl py-3 w-full cursor-pointer" />
+                <a href="/api/panel/tarjeta-pdf" target="_blank" rel="noreferrer"
+                  className="mt-2.5 font-semibold text-[14.5px] text-white border border-white/25 rounded-xl py-3 w-full text-center block no-underline"
+                  style={{ background: "rgba(255,255,255,.08)" }}>
+                  Descargar tarjetas para imprimir
+                </a>
               </>
             ) : (
               <p className="text-white/60 text-[14px] mt-4">Todavía no tenés un código asignado.</p>
