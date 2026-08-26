@@ -1,0 +1,298 @@
+<!-- PLACEHOLDER: revisar contenido antes de publicar -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de ventas · glob.ar</title>
+<style>
+  :root {
+    --navy: #0C2A45;
+    --blue: #0E6BA8;
+    --blue-tint: #E1EFF8;
+    --blue-dark: #0B5A8F;
+    --rose: #9B4A57;
+    --rose-tint: #FCE6E9;
+    --green: #1B9462;
+    --green-tint: #E7F5EE;
+    --ink: #0C2A45;
+    --muted: #5B6577;
+    --faint: #9AA3B2;
+    --line: #E9ECEF;
+    --bg: #F7F8FA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--rose);
+  }
+  h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin: 10px 0 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15.5px;
+    margin: 0 0 36px;
+    max-width: 560px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  section {
+    margin-bottom: 34px;
+  }
+  section > p:first-of-type { margin-top: 14px; }
+  p { color: var(--ink); font-size: 15px; }
+  .lead { color: var(--muted); }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .chip {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+    border: 1px solid #CFE3F2;
+  }
+  .benefit-list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .benefit-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 14.5px;
+  }
+  .benefit-list li .dot {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--green-tint);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .benefit-list b { color: var(--navy); }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .step {
+    display: flex;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .step .n {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step strong { color: var(--navy); display: block; margin-bottom: 2px; font-size: 14.5px; }
+  .step span { color: var(--muted); font-size: 14px; }
+  .objection {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-top: 12px;
+  }
+  .objection .q {
+    font-weight: 700;
+    color: var(--rose);
+    font-size: 14.5px;
+    margin-bottom: 6px;
+  }
+  .objection .q::before { content: "\201C"; }
+  .objection .q::after { content: "\201D"; }
+  .objection .a {
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .callout {
+    background: var(--blue-tint);
+    border: 1px solid #CFE3F2;
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--blue-dark);
+    margin-top: 14px;
+  }
+  .callout a { color: var(--blue-dark); font-weight: 700; }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 12.5px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  @media print {
+    body { background: #fff; }
+    .callout { border: 1px solid #999; }
+    .benefit-list li, .step, .objection { break-inside: avoid; }
+  }
+  @media (max-width: 560px) {
+    h1 { font-size: 27px; }
+    .page { padding: 32px 16px 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <span class="eyebrow">Guía de ventas</span>
+  <h1>Cómo funciona glob.ar</h1>
+  <p class="subtitle">Referencia rápida para arrancar como revendedor: qué es glob.ar, cómo activás cada producto, y cómo cobrás tu comisión. Complementa al video de onboarding — este es el material para tener a mano las primeras semanas.</p>
+
+  <section>
+    <h2><span class="section-num">1</span>Qué es glob.ar</h2>
+    <p class="lead">glob.ar es la plataforma desde la que revendés productos SaaS propios — hoy <b>agendaonline</b> (reservas de turnos online) y <b>nume</b> — a cambio de una comisión por cada cliente que sumás. Vos no desarrollás ni soportás el producto: tu trabajo es acercar clientes y ayudarlos a arrancar.</p>
+  </section>
+
+  <section>
+    <h2><span class="section-num">2</span>Cómo arrancar</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="n">1</span>
+        <div><strong>Completá tu perfil</strong><span>DNI, fecha de nacimiento, provincia/localidad y teléfono — necesario para poder facturar tus comisiones.</span></div>
+      </div>
+      <div class="step">
+        <span class="n">2</span>
+        <div><strong>Mirá el video de onboarding y aprobá el quiz</strong><span>Es este mismo paso — una vez aprobado, se desbloquea el resto del panel.</span></div>
+      </div>
+      <div class="step">
+        <span class="n">3</span>
+        <div><strong>Conseguí tu link</strong><span>En "Mis productos" tenés el link y QR de cada producto, ya con tu código de vendedor cargado.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">3</span>Cómo activar un producto para vender</h2>
+    <p class="lead">Cada producto tiene su propia capacitación — un video corto más una evaluación de múltiple choice — en la sección <b>Capacitación</b> de tu panel. Recién cuando la apruebas queda habilitado para compartir tu link de ese producto puntual.</p>
+    <div class="callout">
+      No hace falta aprobar todos los productos de una — activá primero el que vayas a ofrecer.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">4</span>Cómo cobrás</h2>
+    <p class="lead">Cobrás una comisión fija por cada venta, en cuotas mensuales mientras ese cliente siga pagando su suscripción (con un tope de cuotas). Cuando una cuota queda "generada", subís tu factura en <b>Facturas</b> y el superadmin la paga.</p>
+    <div class="callout">
+      Revisá el monto y la cantidad de cuotas vigentes en <b>Mis productos</b> — se actualizan solos si cambia la regla de comisión.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">5</span>Objeciones comunes</h2>
+    <div class="objection">
+      <div class="q">¿Tengo que pagar algo para empezar?</div>
+      <div class="a">No. Sumarte a glob.ar como revendedor no tiene costo — cobrás comisión, no pagás nada por vender.</div>
+    </div>
+    <div class="objection">
+      <div class="q">¿Puedo vender más de un producto?</div>
+      <div class="a">Sí, cada uno se activa por separado con su propia capacitación, pero podés tener varios habilitados al mismo tiempo.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="section-num">6</span>Dónde pedir ayuda</h2>
+    <p class="lead">Si tenés una duda sobre una comisión, una factura o cómo usar el panel, escribí a soporte de glob.ar o revisá las secciones <b>Facturas</b> y <b>Comisiones</b> de tu panel.</p>
+  </section>
+
+  <footer>
+    <span>glob.ar — Guía de ventas · glob.ar</span>
+    <span>Contenido placeholder — actualizar antes de publicar.</span>
+  </footer>
+
+</div>
+</body>
+</html>

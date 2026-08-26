@@ -87,6 +87,11 @@ export const revendedores = pgTable("revendedores", {
   titularNombre:  text("titular_nombre"),   // a nombre de quién está la cuenta de cobro
   titularCuit:    text("titular_cuit"),     // obligatorio a nivel de app si puedeFacturar
   activo:         boolean("activo").notNull().default(true),
+  // Se completa cuando el revendedor aprueba el onboarding general de glob.ar
+  // (video + quiz, /panel/onboarding). NULL = todavía no lo hizo. El backfill
+  // de la migración marca como completado a todo revendedor preexistente —
+  // el gate solo aplica a altas nuevas.
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
   notifFacturaPagada:    boolean("notif_factura_pagada").notNull().default(true),
   notifComisionGenerada: boolean("notif_comision_generada").notNull().default(true),
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),

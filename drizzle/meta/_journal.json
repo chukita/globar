@@ -127,6 +127,13 @@
       "when": 1786897743750,
       "tag": "0017_add_verificaciones_email",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787769619309,
+      "tag": "0018_thankful_amphibian",
+      "breakpoints": true
     }
   ]
 }

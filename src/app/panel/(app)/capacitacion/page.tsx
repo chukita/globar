@@ -6,6 +6,7 @@ import { CapacitacionClient } from "./CapacitacionClient";
 import { getRevendedorByUserId } from "@/lib/revendedor";
 import { getProductosConHabilitacion } from "@/lib/panel-data";
 import { getQuizPublico, PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
+import type { QuizQuestion } from "@/lib/capacitacionQuiz";
 import { getConfiguracion } from "@/lib/configuracion";
 
 type Material = { tipo: "video" | "pdf" | "link"; titulo: string; duracion?: string; url: string };
@@ -24,6 +25,11 @@ const MATERIALES: Record<string, Material[]> = {
   ],
 };
 
+const MATERIALES_ONBOARDING: Material[] = [
+  { tipo: "video", titulo: "Onboarding glob.ar", duracion: "3:02 min", url: "/capacitacion/onboarding.mp4" },
+  { tipo: "link",  titulo: "Guía de ventas · glob.ar", url: "/capacitacion/guia-ventas-globar.html" },
+];
+
 export default async function CapacitacionPage() {
   const session = await auth();
 
@@ -35,24 +41,41 @@ export default async function CapacitacionPage() {
   const { comisionMeses } = await getConfiguracion();
 
   let habilitadosSet = new Set<string>();
+  let onboardingCompletado = false;
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
     if (rev) {
+      onboardingCompletado = !!rev.onboardingCompletedAt;
       const conHabilitacion = await getProductosConHabilitacion(rev.id);
       habilitadosSet = new Set(conHabilitacion.filter(p => p.habilitado).map(p => p.id));
     }
   }
 
-  const productosConMateriales = lista.map(p => ({
-    id:               p.id,
-    nombre:           p.nombre,
-    descripcion:      p.descripcion ?? "",
-    dominio:          p.dominio,
-    materiales:       MATERIALES[p.nombre] ?? [],
-    habilitado:       habilitadosSet.has(p.id),
-    requiereEvaluacion: PRODUCTOS_CON_EVALUACION.has(p.nombre),
-    quiz:             getQuizPublico(p.nombre, comisionMeses),
-  }));
+  const productosConMateriales = [
+    ...(onboardingCompletado
+      ? [{
+          id: "onboarding-globar",
+          nombre: "Onboarding glob.ar",
+          descripcion: "Cómo funciona glob.ar como revendedor",
+          dominio: "glob.ar",
+          materiales: MATERIALES_ONBOARDING,
+          habilitado: true,
+          requiereEvaluacion: false,
+          quiz: null as QuizQuestion[] | null,
+          esOnboardingGeneral: true,
+        }]
+      : []),
+    ...lista.map(p => ({
+      id:               p.id,
+      nombre:           p.nombre,
+      descripcion:      p.descripcion ?? "",
+      dominio:          p.dominio,
+      materiales:       MATERIALES[p.nombre] ?? [],
+      habilitado:       habilitadosSet.has(p.id),
+      requiereEvaluacion: PRODUCTOS_CON_EVALUACION.has(p.nombre),
+      quiz:             getQuizPublico(p.nombre, comisionMeses),
+    })),
+  ];
 
   return (
     <div className="p-10 max-w-[860px]">

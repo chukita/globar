@@ -20,6 +20,8 @@ glob.ar es la plataforma de reventa de dos productos SaaS propios: **agendaonlin
 
 El alta por email+contraseña (`/registro`) es solo el **paso 1**: nombre, email, contraseña. Los datos propios del vendedor (DNI, fecha de nacimiento, provincia/localidad, teléfono, "puede facturar") se piden en un **paso 2** separado, `/panel/completar-perfil` — que ya existía de antes para las altas por Google (que no traen esos datos) y ahora también cubre el alta por email. El layout del panel (`src/app/panel/(app)/layout.tsx`) redirige ahí automáticamente a cualquier revendedor con esos campos incompletos, en cada request — no hace falta "recordar" si alguien lo completó o no.
 
+Después de completar el perfil hay un **paso 3**: onboarding general obligatorio en `/panel/onboarding` (video `public/capacitacion/onboarding.mp4` + quiz de múltiple choice, `src/lib/onboardingQuiz.ts`). El mismo layout redirige ahí mientras `revendedores.onboardingCompletedAt` sea `NULL`; se completa con la server action `completarOnboardingGlobalAction` (`src/lib/actions.ts`). Cadena completa: `completar-perfil` → `onboarding` → panel. Los revendedores que ya existían cuando se agregó este paso quedaron con `onboardingCompletedAt` backfilleado (no se los bloquea retroactivamente) — solo aplica a altas nuevas. El video y una guía de ventas quedan además visibles después en `/panel/capacitacion` (card "Onboarding glob.ar", sin gate de quiz ahí).
+
 El alta por email+contraseña además requiere **verificar el email** antes de poder loguearse (Google no lo necesita — Google ya lo confirma):
 
 1. `POST /api/registro` crea `users`+`revendedores` igual que antes, pero con `emailVerified: null`, y manda un mail (`emailVerificarCuenta` en `lib/email.ts`) con un código de 6 dígitos (vence en 15 min) y un link mágico (vence en 24 h) — ambos guardados hasheados en la tabla `verificaciones_email` (una fila por usuario; "reenviar" reemplaza los dos juntos).
@@ -124,7 +126,7 @@ El superadmin puede entrar al panel de un revendedor puntual sin conocer su cont
 
 Ya no queda contenido de ejemplo en el panel ni en el admin — todo consulta la base real. Lo que **sigue siendo estático a propósito** (marketing/onboarding, no toca plata, no se tocó todavía):
 - La landing pública (`src/app/page.tsx`) y sus constantes en `src/lib/constants.ts` (`PRODUCTS`, `STEPS`, `REQUISITOS`, precios de ejemplo).
-- `/panel/capacitacion` — sigue siendo un placeholder; no hay un sistema real de capacitación/quiz.
+- `/panel/capacitacion` ya no es un placeholder: tiene un sistema real de video + quiz por producto (`src/lib/capacitacionQuiz.ts`, `src/lib/actions.ts` → `completarCapacitacionAction`) que auto-activa `habilitaciones` para agendaonline (nume sigue sin materiales reales). Además hay un onboarding general obligatorio para revendedores nuevos (`/panel/onboarding`, video + quiz en `src/lib/onboardingQuiz.ts` → `completarOnboardingGlobalAction`), gateado en `panel/(app)/layout.tsx` vía `revendedores.onboardingCompletedAt` — ver "Registro en 2 pasos y verificación de email" más abajo.
 - `/identidad` — página de sistema de diseño, no debería estar indexada/linkeada en producción pero no es prioritario sacarla.
 
 Pendiente: **integrar nume** para que capture `?vendedor=` y llame al webhook de pagos, igual que ya hace agendaonline (ver "Modelo de negocio" arriba). Coordinar con Cynthia, que está trabajando en ese repo.

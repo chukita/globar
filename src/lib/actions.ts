@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
 import { signImpersonationToken } from "@/lib/impersonar";
 import { validarQuiz } from "@/lib/capacitacionQuiz";
+import { validarOnboardingQuiz } from "@/lib/onboardingQuiz";
 
 export async function logoutAction() {
   const session = await auth();
@@ -93,6 +94,31 @@ export async function completarCapacitacionAction(productoNombre: string, respue
   await db.insert(habilitaciones).values({ revendedorId: rev.id, productoId: producto.id }).onConflictDoNothing();
   revalidatePath("/panel/capacitacion");
   revalidatePath("/panel/productos");
+  return { ok: true };
+}
+
+/**
+ * Onboarding general de glob.ar (video + quiz), distinto de
+ * completarCapacitacionAction: no depende de `productos`/`habilitaciones`
+ * (no hay un producto "globar"), es un gate de panel completo que se marca
+ * una sola vez en revendedores.onboardingCompletedAt. Mismo criterio que
+ * completarCapacitacionAction para no lanzar excepción en el caso esperado
+ * (respuesta incorrecta) — Next.js enmascara el mensaje de un throw real.
+ */
+export async function completarOnboardingGlobalAction(respuestas: Record<string, number>): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("No autorizado");
+
+  const [rev] = await db.select({ id: revendedores.id }).from(revendedores).where(eq(revendedores.userId, session.user.id)).limit(1);
+  if (!rev) throw new Error("Revendedor no encontrado");
+
+  if (!validarOnboardingQuiz(respuestas)) {
+    return { ok: false, error: "No aprobaste todas las preguntas — revisá y volvé a intentar" };
+  }
+
+  await db.update(revendedores).set({ onboardingCompletedAt: new Date() }).where(eq(revendedores.id, rev.id));
+  revalidatePath("/panel");
+  revalidatePath("/panel/capacitacion");
   return { ok: true };
 }
 

@@ -15,10 +15,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   const role = session?.user?.role ?? undefined;
 
-  // Quien se registra con Google nunca pasó por /registro (que sí pide estos
-  // datos) — ensureRevendedor() le crea una fila vacía. Bloqueamos el resto
-  // del panel hasta que los complete en /panel/completar-perfil, que queda
-  // afuera de este route group a propósito (si no, se redirigiría a sí mismo).
+  // Encadenado: cuenta desactivada → perfil incompleto (completar-perfil) →
+  // onboarding general no aprobado (onboarding). Quien se registra con
+  // Google nunca pasó por /registro (que sí pide estos datos) —
+  // ensureRevendedor() le crea una fila vacía. Todas estas páginas viven
+  // afuera de este route group a propósito (si no, se redirigirían a sí mismas).
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
     // Sesión JWT: activo=false no invalida el token ya emitido, así que hay
@@ -29,6 +30,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     }
     if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad || !rev.telefono) {
       redirect("/panel/completar-perfil");
+    }
+    if (!rev.onboardingCompletedAt) {
+      redirect("/panel/onboarding");
     }
   }
 
