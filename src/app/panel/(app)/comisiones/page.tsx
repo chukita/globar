@@ -4,6 +4,7 @@ import { revendedores, cuotas, ventas, productos, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getConfiguracion } from "@/lib/configuracion";
+import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
 
 const fmtARS = (n: number) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
@@ -34,7 +35,7 @@ export default async function ComisionesPage() {
     );
   }
 
-  const { comisionMeses } = await getConfiguracion();
+  const { comisionMonto, comisionMeses } = await getConfiguracion();
 
   // Todas las cuotas del revendedor con info de venta y producto
   const rows = await db
@@ -48,6 +49,7 @@ export default async function ComisionesPage() {
       ventaId:      ventas.id,
       clienteNombre: ventas.clienteNombre,
       vendidoEn:    ventas.vendidoEn,
+      ultimoPagoEn: ventas.ultimoPagoEn,
       productoNombre: productos.nombre,
     })
     .from(cuotas)
@@ -58,7 +60,8 @@ export default async function ComisionesPage() {
 
   // Totales (una cuota "anulada" — cliente arrepentido y reembolsado — no cuenta ni como cobrada ni como pendiente)
   const cobrado = rows.filter(r => r.status === "pagada").reduce((a, r) => a + parseFloat(r.monto), 0);
-  const pendiente = rows.filter(r => r.status !== "pagada" && r.status !== "anulada").reduce((a, r) => a + parseFloat(r.monto), 0);
+  const cuotasGeneradasSinCobrar = rows.filter(r => r.status !== "pagada" && r.status !== "anulada");
+  const generadoSinCobrar = cuotasGeneradasSinCobrar.reduce((a, r) => a + parseFloat(r.monto), 0);
   const facturablesAhora = rows.filter(r => r.status === "generada");
   const aFacturar = facturablesAhora.reduce((a, r) => a + parseFloat(r.monto), 0);
 
@@ -73,21 +76,40 @@ export default async function ComisionesPage() {
   // Ventas únicas con progreso, contra la cantidad de cuotas configurada (no
   // contra cuántas cuotas ya existen — probar varias suscripciones distintas
   // el mismo día para el mismo cliente puede acumular cuotas rápido).
-  const ventasMap = new Map<string, { fecha: Date; producto: string; cliente: string; cuotasPagadas: number }>();
+  const ventasMap = new Map<string, { fecha: Date; producto: string; cliente: string; cuotasPagadas: number; cuotasExistentes: number; ultimoPagoEn: Date }>();
   for (const r of rows) {
     if (!ventasMap.has(r.ventaId)) {
-      ventasMap.set(r.ventaId, { fecha: r.vendidoEn, producto: r.productoNombre, cliente: r.clienteNombre, cuotasPagadas: 0 });
+      ventasMap.set(r.ventaId, { fecha: r.vendidoEn, producto: r.productoNombre, cliente: r.clienteNombre, cuotasPagadas: 0, cuotasExistentes: 0, ultimoPagoEn: r.ultimoPagoEn });
     }
     const v = ventasMap.get(r.ventaId)!;
+    v.cuotasExistentes++;
     if (r.status === "pagada") v.cuotasPagadas++;
   }
   const ventasList = [...ventasMap.entries()].map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
+  // Proyección: cuotas que todavía no se generaron (no llegó el webhook de
+  // pago de ese mes) pero se generarían si el cliente sigue pagando, para
+  // ventas que no completaron el ciclo de comisionMeses y cuya suscripción
+  // sigue activa (esSuscripcionActiva, basado en ultimoPagoEn — no hay
+  // webhook de baja). Si el cliente dejó de pagar, no proyectamos esas cuotas.
+  let cuotasFuturasProyectadas = 0;
+  let montoFuturoProyectado = 0;
+  for (const v of ventasMap.values()) {
+    const restantes = comisionMeses - v.cuotasExistentes;
+    if (restantes > 0 && esSuscripcionActiva(v.ultimoPagoEn)) {
+      cuotasFuturasProyectadas += restantes;
+      montoFuturoProyectado += restantes * Number(comisionMonto);
+    }
+  }
+
+  const totalProyectado = generadoSinCobrar + montoFuturoProyectado;
+  const cuotasProyectadasCount = cuotasGeneradasSinCobrar.length + cuotasFuturasProyectadas;
+
   const TOTALS = [
-    { label: "Cobrado",          value: fmtARS(cobrado),    sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
-    { label: "A facturar",       value: fmtARS(aFacturar),  sub: `${facturablesAhora.length} cuotas listas para facturar`,                     accent: "#7A6020" },
-    { label: "Total pendiente",  value: fmtARS(pendiente),  sub: `${rows.filter(r => r.status !== "pagada" && r.status !== "anulada").length} cuotas programadas`, accent: "#9B4A57" },
+    { label: "Cobrado",              value: fmtARS(cobrado),          sub: `${rows.filter(r => r.status === "pagada").length} cuotas acreditadas`, accent: "#0B5A8F" },
+    { label: "A facturar",           value: fmtARS(aFacturar),        sub: `${facturablesAhora.length} cuotas listas para facturar`,                     accent: "#7A6020" },
+    { label: "Proyectado a cobrar",  value: fmtARS(totalProyectado),  sub: `${cuotasProyectadasCount} cuotas, si los clientes siguen suscriptos`, accent: "#9B4A57" },
   ];
 
   const formatFecha = (d: Date) => d.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
@@ -134,6 +156,9 @@ export default async function ComisionesPage() {
           </div>
         ))}
       </div>
+      <p className="text-[12.5px] text-[#9AA3B2] mt-3 mb-0">
+        &quot;Proyectado a cobrar&quot; suma las cuotas ya generadas sin cobrar más las que faltan generarse de cada venta activa — es una estimación a futuro, no un monto ya confirmado, y se ajusta solo si el cliente deja de pagar.
+      </p>
 
       {/* Tabla de cuotas */}
       <div className="bg-white border border-[#E9ECEF] rounded-[18px] mt-6 overflow-hidden">

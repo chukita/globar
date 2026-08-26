@@ -47,6 +47,8 @@ Un superadmin puede habilitar/deshabilitar productos por revendedor desde `/admi
 
 ## Comandos frecuentes
 
+> Docker Desktop en la máquina de Carlos no queda corriendo por default. Si necesitás la DB local (para levantar `npm run dev`, correr migraciones, verificar un cambio en el navegador, etc.) y `docker compose`/`docker info` falla, arrancar Docker Desktop primero (`Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'` y esperar a que `docker info` responda, ~30-60s) en vez de asumir que no se puede verificar.
+
 ```bash
 docker compose up -d      # levanta postgres local
 npm run dev                # next dev
