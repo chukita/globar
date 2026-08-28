@@ -12,6 +12,38 @@ const MESES_PLACEHOLDER = "{{comisionMeses}}";
 // siempre `getQuizPublico()` para lo que se renderiza en el browser, y
 // `validarQuiz()` (server-side, en la action) para corregir.
 const QUIZZES: Record<string, QuizInterno[]> = {
+  nume: [
+    {
+      id: "q1",
+      q: "¿Para qué tipo de negocios está pensado NuMe?",
+      options: [
+        "Peluquerías y centros de estética",
+        "Bares, rotiserías y casas de comida en general",
+        "Farmacias y dietéticas",
+      ],
+      correct: 1,
+    },
+    {
+      id: "q2",
+      q: "Cuando un cliente envía un pedido desde la carta digital, ¿cómo le llega al negocio?",
+      options: [
+        "Por email al dueño del local",
+        "Por llamada telefónica automática",
+        "Al WhatsApp del negocio y al panel de administración de NuMe",
+      ],
+      correct: 2,
+    },
+    {
+      id: "q3",
+      q: "¿Cuál es la primera acción que debe hacer un negocio al ingresar a NuMe?",
+      options: [
+        "Activar el plan PRO para tener acceso completo",
+        "Cargar la carta: definir las categorías y los platos",
+        "Configurar el QR imprimible para las mesas",
+      ],
+      correct: 1,
+    },
+  ],
   agendaonline: [
     {
       id: "q1",

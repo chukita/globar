@@ -19,8 +19,7 @@ const MATERIALES: Record<string, Material[]> = {
     { tipo: "link",  titulo: "Demo del producto", url: "https://agendaonline.com.ar" },
   ],
   nume: [
-    { tipo: "video", titulo: "Conocé NuMe en 5 minutos", duracion: "5:10 min", url: "#" },
-    { tipo: "pdf",   titulo: "Argumentario de ventas · NuMe", url: "#" },
+    { tipo: "video", titulo: "Introducción a NuMe", duracion: "4:56 min", url: "/capacitacion/nume-intro.mp4" },
     { tipo: "link",  titulo: "Demo del producto", url: "https://nume.com.ar" },
   ],
 };
@@ -81,7 +80,7 @@ export default async function CapacitacionPage() {
     <div className="p-10 max-w-[860px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Capacitación</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-        Materiales para conocer cada producto y venderlos mejor. Para agendaonline, mirar el video y aprobar la evaluación activa el producto en tu cuenta.
+        Materiales para conocer cada producto y venderlos mejor. Para agendaonline y NuMe, mirar el video y aprobar la evaluación activa el producto en tu cuenta.
       </p>
       <CapacitacionClient productos={productosConMateriales} />
     </div>
