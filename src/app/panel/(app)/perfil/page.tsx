@@ -55,6 +55,20 @@ export default async function PerfilPage() {
         />
       </div>
 
+      {/* Datos de cobro */}
+      <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
+        <div className="font-semibold text-[18px] mb-1">Datos de cobro</div>
+        <p className="text-[13.5px] text-[#5B6577] mb-5">
+          CBU o alias de Mercado Pago, y a nombre de quién está la cuenta, para acreditarte las comisiones.
+        </p>
+        <DatosCobroForm
+          currentCbuAlias={rev?.cbuAlias ?? ""}
+          currentTitularNombre={rev?.titularNombre ?? ""}
+          currentTitularCuit={rev?.titularCuit ?? ""}
+          currentPuedeFacturar={rev?.puedeFacturar ?? false}
+        />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
         {/* Sales code */}
         <div className="bg-[#0C2A45] rounded-[20px] p-7 relative overflow-hidden">
@@ -119,20 +133,6 @@ export default async function PerfilPage() {
             Cada venta genera {comisionMeses} cuotas de comisión de {fmtARS(Number(comisionMonto))} cada una. Se acreditan mes a mes mientras el cliente mantenga la suscripción.
           </p>
         </div>
-      </div>
-
-      {/* Datos de cobro */}
-      <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-7 mt-5">
-        <div className="font-semibold text-[18px] mb-1">Datos de cobro</div>
-        <p className="text-[13.5px] text-[#5B6577] mb-5">
-          CBU o alias de Mercado Pago, y a nombre de quién está la cuenta, para acreditarte las comisiones.
-        </p>
-        <DatosCobroForm
-          currentCbuAlias={rev?.cbuAlias ?? ""}
-          currentTitularNombre={rev?.titularNombre ?? ""}
-          currentTitularCuit={rev?.titularCuit ?? ""}
-          currentPuedeFacturar={rev?.puedeFacturar ?? false}
-        />
       </div>
 
       {/* Notificaciones */}
