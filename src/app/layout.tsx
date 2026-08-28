@@ -10,6 +10,13 @@ const openSans = Open_Sans({
 export const metadata: Metadata = {
   title: "glob.ar — Revendé productos digitales",
   description: "Plataforma argentina de reventa de productos digitales SaaS.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

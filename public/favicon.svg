@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="glob.ar">
+  <rect width="64" height="64" rx="17" fill="#0E6BA8"></rect>
+  <text x="32" y="42" font-family="'Open Sans',system-ui,sans-serif" font-size="38" font-weight="700" fill="#FFFFFF" text-anchor="middle">g</text>
+  <circle cx="49" cy="49" r="4.3" fill="#FADADD"></circle>
+</svg>
