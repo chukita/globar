@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { completarCapacitacionAction } from "@/lib/actions";
 import { EvaluacionStepper } from "@/components/EvaluacionStepper";
 import type { QuizQuestion } from "@/lib/capacitacionQuiz";
@@ -46,22 +46,25 @@ const ICON_LINK = (
   </svg>
 );
 
+function initialAbierto(productos: Producto[]): string | null {
+  if (typeof window !== "undefined") {
+    const hash = window.location.hash.replace("#", "");
+    const match = productos.find(p => p.nombre === hash);
+    if (match) return match.id;
+  }
+  return productos[0]?.id ?? null;
+}
+
 export function CapacitacionClient({ productos }: { productos: Producto[] }) {
-  const [abierto, setAbierto] = useState<string | null>(productos[0]?.id ?? null);
-  const didScroll = useRef(false);
+  const [abierto, setAbierto] = useState<string | null>(() => initialAbierto(productos));
 
   useEffect(() => {
-    if (didScroll.current) return;
     const hash = window.location.hash.replace("#", "");
     if (!hash) return;
-    const match = productos.find(p => p.nombre === hash);
-    if (!match) return;
-    setAbierto(match.id);
-    didScroll.current = true;
-    setTimeout(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
-  }, [productos]);
+    const el = document.getElementById(hash);
+    if (!el) return;
+    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }, []);
 
   if (productos.length === 0) {
     return <p className="text-[14.5px] text-[#9AA3B2] mt-6">No hay productos disponibles aún.</p>;
