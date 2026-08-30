@@ -25,7 +25,7 @@ const MATERIALES: Record<string, Material[]> = {
 };
 
 const MATERIALES_ONBOARDING: Material[] = [
-  { tipo: "video", titulo: "Onboarding glob.ar", duracion: "3:02 min", url: "/capacitacion/onboarding.mp4" },
+  { tipo: "video", titulo: "Capacitación glob.ar", duracion: "3:02 min", url: "/capacitacion/onboarding.mp4" },
   { tipo: "link",  titulo: "Guía de ventas · glob.ar", url: "/capacitacion/guia-ventas-globar.html" },
 ];
 
@@ -54,7 +54,7 @@ export default async function CapacitacionPage() {
     ...(onboardingCompletado
       ? [{
           id: "onboarding-globar",
-          nombre: "Onboarding glob.ar",
+          nombre: "Capacitación glob.ar",
           descripcion: "Cómo funciona glob.ar como revendedor",
           dominio: "glob.ar",
           materiales: MATERIALES_ONBOARDING,
