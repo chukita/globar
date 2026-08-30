@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { completarCapacitacionAction } from "@/lib/actions";
 import { EvaluacionStepper } from "@/components/EvaluacionStepper";
 import type { QuizQuestion } from "@/lib/capacitacionQuiz";
@@ -48,6 +48,20 @@ const ICON_LINK = (
 
 export function CapacitacionClient({ productos }: { productos: Producto[] }) {
   const [abierto, setAbierto] = useState<string | null>(productos[0]?.id ?? null);
+  const didScroll = useRef(false);
+
+  useEffect(() => {
+    if (didScroll.current) return;
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const match = productos.find(p => p.nombre === hash);
+    if (!match) return;
+    setAbierto(match.id);
+    didScroll.current = true;
+    setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }, [productos]);
 
   if (productos.length === 0) {
     return <p className="text-[14.5px] text-[#9AA3B2] mt-6">No hay productos disponibles aún.</p>;
