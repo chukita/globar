@@ -162,13 +162,26 @@ function ProductCard({
           <div className="text-[13.5px] text-[#0C2A45] font-semibold">
             {comisionTexto}
           </div>
+          <div className="text-[12px] text-[#5B6577] leading-[1.45] mt-1.5">
+            Empezás a cobrarla cuando tu cliente se suscribe a un plan pago.
+          </div>
         </div>
 
         {/* Link */}
         {bloqueado ? (
-          <div className="bg-[#F0E8F8] border border-[#D4B8F0] rounded-xl px-4 py-3 text-[13px] text-[#5B3D75]">
-            Mirá el video y aprobá la evaluación para activar este producto.{" "}
-            <Link href="/panel/capacitacion" className="font-semibold underline">Ir a Capacitación</Link>
+          <div className="bg-[#F0E8F8] border border-[#D4B8F0] rounded-xl px-4 py-4">
+            <div className="text-[13px] text-[#5B3D75] leading-[1.5] mb-3">
+              Mirá el video y aprobá la evaluación para activar este producto.
+            </div>
+            <Link
+              href="/panel/capacitacion"
+              className="flex items-center justify-center gap-1.5 w-full font-bold text-[13.5px] bg-[#7B4FA6] text-white no-underline rounded-xl py-2.5 px-4 hover:bg-[#6B4393] transition-colors"
+            >
+              Ir a Capacitación
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
           </div>
         ) : tienecodigo && link ? (
           <div className="flex flex-col gap-2">

@@ -66,17 +66,22 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
             <div key={p.id} className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden">
               <button
                 onClick={() => setAbierto(open ? null : p.id)}
-                className="w-full flex items-center gap-4 px-6 py-5 cursor-pointer border-0 bg-transparent text-left"
+                className="w-full flex flex-wrap items-center gap-x-3 gap-y-3 px-5 sm:px-6 py-5 cursor-pointer border-0 bg-transparent text-left"
               >
                 <span className="w-10 h-10 rounded-[11px] flex items-center justify-center font-extrabold text-[18px] flex-shrink-0"
                   style={{ background: c.bg, color: c.text }}>
                   {inicial}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-[16px] text-[#0C2A45]">{p.nombre}</div>
+                  <div className="font-bold text-[16px] text-[#0C2A45] truncate">{p.nombre}</div>
                   <div className="text-[13px] text-[#5B6577] mt-0.5 truncate">{p.descripcion}</div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                  className="flex-shrink-0 sm:order-2"
+                  style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .18s" }}>
+                  <path d="M4.5 6.75L9 11.25l4.5-4.5" stroke="#9AA3B2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:order-1">
                   {p.esOnboardingGeneral ? (
                     <span className="text-[11.5px] font-bold text-[#1B9462] bg-[#E7F5EE] border border-[#9BD3B6] rounded-full px-3 py-1 flex items-center gap-1.5">
                       <span className="w-[6px] h-[6px] rounded-full bg-[#1B9462]" />
@@ -97,10 +102,6 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                   <span className="text-[12px] font-semibold text-[#5B6577] bg-[#F7F8FA] border border-[#E9ECEF] rounded-full px-3 py-1">
                     {p.materiales.length} material{p.materiales.length !== 1 ? "es" : ""}
                   </span>
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-                    style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .18s" }}>
-                    <path d="M4.5 6.75L9 11.25l4.5-4.5" stroke="#9AA3B2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
                 </div>
               </button>
 
