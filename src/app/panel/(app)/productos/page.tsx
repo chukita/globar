@@ -174,7 +174,7 @@ function ProductCard({
               Mirá el video y aprobá la evaluación para activar este producto.
             </div>
             <Link
-              href="/panel/capacitacion"
+              href={`/panel/capacitacion#${producto.nombre}`}
               className="flex items-center justify-center gap-1.5 w-full font-bold text-[13.5px] bg-[#7B4FA6] text-white no-underline rounded-xl py-2.5 px-4 hover:bg-[#6B4393] transition-colors"
             >
               Ir a Capacitación

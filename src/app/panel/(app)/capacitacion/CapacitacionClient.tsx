@@ -63,7 +63,7 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
           const gateado = p.requiereEvaluacion && !p.habilitado && p.quiz;
 
           return (
-            <div key={p.id} className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden">
+            <div key={p.id} id={p.nombre} className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden">
               <button
                 onClick={() => setAbierto(open ? null : p.id)}
                 className="w-full flex flex-wrap items-center gap-x-3 gap-y-3 px-5 sm:px-6 py-5 cursor-pointer border-0 bg-transparent text-left"
