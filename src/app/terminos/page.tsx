@@ -23,10 +23,10 @@ export default function TerminosPage() {
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">1. Identidad del proveedor</h2>
             <p>
-              glob.ar es operado por <strong>Carlos Hugo Costantino</strong>, monotributista,
+              glob.ar es operado por <strong>Grupo Globaliza</strong>,
               CUIT 20-29739072-5, con domicilio en Berta Vidal de Battini 1343, San Luis,
               Provincia de San Luis, República Argentina. Contacto:{" "}
-              <a href="mailto:legal@glob.ar" className="text-[#0E6BA8] font-medium">legal@glob.ar</a>.
+              <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
             </p>
           </section>
 
