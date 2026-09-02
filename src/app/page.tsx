@@ -59,6 +59,13 @@ export default async function LandingPage() {
         /* section padding mobile */
         .section-pad { padding: 104px 32px; }
         @media (max-width: 767px) { .section-pad { padding: 72px 20px; } }
+
+        /* hero wave */
+        .hero-wave { height: 78%; min-height: 420px; }
+        @media (max-width: 767px) { .hero-wave { height: 55%; min-height: 280px; } }
+
+        /* hero section padding mobile */
+        @media (max-width: 767px) { #top { padding: 60px 20px 0 !important; } }
       `}</style>
 
       {/* ── NAV ── */}
@@ -68,7 +75,8 @@ export default async function LandingPage() {
       <section id="top" style={{ background: "#1E3AA8", padding: "96px 32px 0", paddingBottom: 0, position: "relative", overflow: "hidden" }}>
         {/* onda decorativa */}
         <svg viewBox="0 0 1440 900" preserveAspectRatio="none"
-          style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "78%", pointerEvents: "none", zIndex: 0 }}>
+          className="hero-wave"
+          style={{ position: "absolute", bottom: 0, left: 0, width: "100%", pointerEvents: "none", zIndex: 0 }}>
           <defs>
             <linearGradient id="heroWave" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stopColor="#E7CFE0" />
