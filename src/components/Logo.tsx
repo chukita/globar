@@ -3,46 +3,39 @@ interface LogoProps {
   darkText?: boolean;
 }
 
+const heights: Record<string, number> = { sm: 30, md: 36, lg: 56 };
+
 export function Logo({ size = "md", darkText = false }: LogoProps) {
-  const sizes = {
-    sm: { box: 30, boxR: 8, g: 18, dot: 4, dotPos: 5, text: 18 },
-    md: { box: 34, boxR: 9, g: 21, dot: 5, dotPos: 6, text: 20 },
-    lg: { box: 64, boxR: 16, g: 38, dot: 8, dotPos: 11, text: 38 },
-  };
-  const s = sizes[size];
+  const h = heights[size] ?? 36;
+  // darkText = página clara → el logo PNG tiene texto blanco, no se ve sobre blanco.
+  // En ese caso renderizamos el logo SVG inline (versión oscura).
+  if (darkText) {
+    return <LogoDark height={h} />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo-glob.png" alt="glob.ar" height={h} style={{ height: h, width: "auto", display: "block" }} />
+  );
+}
+
+// Logo SVG para fondos claros (texto navy + azul)
+function LogoDark({ height }: { height: number }) {
+  const scale = height / 36;
+  const boxSize  = Math.round(34 * scale);
+  const boxR     = Math.round(9  * scale);
+  const fontSize = Math.round(21 * scale);
+  const dot      = Math.round(5  * scale);
+  const dotPos   = Math.round(6  * scale);
+  const textSize = Math.round(20 * scale);
 
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="relative flex items-center justify-center bg-[#0E6BA8] flex-shrink-0"
-        style={{ width: s.box, height: s.box, borderRadius: s.boxR }}
-      >
-        <span
-          className="font-bold text-white leading-none"
-          style={{ fontFamily: "Open Sans", fontSize: s.g }}
-        >
-          g
-        </span>
-        <span
-          className="absolute rounded-full bg-[#FADADD]"
-          style={{
-            width: s.dot,
-            height: s.dot,
-            right: s.dotPos,
-            bottom: s.dotPos,
-          }}
-        />
+    <div style={{ display: "flex", alignItems: "center", gap: Math.round(10 * scale) }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E6BA8", width: boxSize, height: boxSize, borderRadius: boxR, flexShrink: 0 }}>
+        <span style={{ fontFamily: "Open Sans, sans-serif", fontWeight: 700, color: "#fff", fontSize, lineHeight: 1 }}>g</span>
+        <span style={{ position: "absolute", width: dot, height: dot, borderRadius: "50%", background: "#FADADD", right: dotPos, bottom: dotPos }} />
       </div>
-      <span
-        className="font-bold tracking-tight"
-        style={{
-          fontSize: s.text,
-          color: darkText ? "#0C2A45" : "#fff",
-          fontFamily: "Open Sans",
-          letterSpacing: "-0.03em",
-        }}
-      >
-        glob<span style={{ color: darkText ? "#0E6BA8" : "#7FB4DC" }}>.ar</span>
+      <span style={{ fontFamily: "Open Sans, sans-serif", fontWeight: 700, fontSize: textSize, color: "#0C2A45", letterSpacing: "-0.03em" }}>
+        glob<span style={{ color: "#0E6BA8" }}>.ar</span>
       </span>
     </div>
   );
