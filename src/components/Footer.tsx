@@ -5,7 +5,7 @@ import { waLink } from "@/lib/telefono";
 
 export function Footer() {
   return (
-    <div className="bg-[#0C2A45]">
+    <div className="bg-[#152C86]">
       <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-14 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
         <div>
           <Logo size="sm" />

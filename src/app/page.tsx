@@ -8,14 +8,9 @@ import { eq } from "drizzle-orm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
-import { AgendaIllustration, NumeIllustration } from "@/components/ProductIllustrations";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
-
-const PRODUCT_COLORS: Record<string, { bg: string; text: string; tag: string }> = {
-  agendaonline: { bg: "#E1EFF8", text: "#0B5A8F", tag: "Turnos & reservas" },
-  nume:         { bg: "#F0E8F8", text: "#7B4FA6", tag: "Carta digital & menú QR" },
-};
-const DEFAULT_COLOR = { bg: "#E9ECEF", text: "#5B6577", tag: "Producto digital" };
+import { SOPORTE_WHATSAPP } from "@/lib/constants";
+import { waLink } from "@/lib/telefono";
 
 export const dynamic = "force-dynamic";
 
@@ -30,247 +25,314 @@ export default async function LandingPage() {
   const comisionMeses = config.comisionMeses;
   const comisionTotalPorVenta = comisionMonto * comisionMeses;
 
+  const agendaonline = lista.find(p => p.nombre === "agendaonline");
+  const nume         = lista.find(p => p.nombre === "nume");
+
   return (
-    <div className="min-h-screen bg-[#F7F8FA] text-[#0C2A45]"
->
-      {/* Wave background pattern */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <svg key={i} style={{ position: "absolute", left: 0, width: "100%", top: i * 160, opacity: 0.5 }}
-            viewBox="0 0 1440 160" preserveAspectRatio="none" height="160">
-            <path d="M0,60 C200,100 400,20 600,60 C800,100 1000,30 1200,60 C1350,82 1400,70 1440,65" stroke="#b0b8cc" strokeWidth="1.5" fill="none"/>
-            <path d="M0,90 C180,120 380,50 600,90 C820,130 1020,55 1240,90 C1360,108 1410,95 1440,92" stroke="#b0b8cc" strokeWidth="1" fill="none"/>
-            <path d="M0,120 C220,148 440,80 660,120 C880,160 1080,88 1300,120 C1380,135 1420,128 1440,124" stroke="#b0b8cc" strokeWidth="0.8" fill="none"/>
-          </svg>
-        ))}
-      </div>
+    <div style={{ fontFamily: "var(--font-figtree, 'Open Sans', system-ui, sans-serif)", minHeight: "100vh", background: "#fff", color: "#132A6E" }}>
+      <style>{`
+        html { scroll-behavior: smooth; }
+        [id] { scroll-margin-top: 80px; }
+        @keyframes floaty {
+          0%, 100% { transform: translateY(0); }
+          50%       { transform: translateY(-10px); }
+        }
+        @media (prefers-reduced-motion: reduce) { .card-float { animation: none !important; } }
 
-      <div className="relative" style={{ zIndex: 1 }}>
-      <PublicNav />
+        /* hero responsive */
+        .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 64px; align-items: center; }
+        @media (max-width: 1023px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
 
-      {/* Hero */}
-      <div className="max-w-[1180px] mx-auto mt-3.5 px-4 sm:px-8">
-        <div className="bg-[#0E6BA8] rounded-[28px] px-6 py-10 md:px-10 md:py-16 lg:px-16 lg:py-[76px] relative overflow-hidden">
-          <div className="absolute -top-[90px] -right-[50px] w-[360px] h-[360px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(250,218,221,.35),transparent 70%)" }} />
-          <div className="absolute -bottom-[120px] -left-[80px] w-[300px] h-[300px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(255,255,255,.16),transparent 70%)" }} />
+        /* como-funciona grid */
+        .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 52px; }
+        @media (max-width: 1023px) { .steps-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 639px)  { .steps-grid { grid-template-columns: 1fr; } }
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-[1.15fr_.85fr] gap-8 lg:gap-12 items-center">
+        /* productos grid */
+        .productos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 52px; }
+        @media (max-width: 767px) { .productos-grid { grid-template-columns: 1fr; } }
+
+        /* contacto grid */
+        .contacto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+        @media (max-width: 767px) { .contacto-grid { grid-template-columns: 1fr; gap: 40px; } }
+
+        /* section padding mobile */
+        .section-pad { padding: 104px 32px; }
+        @media (max-width: 767px) { .section-pad { padding: 72px 20px; } }
+      `}</style>
+
+      {/* ── NAV ── */}
+      <PublicNav variant="dark" />
+
+      {/* ── HERO ── */}
+      <section id="top" style={{ background: "#1E3AA8", padding: "96px 32px 0", paddingBottom: 0, position: "relative", overflow: "hidden" }}>
+        {/* onda decorativa */}
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="none"
+          style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "78%", pointerEvents: "none", zIndex: 0 }}>
+          <defs>
+            <linearGradient id="heroWave" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#E7CFE0" />
+              <stop offset="26%"  stopColor="#B3A6E2" />
+              <stop offset="72%"  stopColor="#3B4FB8" />
+              <stop offset="100%" stopColor="#1E3AA8" />
+            </linearGradient>
+          </defs>
+          <path d="M0,300 C240,180 380,470 720,430 C1040,392 1180,60 1440,120 L1440,900 L0,900 Z" fill="url(#heroWave)" />
+        </svg>
+
+        <div style={{ maxWidth: 1180, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div className="hero-grid" style={{ paddingBottom: 120 }}>
+            {/* columna izquierda */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/30"
-                style={{ background: "rgba(255,255,255,.16)" }}>
-                <span className="w-[7px] h-[7px] rounded-full bg-[#FADADD]" />
-                <span className="text-[13px] font-semibold text-white">Programa de revendedores</span>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9FC6F0", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "7px 14px" }}>
+                Programa de revendedores
               </div>
-              <h1 className="font-extrabold text-[34px] md:text-[44px] lg:text-[58px] leading-[1.08] lg:leading-[1.04] text-white mt-5 mb-0"
-                style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
+              <h1 style={{ fontSize: "clamp(40px, 5vw, 60px)", fontWeight: 800, lineHeight: 1.03, letterSpacing: "-0.035em", color: "#fff", margin: "20px 0 0", textWrap: "balance" } as React.CSSProperties}>
                 Vendé herramientas digitales y cobrá comisiones{" "}
-                <span className="text-[#FADADD]">sin inversión inicial</span>.
+                <span style={{ color: "#E7CFE0" }}>sin inversión inicial.</span>
               </h1>
-              <div className="flex flex-wrap gap-3.5 mt-9">
-                <Link href="/registro"
-                  className="font-semibold text-base bg-white text-[#0E6BA8] rounded-xl px-6 py-[15px]">
+              <p style={{ fontSize: 19, lineHeight: 1.55, color: "rgba(255,255,255,0.75)", maxWidth: 520, marginTop: 20, marginBottom: 0 }}>
+                Plataforma argentina de reventa de productos digitales SaaS. Registrate, ofrecé los productos y cobrá comisiones recurrentes durante cuatro meses por cada cliente.
+              </p>
+              <div style={{ display: "flex", gap: 14, marginTop: 38, flexWrap: "wrap" }}>
+                <Link href="/registro" style={{ fontWeight: 700, fontSize: 16, background: "#fff", color: "#1E3AA8", borderRadius: 999, padding: "16px 28px", textDecoration: "none" }}>
                   Convertite en revendedor
                 </Link>
-                <Link href="/#productos"
-                  className="font-semibold text-base text-white rounded-xl px-6 py-[15px] border border-white/30"
-                  style={{ background: "rgba(255,255,255,.12)" }}>
+                <Link href="#productos" style={{ fontWeight: 700, fontSize: 16, border: "1px solid rgba(255,255,255,0.38)", color: "#fff", borderRadius: 999, padding: "16px 28px", textDecoration: "none" }}>
                   Conocé nuestros productos
                 </Link>
               </div>
             </div>
 
-            {/* Phone mockup */}
-            <div className="relative flex justify-center items-end min-h-[420px]">
-              <div className="absolute bottom-0 w-[300px] h-[300px] rounded-full"
-                style={{ background: "radial-gradient(circle,rgba(255,255,255,.22),transparent 68%)" }} />
-              <div className="absolute top-3.5 -left-1.5 z-10 bg-white rounded-[14px] px-4 py-3 flex items-center gap-3"
-                style={{ boxShadow: "0 14px 30px rgba(8,30,48,.24)" }}>
-                <div className="w-[34px] h-[34px] rounded-[9px] bg-[#E1EFF8] flex items-center justify-center">
-                  <span className="w-[11px] h-[11px] rounded-full bg-[#0E6BA8]" />
-                </div>
-                <div>
-                  <div className="text-[10.5px] text-[#5B6577] font-semibold uppercase tracking-[.04em]">Comisión / venta</div>
-                  <div className="font-extrabold text-[18px] text-[#0C2A45] leading-tight">
-                    {fmtARS(comisionTotalPorVenta)}
+            {/* columna derecha — tarjeta flotante agendaonline */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div className="card-float"
+                style={{ background: "#fff", borderRadius: 26, padding: 22, boxShadow: "0 40px 80px -30px rgba(9,18,60,0.55)", color: "#132A6E", animation: "floaty 7s ease-in-out infinite", maxWidth: 340, width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "#7C87B5", marginBottom: 4 }}>Comisión / venta</div>
+                    <div style={{ fontSize: 38, fontWeight: 800, lineHeight: 1 }}>{fmtARS(comisionTotalPorVenta)}</div>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, background: "#E6F1F8", color: "#0E6BA0", borderRadius: 999, padding: "5px 12px" }}>
+                    Venta registrada
                   </div>
                 </div>
-              </div>
-              <div className="absolute bottom-10 -right-1.5 z-10 bg-[#0C2A45] rounded-[13px] px-[15px] py-[11px] flex items-center gap-2.5"
-                style={{ boxShadow: "0 14px 30px rgba(8,30,48,.3)" }}>
-                <span className="w-2 h-2 rounded-full bg-[#FADADD]" />
-                <span className="text-[12.5px] text-white font-semibold">Venta registrada</span>
-              </div>
-              <div className="relative z-[2] w-[248px] h-[404px] bg-[#0C2A45] rounded-[34px] p-2.5"
-                style={{ boxShadow: "0 30px 60px rgba(8,30,48,.4)" }}>
-                <div className="w-full h-full bg-[#F7F8FA] rounded-[26px] overflow-hidden flex flex-col">
-                  <div className="bg-[#0E6BA8] px-4 py-4 relative">
-                    <div className="absolute left-1/2 -translate-x-1/2 top-3.5 w-14 h-[5px] rounded-full bg-white/40" />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="font-bold text-white text-sm">agendaonline</span>
-                      <span className="w-[26px] h-[26px] rounded-full bg-white/20" />
-                    </div>
-                    <div className="text-[#DCEAF4] text-[10.5px] mt-2.5 font-semibold tracking-[.04em]">HOY · MARTES 21</div>
+                <div style={{ background: "#F4F5FB", borderRadius: 18, padding: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <span style={{ fontWeight: 700, fontSize: 15 }}>agendaonline</span>
+                    <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, color: "#7C87B5" }}>HOY · MARTES 21</span>
                   </div>
-                  <div className="p-3.5 flex flex-col gap-2.5">
-                    {[
-                      { time: "09", name: "Corte y peinado", sub: "Lucía Fernández · 45 min", bg: "#E1EFF8", fg: "#0B5A8F" },
-                      { time: "11", name: "Consulta inicial", sub: "Diego Sosa · 30 min",      bg: "#FCE6E9", fg: "#9B4A57" },
-                      { time: "14", name: "Control mensual",  sub: "Ana Torres · 20 min",      bg: "#E1EFF8", fg: "#0B5A8F" },
-                    ].map((appt) => (
-                      <div key={appt.time} className="flex items-center gap-2.5 bg-white border border-[#E9ECEF] rounded-xl p-3">
-                        <div className="w-[38px] h-[38px] rounded-[9px] flex-shrink-0 flex items-center justify-center font-bold text-xs"
-                          style={{ background: appt.bg, color: appt.fg }}>{appt.time}</div>
-                        <div>
-                          <div className="text-[11.5px] font-bold text-[#0C2A45]">{appt.name}</div>
-                          <div className="text-[10px] text-[#9AA3B2]">{appt.sub}</div>
-                        </div>
+                  {[
+                    { hora: "09:00", nombre: "Corte y peinado",  sub: "Lucía Fernández · 45 min" },
+                    { hora: "11:00", nombre: "Consulta inicial",  sub: "Diego Sosa · 30 min" },
+                    { hora: "14:00", nombre: "Control mensual",   sub: "Ana Torres · 20 min" },
+                  ].map((t) => (
+                    <div key={t.hora} style={{ background: "#fff", borderRadius: 12, padding: "12px 14px", marginBottom: 8, display: "flex", gap: 10, alignItems: "center" }}>
+                      <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 14, color: "#0E6BA0", fontWeight: 500, flexShrink: 0 }}>{t.hora}</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{t.nombre}</div>
+                        <div style={{ fontSize: 12, color: "#7C87B5" }}>{t.sub}</div>
                       </div>
-                    ))}
-                    <div className="mt-1.5 bg-[#0E6BA8] rounded-xl p-3 text-center font-bold text-white text-[12.5px]">
-                      + Nuevo turno
                     </div>
+                  ))}
+                  <div style={{ border: "1px dashed #C6D3E8", borderRadius: 12, padding: "12px 14px", textAlign: "center", fontSize: 13, fontWeight: 600, color: "#0E6BA0", marginTop: 4 }}>
+                    + Nuevo turno
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Cómo funciona */}
-      <div id="como-funciona" className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 font-semibold text-[13px] uppercase tracking-[.12em] text-[#0E6BA8]">
-            <span className="w-[7px] h-[7px] rounded-full bg-[#E7A9B3]" />
+      {/* ── CÓMO FUNCIONA ── */}
+      <section id="como-funciona" className="section-pad" style={{ background: "#F6F6FA", color: "#132A6E" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>
             Cómo funciona
           </div>
-          <h2 className="font-extrabold text-[28px] sm:text-[38px] mt-2.5" style={{ letterSpacing: "-0.025em" }}>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 800, letterSpacing: "-0.035em", margin: 0 }}>
             Empezá a cobrar en tres pasos
           </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-11">
-          {STEPS.map((s) => (
-            <div key={s.n} className="bg-white border border-[#E9ECEF] rounded-[20px] p-[30px]">
-              <div className="w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold text-[15px]"
-                style={{ background: s.tint, color: s.accent }}>{s.n}</div>
-              <h3 className="font-semibold text-[21px] mt-5 mb-0" style={{ letterSpacing: "-0.02em" }}>{s.title}</h3>
-              <p className="text-[15px] text-[#5B6577] leading-[1.55] mt-2.5 mb-0">
-                {s.n === "03"
-                  ? `Cada suscripción se registra sola y cobrás tu comisión en ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""} mensuales mientras el cliente siga activo.`
-                  : s.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Productos */}
-      <div id="productos" className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
-        <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8] mb-6">
-          Productos disponibles
-        </div>
-        {lista.length === 0 ? (
-          <p className="text-[#9AA3B2]">Próximamente.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {lista.map((p) => {
-              const c = PRODUCT_COLORS[p.nombre] ?? DEFAULT_COLOR;
-              const precio = parseFloat(String(p.precioMensual));
-              return (
-                <div key={p.id} className="bg-white border border-[#E9ECEF] rounded-[22px] p-[30px]">
-                  <div className="aspect-[560/180] rounded-[14px] overflow-hidden">
-                    {p.nombre === "nume" ? <NumeIllustration /> : <AgendaIllustration />}
-                  </div>
-                  <div className="flex items-center justify-between mt-5">
-                    <span className="font-bold text-2xl" style={{ letterSpacing: "-0.02em" }}>{p.nombre}</span>
-                    <span className="text-xs font-semibold rounded-full px-3 py-1.5"
-                      style={{ background: c.bg, color: c.text }}>{c.tag}</span>
-                  </div>
-                  <div className="text-[13px] text-[#9AA3B2] mt-0.5">
-                    <a href={`https://${p.dominio}`} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#0B5A8F]">
-                      {p.dominio}
-                    </a>
-                  </div>
-                  <p className="text-[15px] text-[#5B6577] leading-[1.55] mt-3.5 mb-5">{p.descripcion}</p>
-                  <div className="flex justify-between items-end border-t border-[#EEF0F2] pt-4">
-                    <div>
-                      <div className="text-xs text-[#9AA3B2]">Suscripción</div>
-                      <div className="font-bold text-2xl">Desde {fmtARS(precio)}<span className="text-[13px] text-[#9AA3B2] font-medium">/mes</span></div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-[#9AA3B2]">Tu comisión total</div>
-                      <div className="font-bold text-2xl text-[#0B5A8F]">{fmtARS(comisionTotalPorVenta)}</div>
-                      <div className="text-[11px] text-[#9AA3B2]">{fmtARS(comisionMonto)}/mes × {comisionMeses} cuota{comisionMeses !== 1 ? "s" : ""}</div>
-                    </div>
-                  </div>
-                  <a href={`https://${p.dominio}`} target="_blank" rel="noopener noreferrer"
-                    className="mt-4 flex items-center justify-center gap-1.5 border border-[#DCE0E5] rounded-xl py-2.5 text-[13.5px] font-semibold text-[#0C2A45] hover:bg-[#F7F8FA] transition-colors">
-                    Ver {p.nombre}
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              );
-            })}
+          <div className="steps-grid">
+            {STEPS.map((s) => (
+              <div key={s.n} style={{ background: "#fff", borderRadius: 22, padding: "34px 30px", border: "1px solid #E3E5F2" }}>
+                <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 14, color: "#A8AECD", marginBottom: 12 }}>{s.n}</div>
+                <div style={{ width: 44, height: 5, borderRadius: 99, background: "linear-gradient(90deg,#1E3AA8,#B3A6E2)", marginBottom: 20 }} />
+                <h3 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{s.title}</h3>
+                <p style={{ fontSize: 16, lineHeight: 1.6, color: "#5B648E", margin: 0 }}>
+                  {s.n === "03"
+                    ? `Cada suscripción se registra sola y cobrás tu comisión en ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""} mensuales mientras el cliente siga activo.`
+                    : s.desc}
+                </p>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
 
-      {/* Calculadora */}
+      {/* ── PRODUCTOS ── */}
+      <section id="productos" className="section-pad" style={{ background: "#fff" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>
+            Productos disponibles
+          </div>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 800, letterSpacing: "-0.035em", margin: 0 }}>
+            Dos productos, la misma comisión
+          </h2>
+          <div className="productos-grid">
+            {/* agendaonline */}
+            {agendaonline && (
+              <ProductCard
+                gradiente="linear-gradient(160deg,#1E3AA8 40%,#6A6DC7 100%)"
+                eyebrow="Turnos online · Argentina"
+                titulo="Tu agenda online, trabaja por vos."
+                bajada="Reserva de turnos para peluquerías, barberías, centros de estética y consultorios."
+                decoracion={
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18 }}>
+                    {["10:00", "10:50", "11:40", "15:00", "16:30"].map((h, i) => (
+                      <span key={h} style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 10, borderRadius: 8, padding: "4px 10px", background: i === 1 ? "#E7CFE0" : "rgba(255,255,255,0.14)", color: i === 1 ? "#1E3AA8" : "rgba(255,255,255,0.9)", fontWeight: 500 }}>{h}</span>
+                    ))}
+                  </div>
+                }
+                nombre="agendaonline"
+                tag="Turnos & reservas"
+                dominio={agendaonline.dominio}
+                descripcion={agendaonline.descripcion ?? ""}
+                precio={parseFloat(String(agendaonline.precioMensual))}
+                comisionMonto={comisionMonto}
+                comisionMeses={comisionMeses}
+                comisionTotal={comisionTotalPorVenta}
+              />
+            )}
+            {/* nume */}
+            {nume && (
+              <ProductCard
+                gradiente="linear-gradient(160deg,#0E6BA0 35%,#B3A6E2 100%)"
+                eyebrow="Nuevo · Disponible para ARG"
+                titulo="Carta digital con QR y reservas."
+                bajada="Menú y precios en tiempo real, sin reimprimir nada."
+                decoracion={
+                  <div style={{ background: "rgba(255,255,255,0.14)", borderRadius: 14, padding: 16, marginTop: 18 }}>
+                    <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11, color: "rgba(255,255,255,0.75)", marginBottom: 8 }}>BODEGÓN N · MESA 12</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Menú ejecutivo $7.500</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>Entrada + principal + bebida</div>
+                  </div>
+                }
+                nombre="nume"
+                tag="Carta digital & menú QR"
+                dominio={nume.dominio}
+                descripcion={nume.descripcion ?? ""}
+                precio={parseFloat(String(nume.precioMensual))}
+                comisionMonto={comisionMonto}
+                comisionMeses={comisionMeses}
+                comisionTotal={comisionTotalPorVenta}
+              />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CALCULADORA ── */}
       <LandingCalculator
         productos={lista.map(p => ({ nombre: p.nombre }))}
         comisionMonto={comisionMonto}
         comisionMeses={comisionMeses}
       />
 
-      {/* CTA final */}
-      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-[56px] sm:py-[84px]">
-        <div className="bg-[#0E6BA8] rounded-[28px] px-6 py-10 md:p-16 text-center relative overflow-hidden">
-          <div className="absolute -top-[80px] -left-[40px] w-[280px] h-[280px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(250,218,221,.3),transparent 70%)" }} />
-          <div className="relative">
-            <h2 className="font-extrabold text-[28px] sm:text-[36px] md:text-[44px] text-white m-0" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
-              Tu código de ventas te espera
-            </h2>
-            <p className="text-[17px] text-[#DCEAF4] max-w-[480px] mx-auto mt-4 mb-0 leading-relaxed">
-              Registrate gratis hoy y empezá a generar ingresos recurrentes esta misma semana.
-            </p>
-            <div className="flex gap-3.5 justify-center mt-8 flex-wrap">
-              <Link href="/registro"
-                className="font-semibold text-base bg-white text-[#0E6BA8] rounded-xl px-7 py-4">
-                Crear mi cuenta gratis
-              </Link>
-              <Link href="/login"
-                className="font-semibold text-base text-white rounded-xl px-[29px] border border-white/50"
-                style={{ background: "rgba(255,255,255,.12)", paddingTop: 15, paddingBottom: 15 }}>
-                Ya tengo cuenta
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Contacto */}
-      <div id="contacto" className="max-w-[1180px] mx-auto px-4 sm:px-8 pb-[56px] sm:pb-[84px]">
-        <div className="text-center mb-8">
-          <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8] mb-2.5">
-            Contacto
-          </div>
-          <h2 className="font-extrabold text-[28px] sm:text-[34px] m-0" style={{ letterSpacing: "-0.025em" }}>
-            ¿Tenés dudas? Escribinos
+      {/* ── CTA FINAL ── */}
+      <section className="section-pad" style={{ background: "#F6F6FA" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
+          <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
+            Tu código de ventas te espera
           </h2>
-          <p className="text-[15px] text-[#5B6577] mt-2.5 mb-0">
-            Te respondemos a la brevedad.
+          <p style={{ fontSize: 18, color: "#5B648E", lineHeight: 1.6, margin: "0 0 36px" }}>
+            Registrate gratis hoy y empezá a generar ingresos recurrentes esta misma semana.
           </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/registro" style={{ fontWeight: 700, fontSize: 16, background: "#1E3AA8", color: "#fff", borderRadius: 999, padding: "16px 28px", textDecoration: "none" }}>
+              Crear mi cuenta gratis
+            </Link>
+            <Link href="/login" style={{ fontWeight: 700, fontSize: 16, border: "1px solid #C6D3E8", color: "#1E3AA8", borderRadius: 999, padding: "16px 28px", textDecoration: "none" }}>
+              Ya tengo cuenta
+            </Link>
+          </div>
         </div>
-        <ContactoForm />
-      </div>
+      </section>
+
+      {/* ── CONTACTO ── */}
+      <section id="contacto" className="section-pad" style={{ background: "#fff" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="contacto-grid">
+            <div>
+              <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>Contacto</div>
+              <h2 style={{ fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px" }}>¿Tenés dudas? Escribinos</h2>
+              <p style={{ fontSize: 16, color: "#5B648E", lineHeight: 1.6, margin: "0 0 28px" }}>Te respondemos a la brevedad.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <a href="mailto:hola@glob.ar" style={{ color: "#0E6BA0", fontWeight: 600, fontSize: 15, textDecoration: "none" }}>hola@glob.ar</a>
+                <a href={waLink(SOPORTE_WHATSAPP)} target="_blank" rel="noreferrer" style={{ color: "#0E6BA0", fontWeight: 600, fontSize: 15, textDecoration: "none" }}>
+                  WhatsApp +54 9 11 7280 5803
+                </a>
+              </div>
+            </div>
+            <ContactoForm />
+          </div>
+        </div>
+      </section>
 
       <Footer />
+      <FloatingWhatsApp />
+    </div>
+  );
+}
+
+function ProductCard({
+  gradiente, eyebrow, titulo, bajada, decoracion,
+  nombre, tag, dominio, descripcion, precio,
+  comisionMonto, comisionMeses, comisionTotal,
+}: {
+  gradiente: string; eyebrow: string; titulo: string; bajada: string;
+  decoracion: React.ReactNode; nombre: string; tag: string; dominio: string;
+  descripcion: string; precio: number; comisionMonto: number; comisionMeses: number; comisionTotal: number;
+}) {
+  return (
+    <div style={{ border: "1px solid #E3E5F2", borderRadius: 26, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* cabecera con gradiente */}
+      <div style={{ background: gradiente, padding: "34px 30px", color: "#fff" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: eyebrow.startsWith("Nuevo") ? "#E7CFE0" : "#9FC6F0", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          {eyebrow}
+        </div>
+        <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 10 }}>{titulo}</div>
+        <div style={{ fontSize: 15, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{bajada}</div>
+        {decoracion}
       </div>
 
-      <FloatingWhatsApp />
+      {/* cuerpo */}
+      <div style={{ padding: 30, display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "#132A6E" }}>{nombre}</span>
+          <span style={{ fontSize: 15, color: "#7C87B5" }}>{tag}</span>
+        </div>
+        <a href={`https://${dominio}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: "#0E6BA0", textDecoration: "none" }}>{dominio}</a>
+        <p style={{ fontSize: 16, lineHeight: 1.6, color: "#5B648E", margin: 0 }}>{descripcion}</p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ background: "#F6F6FA", borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#7C87B5", marginBottom: 4 }}>Suscripción</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#132A6E" }}>Desde {fmtARS(precio)}/mes</div>
+          </div>
+          <div style={{ background: "#EEF0FF", borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#7C87B5", marginBottom: 4 }}>Tu comisión total</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#1E3AA8" }}>{fmtARS(comisionTotal)}</div>
+            <div style={{ fontSize: 11, color: "#7C87B5", marginTop: 2 }}>{fmtARS(comisionMonto)}/mes × {comisionMeses} cuotas</div>
+          </div>
+        </div>
+
+        <a href={`https://${dominio}`} target="_blank" rel="noopener noreferrer"
+          style={{ fontWeight: 700, fontSize: 14, background: "#1E3AA8", color: "#fff", borderRadius: 999, padding: 15, textAlign: "center", textDecoration: "none", marginTop: "auto" }}>
+          Ver {nombre} →
+        </a>
+      </div>
     </div>
   );
 }

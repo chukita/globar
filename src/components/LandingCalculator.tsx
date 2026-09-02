@@ -19,65 +19,95 @@ export function LandingCalculator({ productos, comisionMonto, comisionMeses }: {
   function dec(nombre: string) { setCounts(c => ({ ...c, [nombre]: Math.max(0, c[nombre] - 1) })); }
 
   const totalVentas = Object.values(counts).reduce((a, b) => a + b, 0);
-
   const comisionMensual = totalVentas * comisionMonto;
-  const comisionTotal = comisionMensual * comisionMeses;
+  const comisionTotal   = comisionMensual * comisionMeses;
 
   return (
-    <div id="calculadora" className="max-w-[1180px] mx-auto px-4 sm:px-8 pt-[56px] sm:pt-[84px]">
-      <div className="bg-white border border-[#E9ECEF] rounded-[28px] p-6 sm:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div>
-          <div className="text-[13px] font-semibold uppercase tracking-[.12em] text-[#0E6BA8]">Calculadora</div>
-          <h2 className="font-extrabold text-[26px] sm:text-[34px] mt-2.5 mb-2" style={{ letterSpacing: "-0.025em" }}>¿Cuánto podés ganar?</h2>
-          <p className="text-[15px] text-[#5B6577] leading-[1.55] mb-7">
-            Ajustá cuántas ventas hacés este mes y mirá tus comisiones a lo largo de {comisionMeses} meses.
-          </p>
-          <div className="flex flex-col gap-4">
+    <section id="calculadora" style={{ background: "#1E3AA8", padding: "104px 32px", overflow: "hidden", position: "relative" }}>
+      {/* onda superior decorativa */}
+      <svg viewBox="0 0 1440 400" preserveAspectRatio="none"
+        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 340, opacity: 0.5, pointerEvents: "none" }}>
+        <defs>
+          <linearGradient id="waveCalc" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#E7CFE0" />
+            <stop offset="100%" stopColor="#1E3AA8" />
+          </linearGradient>
+        </defs>
+        <path d="M0,0 L1440,0 L1440,120 C1120,300 980,20 660,140 C380,244 220,60 0,180 Z" fill="url(#waveCalc)" />
+      </svg>
+
+      <div style={{ maxWidth: 1180, margin: "0 auto", position: "relative" }}>
+        <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#9FC6F0", marginBottom: 10 }}>
+          Calculadora
+        </div>
+        <h2 style={{ fontSize: 46, fontWeight: 800, letterSpacing: "-0.035em", color: "#fff", margin: "0 0 12px" }}>
+          ¿Cuánto podés ganar?
+        </h2>
+        <p style={{ fontSize: 18, color: "rgba(255,255,255,0.75)", lineHeight: 1.55, maxWidth: 560, margin: "0 0 44px" }}>
+          Ajustá cuántas ventas hacés este mes y mirá tus comisiones a lo largo de {comisionMeses} meses.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 24 }}
+          className="grid-calc">
+          {/* controles */}
+          <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 24, padding: 30, display: "flex", flexDirection: "column", gap: 18 }}>
             {productos.map((p) => (
-              <div key={p.nombre} className="flex items-center justify-between bg-[#F7F8FA] rounded-[14px] px-[18px] py-4">
+              <div key={p.nombre} style={{ background: "rgba(255,255,255,0.07)", borderRadius: 18, padding: "20px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <div className="font-semibold text-base">{p.nombre}</div>
-                  <div className="text-[12.5px] text-[#9AA3B2]">
+                  <div style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{p.nombre}</div>
+                  <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12.5, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
                     comisión: {fmtARS(comisionMonto)}/mes × {comisionMeses} cuotas
                   </div>
                 </div>
-                <div className="flex items-center gap-3.5">
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <button onClick={() => dec(p.nombre)}
-                    className="w-[38px] h-[38px] rounded-[10px] border border-[#DCE0E5] bg-white text-[20px] text-[#0C2A45] cursor-pointer leading-none">–</button>
-                  <span className="font-bold text-[22px] min-w-[28px] text-center">{counts[p.nombre]}</span>
+                    style={{ width: 38, height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.35)", background: "transparent", color: "#fff", fontSize: 20, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    –
+                  </button>
+                  <span style={{ fontWeight: 800, fontSize: 24, color: "#fff", minWidth: 28, textAlign: "center" }}>
+                    {counts[p.nombre]}
+                  </span>
                   <button onClick={() => inc(p.nombre)}
-                    className="w-[38px] h-[38px] rounded-[10px] border-none bg-[#0E6BA8] text-white text-[20px] cursor-pointer leading-none">+</button>
+                    style={{ width: 38, height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 20, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    +
+                  </button>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="bg-[#0C2A45] rounded-[22px] p-[34px] relative overflow-hidden">
-          <div className="absolute -bottom-[70px] -left-[40px] w-[240px] h-[240px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(14,107,168,.4),transparent 70%)" }} />
-          <div className="absolute -top-[50px] -right-[40px] w-[180px] h-[180px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(250,218,221,.18),transparent 70%)" }} />
-          <div className="relative">
-            <div className="text-[13px] text-[#9DB0C4] font-semibold">
-              Con {totalVentas} venta{totalVentas !== 1 ? "s" : ""} este mes cobrás
-            </div>
-            <div className="font-extrabold text-[38px] sm:text-[54px] text-white leading-none mt-2.5" style={{ letterSpacing: "-0.03em" }}>
-              {fmtARS(comisionTotal)}
-            </div>
-            <div className="text-sm text-[#BBD9EE] mt-1.5">en total, a lo largo de {comisionMeses} meses</div>
-            <div className="h-px bg-white/10 my-5" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-[#A9B4C2]">Por mes durante {comisionMeses} meses</span>
-              <span className="font-bold text-[22px] text-white">{fmtARS(comisionMensual)}</span>
-            </div>
-            <div className="mt-4 text-[12.5px] text-[#9DB0C4] leading-relaxed">
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: "rgba(255,255,255,0.6)", margin: 0 }}>
               Cada venta genera {comisionMeses} cuotas de comisión de {fmtARS(comisionMonto)} cada una.
               Se acreditan mientras el cliente mantenga su suscripción activa.
+            </p>
+          </div>
+
+          {/* resultado */}
+          <div style={{ background: "#fff", borderRadius: 24, padding: "34px 30px", color: "#132A6E" }}>
+            <div style={{ fontSize: 15, color: "#5B648E", marginBottom: 8 }}>
+              Con {totalVentas} venta{totalVentas !== 1 ? "s" : ""} este mes cobrás
+            </div>
+            <div style={{ fontSize: 56, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1 }}>
+              {fmtARS(comisionTotal)}
+            </div>
+            <div style={{ fontSize: 15, color: "#7C87B5", marginTop: 8 }}>
+              en total, a lo largo de {comisionMeses} meses
+            </div>
+            <div style={{ height: 1, background: "#E3E5F2", margin: "24px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 15, color: "#5B648E" }}>Por mes durante {comisionMeses} meses</span>
+              <span style={{ fontWeight: 800, fontSize: 24, color: "#132A6E" }}>{fmtARS(comisionMensual)}</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <style>{`
+        @media (max-width: 1023px) {
+          .grid-calc { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 767px) {
+          #calculadora { padding: 72px 20px !important; }
+        }
+      `}</style>
+    </section>
   );
 }
