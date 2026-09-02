@@ -1,12 +1,13 @@
 interface LogoProps {
   size?: "sm" | "md" | "lg";
+  height?: number;
   darkText?: boolean;
 }
 
 const heights: Record<string, number> = { sm: 30, md: 36, lg: 56 };
 
-export function Logo({ size = "md", darkText = false }: LogoProps) {
-  const h = heights[size] ?? 36;
+export function Logo({ size = "md", height, darkText = false }: LogoProps) {
+  const h = height ?? heights[size] ?? 36;
   // darkText = página clara → el logo PNG tiene texto blanco, no se ve sobre blanco.
   // En ese caso renderizamos el logo SVG inline (versión oscura).
   if (darkText) {

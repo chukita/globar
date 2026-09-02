@@ -8,7 +8,7 @@ export function Footer() {
     <div className="bg-[#152C86]">
       <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-14 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
         <div>
-          <Logo size="sm" />
+          <Logo height={40} />
           <p className="text-[13.5px] text-[#8595A8] leading-relaxed mt-4 max-w-[240px]">
             Plataforma argentina de reventa de productos digitales SaaS.
           </p>
