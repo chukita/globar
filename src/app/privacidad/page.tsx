@@ -27,7 +27,7 @@ export default function PrivacidadPage() {
               <strong>Carlos Hugo Costantino</strong>, monotributista, CUIT 20-29739072-5,
               con domicilio en Berta Vidal de Battini 1343, San Luis, Provincia de San Luis,
               República Argentina. Contacto:{" "}
-              <a href="mailto:legal@glob.ar" className="text-[#0E6BA8] font-medium">legal@glob.ar</a>.
+              <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
             </p>
           </section>
 
@@ -98,7 +98,7 @@ export default function PrivacidadPage() {
               de la baja para cumplir obligaciones legales y contables (por ejemplo,
               comisiones ya generadas). Podés pedir la eliminación anticipada de tus datos
               escribiendo a{" "}
-              <a href="mailto:legal@glob.ar" className="text-[#0E6BA8] font-medium">legal@glob.ar</a>.
+              <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
             </p>
           </section>
 
@@ -113,7 +113,7 @@ export default function PrivacidadPage() {
             </ul>
             <p className="mt-3">
               Para ejercerlos escribinos a{" "}
-              <a href="mailto:legal@glob.ar" className="text-[#0E6BA8] font-medium">legal@glob.ar</a>.
+              <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
               El primer pedido en un período de 6 meses es gratuito (art. 14 Ley 25.326).
             </p>
             <p className="mt-3">
