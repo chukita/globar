@@ -22,7 +22,7 @@ export function PublicNav({ activeLink, variant = "light" }: PublicNavProps) {
         : { background: "rgba(247,248,250,0.9)", backdropFilter: "blur(8px)", borderBottom: "1px solid rgba(233,236,239,0.6)" }
       }
     >
-      <div className="flex items-center max-w-[1180px] mx-auto px-4 sm:px-8 py-3" style={{ gap: 40 }}>
+      <div className="flex items-center max-w-[1180px] mx-auto w-full px-4 lg:px-0 py-3" style={{ gap: 40 }}>
         <Link href="/" onClick={() => setOpen(false)} style={{ display: "flex", flexShrink: 0 }}>
           <Logo height={50} darkText={!dark} />
         </Link>

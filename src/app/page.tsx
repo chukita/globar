@@ -57,22 +57,25 @@ export default async function LandingPage() {
         @media (max-width: 767px) { .contacto-grid { grid-template-columns: 1fr; gap: 40px; } }
 
         /* section padding mobile */
-        .section-pad { padding: 104px 32px; }
-        @media (max-width: 767px) { .section-pad { padding: 72px 20px; } }
+        .section-pad { padding: 104px 0; }
+        @media (max-width: 767px) { .section-pad { padding: 72px 0; } }
+        .section-inner { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+        @media (max-width: 767px) { .section-inner { padding: 0 20px; } }
 
         /* hero wave */
         .hero-wave { height: 78%; min-height: 420px; }
         @media (max-width: 767px) { .hero-wave { height: 55%; min-height: 280px; } }
 
         /* hero section padding mobile */
-        @media (max-width: 767px) { #top { padding: 60px 20px 0 !important; } }
+        @media (max-width: 767px) { #top { padding-top: 60px !important; } }
+        @media (max-width: 767px) { #top .hero-inner { padding: 0 20px !important; } }
       `}</style>
 
       {/* ── NAV ── */}
       <PublicNav variant="dark" />
 
       {/* ── HERO ── */}
-      <section id="top" style={{ background: "#1E3AA8", padding: "96px 32px 0", paddingBottom: 0, position: "relative", overflow: "hidden" }}>
+      <section id="top" style={{ background: "#1E3AA8", padding: "96px 0 0", position: "relative", overflow: "hidden" }}>
         {/* onda decorativa */}
         <svg viewBox="0 0 1440 900" preserveAspectRatio="none"
           className="hero-wave"
@@ -88,7 +91,7 @@ export default async function LandingPage() {
           <path d="M0,300 C240,180 380,470 720,430 C1040,392 1180,60 1440,120 L1440,900 L0,900 Z" fill="url(#heroWave)" />
         </svg>
 
-        <div style={{ maxWidth: 1180, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div className="section-inner hero-inner" style={{ position: "relative", zIndex: 1 }}>
           <div className="hero-grid" style={{ paddingBottom: 120 }}>
             {/* columna izquierda */}
             <div>
@@ -155,7 +158,7 @@ export default async function LandingPage() {
 
       {/* ── CÓMO FUNCIONA ── */}
       <section id="como-funciona" className="section-pad" style={{ background: "#F6F6FA", color: "#132A6E" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div className="section-inner">
           <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>
             Cómo funciona
           </div>
@@ -181,7 +184,7 @@ export default async function LandingPage() {
 
       {/* ── PRODUCTOS ── */}
       <section id="productos" className="section-pad" style={{ background: "#fff" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div className="section-inner">
           <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>
             Productos disponibles
           </div>
@@ -270,7 +273,7 @@ export default async function LandingPage() {
 
       {/* ── CONTACTO ── */}
       <section id="contacto" className="section-pad" style={{ background: "#fff" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div className="section-inner">
           <div className="contacto-grid">
             <div>
               <div style={{ textTransform: "uppercase", letterSpacing: "0.14em", fontSize: 13, fontWeight: 700, color: "#0E6BA0", marginBottom: 12 }}>Contacto</div>
