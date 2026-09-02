@@ -24,7 +24,7 @@ export default function PrivacidadPage() {
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">1. Responsable del tratamiento</h2>
             <p>
               El responsable del tratamiento de tus datos personales es{" "}
-              <strong>Carlos Hugo Costantino</strong>, monotributista, CUIT 20-29739072-5,
+              <strong>Grupo Globaliza</strong>, CUIT 20-29739072-5,
               con domicilio en Berta Vidal de Battini 1343, San Luis, Provincia de San Luis,
               República Argentina. Contacto:{" "}
               <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
