@@ -36,6 +36,7 @@ export function Footer() {
             <Link href="/privacidad" className="hover:text-white">Privacidad</Link>
             <a href="mailto:hola@glob.ar" className="hover:text-white">Contacto</a>
             <a href={waLink(SOPORTE_WHATSAPP)} target="_blank" rel="noreferrer" className="hover:text-white">WhatsApp</a>
+            <a href="https://www.youtube.com/@Globar-z9k" target="_blank" rel="noreferrer" className="hover:text-white">YouTube</a>
           </div>
         </div>
       </div>
