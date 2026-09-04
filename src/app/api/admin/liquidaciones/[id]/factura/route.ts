@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { facturas } from "@/db/schema";
+import { liquidaciones } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { readFile } from "fs/promises";
 import path from "path";
 import { UPLOAD_DIR } from "@/lib/uploads";
 
+// Sirve el PDF de factura que subió el revendedor para esta liquidación.
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (session?.user?.role !== "superadmin") {
@@ -14,16 +15,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-
-  const [factura] = await db.select().from(facturas).where(eq(facturas.id, id)).limit(1);
-  if (!factura) {
+  const [liq] = await db.select().from(liquidaciones).where(eq(liquidaciones.id, id)).limit(1);
+  if (!liq?.facturaUrl) {
     return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
   }
 
-  // Solo confiamos en el nombre del archivo (basename); el directorio sale del
-  // revendedorId de la factura, no de la URL guardada en la DB.
-  const nombreArchivo = path.basename(factura.archivoUrl);
-  const rutaArchivo = path.join(UPLOAD_DIR, factura.revendedorId, nombreArchivo);
+  const nombreArchivo = path.basename(liq.facturaUrl);
+  const rutaArchivo = path.join(UPLOAD_DIR, liq.revendedorId, nombreArchivo);
 
   let buffer: Buffer;
   try {

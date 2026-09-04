@@ -13,9 +13,6 @@ import { auth } from "@/lib/auth";
 import { UPLOAD_DIR } from "@/lib/uploads";
 import { POST, GET } from "./route";
 
-// `auth` de NextAuth tiene sobrecargas (uso como middleware vs. como
-// `() => Promise<Session | null>`); mockAuth infiere la sobrecarga
-// equivocada. Casteamos una sola vez acá para tener mockResolvedValue tipado.
 const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
 
 beforeAll(async () => {
@@ -29,7 +26,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await db.execute(sql`
-    TRUNCATE TABLE cuotas_facturas, facturas, cuotas, habilitaciones, ventas,
+    TRUNCATE TABLE cuotas_facturas, facturas, cuotas, liquidaciones, habilitaciones, ventas,
       revendedores, productos, configuracion, users
     RESTART IDENTITY CASCADE
   `);
@@ -51,11 +48,13 @@ async function seedRevendedorConUsuario(overrides: Partial<typeof schema.revende
   return r;
 }
 
-async function seedVentaYCuota(revendedorId: string, status: typeof schema.cuotas.$inferInsert["status"] = "generada") {
+/** Crea una liquidación "pagada" con N cuotas "liquidada" enganchadas. */
+async function seedLiquidacion(revendedorId: string, opts: { status?: typeof schema.liquidaciones.$inferInsert["status"]; cuotas?: number } = {}) {
+  const nCuotas = opts.cuotas ?? 1;
   const [producto] = await db
     .insert(schema.productos)
     .values({
-      nombre: "agendaonline",
+      nombre: `prod-${Math.random().toString(36).slice(2, 6)}`,
       dominio: "agendaonline.com.ar",
       urlRegistro: "https://agendaonline.com.ar/register",
       tag: "Turnos",
@@ -64,64 +63,71 @@ async function seedVentaYCuota(revendedorId: string, status: typeof schema.cuota
     .returning();
   const [venta] = await db
     .insert(schema.ventas)
+    .values({ revendedorId, productoId: producto.id, clienteNombre: "Cliente test", clienteEmail: "c@test.com", precioMensual: "9000" })
+    .returning();
+
+  const [liq] = await db
+    .insert(schema.liquidaciones)
     .values({
       revendedorId,
-      productoId: producto.id,
-      clienteNombre: "Cliente test",
-      clienteEmail: "cliente@test.com",
-      precioMensual: "9000",
+      periodoMes: 8,
+      periodoAnio: 2026,
+      monto: String(5000 * nCuotas),
+      cantidadCuotas: nCuotas,
+      status: opts.status ?? "pagada",
+      facturaVenceEn: new Date(Date.now() + 90 * 86400000),
     })
     .returning();
-  const [cuota] = await db
-    .insert(schema.cuotas)
-    .values({
+
+  for (let i = 0; i < nCuotas; i++) {
+    await db.insert(schema.cuotas).values({
       ventaId: venta.id,
       revendedorId,
-      numeroCuota: 1,
+      numeroCuota: i + 1,
       monto: "5000",
       periodoMes: 8,
       periodoAnio: 2026,
-      status,
-    })
-    .returning();
-  return cuota;
+      status: "liquidada",
+      liquidacionId: liq.id,
+      liquidadoEn: new Date(),
+    });
+  }
+  return liq;
 }
 
 function pdfFile(name = "factura.pdf", sizeBytes = 4): File {
   return new File([new Uint8Array(sizeBytes)], name, { type: "application/pdf" });
 }
 
-function facturasRequest(opts: { archivo?: File | null; nota?: string; cuotaIds?: unknown }): NextRequest {
+function facturasRequest(opts: { archivo?: File | null; nota?: string; liquidacionId?: string }): NextRequest {
   const form = new FormData();
   if (opts.archivo !== null) form.set("archivo", opts.archivo ?? pdfFile());
   if (opts.nota !== undefined) form.set("nota", opts.nota);
-  if (opts.cuotaIds !== undefined) {
-    form.set("cuotaIds", typeof opts.cuotaIds === "string" ? opts.cuotaIds : JSON.stringify(opts.cuotaIds));
-  }
+  if (opts.liquidacionId !== undefined) form.set("liquidacionId", opts.liquidacionId);
   return new NextRequest("http://localhost/api/panel/facturas", { method: "POST", body: form });
 }
 
 describe("POST /api/panel/facturas", () => {
   it("rechaza sin sesión", async () => {
     mockAuth.mockResolvedValue(null);
-    const res = await POST(facturasRequest({ cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ liquidacionId: "x" }));
     expect(res.status).toBe(401);
   });
 
   it("rechaza si el rol no es revendedor", async () => {
     mockAuth.mockResolvedValue({ user: { id: "u1", role: "superadmin" } } as never);
-    const res = await POST(facturasRequest({ cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ liquidacionId: "x" }));
     expect(res.status).toBe(403);
   });
 
   it("rechaza sin archivo", async () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
-    const res = await POST(facturasRequest({ archivo: null, cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ archivo: null, liquidacionId: "x" }));
     expect(res.status).toBe(400);
   });
 
-  it("rechaza sin cuotaIds", async () => {
+  it("rechaza sin liquidacionId", async () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
     const res = await POST(facturasRequest({}));
@@ -132,7 +138,7 @@ describe("POST /api/panel/facturas", () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
     const grande = pdfFile("grande.pdf", 6 * 1024 * 1024);
-    const res = await POST(facturasRequest({ archivo: grande, cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ archivo: grande, liquidacionId: "x" }));
     expect(res.status).toBe(400);
   });
 
@@ -140,79 +146,60 @@ describe("POST /api/panel/facturas", () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
     const noPdf = new File([new Uint8Array(4)], "foto.png", { type: "image/png" });
-    const res = await POST(facturasRequest({ archivo: noPdf, cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ archivo: noPdf, liquidacionId: "x" }));
     expect(res.status).toBe(400);
   });
 
   it("responde 404 si el usuario logueado no tiene fila de revendedor", async () => {
     mockAuth.mockResolvedValue({ user: { id: crypto.randomUUID(), role: "revendedor" } } as never);
-    const res = await POST(facturasRequest({ cuotaIds: ["x"] }));
+    const res = await POST(facturasRequest({ liquidacionId: crypto.randomUUID() }));
     expect(res.status).toBe(404);
   });
 
-  it("responde 422 si una cuota ya fue facturada", async () => {
-    const rev = await seedRevendedorConUsuario();
-    mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
-    const cuota = await seedVentaYCuota(rev.id, "facturada");
-    const res = await POST(facturasRequest({ cuotaIds: [cuota.id] }));
-    expect(res.status).toBe(422);
-  });
-
-  it("responde 422 si la cuota es de otro revendedor", async () => {
+  it("responde 404 si la liquidación es de otro revendedor", async () => {
     const rev = await seedRevendedorConUsuario();
     const otro = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
-    const cuotaAjena = await seedVentaYCuota(otro.id, "generada");
-    const res = await POST(facturasRequest({ cuotaIds: [cuotaAjena.id] }));
+    const liqAjena = await seedLiquidacion(otro.id);
+    const res = await POST(facturasRequest({ liquidacionId: liqAjena.id }));
+    expect(res.status).toBe(404);
+  });
+
+  it("responde 422 si la liquidación ya fue facturada", async () => {
+    const rev = await seedRevendedorConUsuario();
+    mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
+    const liq = await seedLiquidacion(rev.id, { status: "facturada" });
+    const res = await POST(facturasRequest({ liquidacionId: liq.id }));
     expect(res.status).toBe(422);
   });
 
-  it("crea la factura, vincula la cuota y la pasa a facturada", async () => {
+  it("marca la liquidación como facturada y sus cuotas como pagadas", async () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
-    const cuota = await seedVentaYCuota(rev.id, "generada");
+    const liq = await seedLiquidacion(rev.id, { cuotas: 2 });
 
-    const res = await POST(facturasRequest({ nota: "prueba", cuotaIds: [cuota.id] }));
+    const res = await POST(facturasRequest({ nota: "prueba", liquidacionId: liq.id }));
     const data = await res.json();
 
     expect(res.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(data.monto).toBe(5000);
-    expect(data.cuotas).toBe(1);
+    expect(data.monto).toBe(10000);
 
-    const [cuotaActualizada] = await db.select().from(schema.cuotas).where(eq(schema.cuotas.id, cuota.id));
-    expect(cuotaActualizada.status).toBe("facturada");
-    expect(cuotaActualizada.facturadoEn).not.toBeNull();
+    const [liqActualizada] = await db.select().from(schema.liquidaciones).where(eq(schema.liquidaciones.id, liq.id));
+    expect(liqActualizada.status).toBe("facturada");
+    expect(liqActualizada.facturaUrl).toBeTruthy();
+    expect(liqActualizada.facturaRecibidaEn).not.toBeNull();
 
-    const [factura] = await db.select().from(schema.facturas).where(eq(schema.facturas.id, data.facturaId));
-    expect(factura.revendedorId).toBe(rev.id);
-    expect(factura.pagada).toBe(false);
-    expect(Number(factura.monto)).toBe(5000);
+    const cuotas = await db.select().from(schema.cuotas).where(eq(schema.cuotas.liquidacionId, liq.id));
+    expect(cuotas).toHaveLength(2);
+    for (const c of cuotas) {
+      expect(c.status).toBe("pagada");
+      expect(c.pagadoEn).not.toBeNull();
+    }
 
-    const links = await db
-      .select()
-      .from(schema.cuotasFacturas)
-      .where(eq(schema.cuotasFacturas.cuotaId, cuota.id));
-    expect(links).toHaveLength(1);
-    expect(links[0].facturaId).toBe(factura.id);
-
-    // El archivo efectivamente se guardó en disco.
-    const nombreArchivo = path.basename(data.archivoUrl);
+    const nombreArchivo = path.basename(liqActualizada.facturaUrl!);
     const contenido = await fs.readFile(path.join(UPLOAD_DIR, rev.id, nombreArchivo));
     expect(contenido.length).toBeGreaterThan(0);
-  });
-
-  it("suma el monto de varias cuotas seleccionadas", async () => {
-    const rev = await seedRevendedorConUsuario();
-    mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
-    const cuota1 = await seedVentaYCuota(rev.id, "generada");
-    const cuota2 = await seedVentaYCuota(rev.id, "generada");
-
-    const res = await POST(facturasRequest({ cuotaIds: [cuota1.id, cuota2.id] }));
-    const data = await res.json();
-
-    expect(data.monto).toBe(10000);
-    expect(data.cuotas).toBe(2);
   });
 });
 
@@ -227,20 +214,19 @@ describe("GET /api/panel/facturas", () => {
     mockAuth.mockResolvedValue({ user: { id: crypto.randomUUID(), role: "revendedor" } } as never);
     const res = await GET();
     const data = await res.json();
-    expect(data.facturas).toEqual([]);
+    expect(data.liquidaciones).toEqual([]);
   });
 
-  it("devuelve solo las facturas del revendedor logueado", async () => {
+  it("devuelve solo las liquidaciones del revendedor logueado", async () => {
     const rev = await seedRevendedorConUsuario();
     const otro = await seedRevendedorConUsuario();
-    await db.insert(schema.facturas).values({ revendedorId: rev.id, monto: "5000", archivoUrl: "/x/a.pdf" });
-    await db.insert(schema.facturas).values({ revendedorId: otro.id, monto: "5000", archivoUrl: "/x/b.pdf" });
+    await seedLiquidacion(rev.id);
+    await seedLiquidacion(otro.id);
 
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
     const res = await GET();
     const data = await res.json();
 
-    expect(data.facturas).toHaveLength(1);
-    expect(data.facturas[0].revendedorId).toBe(rev.id);
+    expect(data.liquidaciones).toHaveLength(1);
   });
 });

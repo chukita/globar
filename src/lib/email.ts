@@ -47,10 +47,13 @@ export async function sendEmail({ to, toName, subject, html, replyTo }: { to: st
 }
 
 /** Avisa a todos los destinatarios configurados en /admin/configuracion, si ese tipo de evento está habilitado. */
-export async function notifyAdmins(subject: string, html: string, tipo: "revendedorNuevo" | "facturaSubida") {
+export async function notifyAdmins(subject: string, html: string, tipo: "revendedorNuevo" | "facturaSubida" | "liquidacionBloqueada") {
   const config = await getConfiguracion();
 
-  const habilitado = tipo === "revendedorNuevo" ? config.notifRevendedorNuevo : config.notifFacturaSubida;
+  const habilitado =
+    tipo === "revendedorNuevo" ? config.notifRevendedorNuevo
+    : tipo === "facturaSubida" ? config.notifFacturaSubida
+    : config.notifLiquidacionBloqueada;
   if (!habilitado) return;
 
   const destinatarios = (config.notifAdminEmails ?? "")
@@ -66,22 +69,71 @@ export async function notifyAdmins(subject: string, html: string, tipo: "revende
   await Promise.all(destinatarios.map((to) => sendEmail({ to, subject, html })));
 }
 
-export function emailFacturaPagada(monto: number) {
-  return {
-    subject: "Tu factura fue marcada como pagada",
-    html: wrapHtml("¡Tu factura ya está pagada!", `
-      <p>Te confirmamos que tu factura por <strong>${fmtARS(monto)}</strong> fue marcada como pagada por el equipo de glob.ar.</p>
-      <p>Podés ver el detalle en tu panel, sección Facturas.</p>
-    `),
-  };
-}
+const fmtFecha = (d: Date) =>
+  new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
 
 export function emailComisionGenerada(monto: number, numeroCuota: number, comisionMeses: number) {
   return {
     subject: "Se generó una nueva cuota de comisión",
-    html: wrapHtml("Nueva cuota de comisión disponible", `
+    html: wrapHtml("Nueva cuota de comisión", `
       <p>Se generó la cuota <strong>${numeroCuota} de ${comisionMeses}</strong> de una de tus comisiones, por <strong>${fmtARS(monto)}</strong>.</p>
-      <p>Ya podés subir la factura correspondiente desde tu panel para cobrarla.</p>
+      <p>La vas a cobrar en la próxima liquidación mensual, junto con el resto de lo que acumules este mes. Podés seguir el detalle en tu panel, sección Comisiones.</p>
+    `),
+  };
+}
+
+export function emailLiquidacionPagada(monto: number, periodoLabel: string, facturaVenceEn: Date) {
+  return {
+    subject: `Te transferimos tu liquidación de ${periodoLabel}`,
+    html: wrapHtml("Recibiste tu liquidación mensual", `
+      <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong>.</p>
+      <p>Ahora necesitamos tu factura a nombre de <strong>Grupo Globaliza</strong> por ese mismo monto exacto. Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>.</p>
+      <p style="font-size:13px; color:#5B6577;">Si no la enviás antes de esa fecha, vas a quedar excluido de la liquidación del mes siguiente hasta ponerte al día — tus comisiones se siguen acumulando igual.</p>
+    `),
+  };
+}
+
+export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: string, facturaVenceEn: Date) {
+  return {
+    subject: `Nos falta tu factura de ${periodoLabel}`,
+    html: wrapHtml("Todavía no recibimos tu factura", `
+      <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y todavía no nos llegó tu factura a nombre de <strong>Grupo Globaliza</strong>.</p>
+      <p>Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>. Pasada esa fecha vas a quedar excluido de la liquidación del mes siguiente hasta enviarla.</p>
+    `),
+  };
+}
+
+export function emailFacturaVencidaBloqueo(monto: number, periodoLabel: string) {
+  return {
+    subject: `Quedás excluido de la próxima liquidación — falta tu factura de ${periodoLabel}`,
+    html: wrapHtml("Factura vencida: liquidación en pausa", `
+      <p>Pasaron más de los meses de gracia desde que te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y seguimos sin tu factura a nombre de <strong>Grupo Globaliza</strong>.</p>
+      <p>Mientras siga pendiente, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
+      <p>Subí la factura que falta desde tu panel, sección Facturas, para destrabar el cobro.</p>
+    `),
+  };
+}
+
+export function emailAdminResellersBloqueados(items: { nombre: string; codigo: string; periodoLabel: string; monto: number }[]) {
+  const filas = items
+    .map((i) => `<li><strong>${i.nombre}</strong> (${i.codigo}) — ${i.periodoLabel}, ${fmtARS(i.monto)}</li>`)
+    .join("");
+  return {
+    subject: `${items.length} revendedor${items.length !== 1 ? "es" : ""} en bloqueo por factura vencida`,
+    html: wrapHtml("Revendedores bloqueados por factura vencida", `
+      <p>Estos revendedores pasaron el plazo de gracia sin enviar su factura y quedan excluidos de la próxima liquidación:</p>
+      <ul>${filas}</ul>
+      <p>Podés ver el detalle en el panel de superadmin, sección Liquidaciones.</p>
+    `),
+  };
+}
+
+export function emailFacturaLiquidacionSubida(revendedorNombre: string, codigoVentas: string, monto: number) {
+  return {
+    subject: "Un revendedor subió la factura de su liquidación",
+    html: wrapHtml("Factura de liquidación recibida", `
+      <p><strong>${revendedorNombre}</strong> (${codigoVentas}) subió la factura de su liquidación por <strong>${fmtARS(monto)}</strong>.</p>
+      <p>Podés verla en el panel de superadmin, sección Liquidaciones.</p>
     `),
   };
 }

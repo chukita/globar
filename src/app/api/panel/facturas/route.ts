@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { facturas, cuotas, cuotasFacturas, revendedores, users } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { cuotas, liquidaciones, revendedores, users } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { UPLOAD_DIR } from "@/lib/uploads";
-import { notifyAdmins, emailFacturaSubida } from "@/lib/email";
+import { notifyAdmins, emailFacturaLiquidacionSubida } from "@/lib/email";
+import { getLiquidacionesDelRevendedor } from "@/lib/panel-data";
 
 const MAX_FILE_MB = 5;
 
+/**
+ * El revendedor sube la factura de una liquidación que ya cobró. Con el
+ * rediseño de sept. 2026 se paga primero (liquidación mensual del superadmin) y
+ * la factura llega después: acá no se elige nada, se adjunta el PDF de UNA
+ * liquidación en estado "pagada".
+ */
 export async function POST(req: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -20,7 +26,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  // ── Parseo del form ───────────────────────────────────────────────────────
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -29,25 +34,15 @@ export async function POST(req: NextRequest) {
   }
 
   const archivo = formData.get("archivo") as File | null;
-  const nota    = (formData.get("nota") as string | null) ?? "";
-  const cuotaIdsRaw = formData.get("cuotaIds") as string | null;
+  const nota = (formData.get("nota") as string | null) ?? "";
+  const liquidacionId = formData.get("liquidacionId") as string | null;
 
   if (!archivo) {
     return NextResponse.json({ error: "El archivo PDF es requerido" }, { status: 400 });
   }
-  if (!cuotaIdsRaw) {
-    return NextResponse.json({ error: "Seleccioná al menos una cuota" }, { status: 400 });
+  if (!liquidacionId) {
+    return NextResponse.json({ error: "Falta la liquidación" }, { status: 400 });
   }
-
-  let cuotaIds: string[];
-  try {
-    cuotaIds = JSON.parse(cuotaIdsRaw);
-    if (!Array.isArray(cuotaIds) || cuotaIds.length === 0) throw new Error();
-  } catch {
-    return NextResponse.json({ error: "cuotaIds inválido" }, { status: 400 });
-  }
-
-  // ── Validar tamaño del archivo ────────────────────────────────────────────
   if (archivo.size > MAX_FILE_MB * 1024 * 1024) {
     return NextResponse.json({ error: `El archivo no puede superar ${MAX_FILE_MB}MB` }, { status: 400 });
   }
@@ -55,7 +50,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Solo se aceptan archivos PDF" }, { status: 400 });
   }
 
-  // ── Buscar el revendedor del usuario logueado ─────────────────────────────
   const [revendedor] = await db
     .select()
     .from(revendedores)
@@ -69,75 +63,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cuenta desactivada" }, { status: 403 });
   }
 
-  // ── Verificar que las cuotas pertenecen a este revendedor y están generadas ──
-  const cuotasValidas = await db
+  const [liq] = await db
     .select()
-    .from(cuotas)
-    .where(and(
-      inArray(cuotas.id, cuotaIds),
-      eq(cuotas.revendedorId, revendedor.id),
-      eq(cuotas.status, "generada"),
-    ));
+    .from(liquidaciones)
+    .where(and(eq(liquidaciones.id, liquidacionId), eq(liquidaciones.revendedorId, revendedor.id)))
+    .limit(1);
 
-  if (cuotasValidas.length !== cuotaIds.length) {
-    return NextResponse.json({
-      error: "Una o más cuotas no son válidas (ya facturadas, de otro revendedor o pendientes)",
-    }, { status: 422 });
+  if (!liq) {
+    return NextResponse.json({ error: "Liquidación no encontrada" }, { status: 404 });
+  }
+  if (liq.status !== "pagada") {
+    return NextResponse.json({ error: "Esta liquidación ya tiene factura o fue anulada" }, { status: 422 });
   }
 
-  // ── Calcular monto total ──────────────────────────────────────────────────
-  const monto = cuotasValidas.reduce((sum, c) => sum + Number(c.monto), 0);
-
   // ── Guardar el archivo ────────────────────────────────────────────────────
-  const timestamp = Date.now();
-  const nombreArchivo = `${revendedor.codigoVentas}_${timestamp}.pdf`;
+  const nombreArchivo = `factura_liq_${liq.id}_${Date.now()}.pdf`;
   const rutaDir = path.join(UPLOAD_DIR, revendedor.id);
-
   await mkdir(rutaDir, { recursive: true });
   const buffer = Buffer.from(await archivo.arrayBuffer());
   await writeFile(path.join(rutaDir, nombreArchivo), buffer);
 
-  const archivoUrl = `/uploads/${revendedor.id}/${nombreArchivo}`;
-
-  // ── Crear la factura y vincular cuotas (transacción) ─────────────────────
-  const resultado = await db.transaction(async (tx) => {
-    const [factura] = await tx
-      .insert(facturas)
-      .values({
-        revendedorId: revendedor.id,
-        monto:        String(monto),
-        archivoUrl,
-        nota:         nota || null,
-        pagada:       false,
+  const ahora = new Date();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(liquidaciones)
+      .set({
+        status: "facturada",
+        facturaUrl: nombreArchivo,
+        facturaRecibidaEn: ahora,
+        nota: nota || liq.nota,
       })
-      .returning();
-
-    await tx.insert(cuotasFacturas).values(
-      cuotaIds.map(cuotaId => ({ cuotaId, facturaId: factura.id }))
-    );
+      .where(eq(liquidaciones.id, liq.id));
 
     await tx
       .update(cuotas)
-      .set({ status: "facturada", facturadoEn: new Date() })
-      .where(inArray(cuotas.id, cuotaIds));
-
-    return factura;
+      .set({ status: "pagada", facturadoEn: ahora, pagadoEn: ahora })
+      .where(eq(cuotas.liquidacionId, liq.id));
   });
 
   const [user] = await db.select({ nombre: users.name }).from(users).where(eq(users.id, revendedor.userId));
-  const { subject, html } = emailFacturaSubida(user?.nombre ?? revendedor.codigoVentas, revendedor.codigoVentas, monto);
+  const { subject, html } = emailFacturaLiquidacionSubida(user?.nombre ?? revendedor.codigoVentas, revendedor.codigoVentas, Number(liq.monto));
   await notifyAdmins(subject, html, "facturaSubida");
 
-  return NextResponse.json({
-    ok:        true,
-    facturaId: resultado.id,
-    monto,
-    cuotas:    cuotaIds.length,
-    archivoUrl,
-  });
+  return NextResponse.json({ ok: true, liquidacionId: liq.id, monto: Number(liq.monto) });
 }
 
-// ── GET: listar facturas del revendedor logueado ──────────────────────────────
+// ── GET: liquidaciones del revendedor logueado ───────────────────────────────
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -145,20 +116,14 @@ export async function GET() {
   }
 
   const [revendedor] = await db
-    .select()
+    .select({ id: revendedores.id })
     .from(revendedores)
     .where(eq(revendedores.userId, session.user.id!))
     .limit(1);
 
   if (!revendedor) {
-    return NextResponse.json({ facturas: [] });
+    return NextResponse.json({ liquidaciones: [] });
   }
 
-  const resultado = await db
-    .select()
-    .from(facturas)
-    .where(eq(facturas.revendedorId, revendedor.id))
-    .orderBy(facturas.subidaEn);
-
-  return NextResponse.json({ facturas: resultado });
+  return NextResponse.json({ liquidaciones: await getLiquidacionesDelRevendedor(revendedor.id) });
 }

@@ -38,8 +38,8 @@ export default function PrivacidadPage() {
             <ul className="list-disc pl-6 space-y-1">
               <li>Nombre y email.</li>
               <li>Contraseña (almacenada cifrada), o los datos que Google nos comparte si elegís iniciar sesión con esa opción.</li>
-              <li>DNI, fecha de nacimiento, provincia, localidad y, opcionalmente, teléfono.</li>
-              <li>CBU o alias de Mercado Pago, nombre del titular de la cuenta y, si podés emitir factura, tu CUIT/CUIL — para poder pagarte las comisiones.</li>
+              <li>DNI, fecha de nacimiento, provincia, localidad y teléfono (se cargan cuando quieras; hacen falta para cobrar).</li>
+              <li>CBU o alias de Mercado Pago, nombre del titular de la cuenta y tu CUIT/CUIL — para poder pagarte las comisiones y validar la factura.</li>
             </ul>
             <p className="font-semibold text-[#0C2A45] mt-4 mb-1">b) Datos de los clientes que se registran con tu link:</p>
             <ul className="list-disc pl-6 space-y-1">

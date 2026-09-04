@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, facturas, cuotasFacturas, users } from "@/db/schema";
+import { revendedores, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { FacturasClient } from "./FacturasClient";
-import { getCuotasFacturables } from "@/lib/panel-data";
+import { getLiquidacionesDelRevendedor, getFacturasDelRevendedor } from "@/lib/panel-data";
+import { periodoLabel } from "@/lib/fecha";
 
 export default async function FacturasPage() {
   const session = await auth();
@@ -22,73 +23,52 @@ export default async function FacturasPage() {
     );
   }
 
-  // Cuotas generadas y ya liquidadas por MP, disponibles para facturar
-  // (misma lógica que el panel de comisiones — ver getCuotasFacturables).
-  const cuotasDisp = (await getCuotasFacturables(rev.id))
-    .sort((a, b) => a.periodoAnio - b.periodoAnio || a.periodoMes - b.periodoMes);
+  const [liqs, facturasLegacy] = await Promise.all([
+    getLiquidacionesDelRevendedor(rev.id),
+    getFacturasDelRevendedor(rev.id),
+  ]);
 
-  // Facturas enviadas
-  const facturasList = await db
-    .select({
-      id:       facturas.id,
-      monto:    facturas.monto,
-      nota:     facturas.nota,
-      pagada:   facturas.pagada,
-      subidaEn: facturas.subidaEn,
-    })
-    .from(facturas)
-    .where(eq(facturas.revendedorId, rev.id))
-    .orderBy(facturas.subidaEn);
+  const ser = (l: (typeof liqs)[number]) => ({
+    id: l.id,
+    periodo: periodoLabel(l.periodoMes, l.periodoAnio),
+    monto: Number(l.monto),
+    cantidadCuotas: l.cantidadCuotas,
+    pagadaEn: l.pagadaEn.toISOString(),
+    facturaVenceEn: l.facturaVenceEn.toISOString(),
+    facturaRecibidaEn: l.facturaRecibidaEn ? l.facturaRecibidaEn.toISOString() : null,
+    tieneFactura: !!l.facturaUrl,
+  });
 
-  // Cantidad de cuotas por factura
-  const cuotasPorFactura: Record<string, number> = {};
-  for (const f of facturasList) {
-    const links = await db
-      .select({ cuotaId: cuotasFacturas.cuotaId })
-      .from(cuotasFacturas)
-      .where(eq(cuotasFacturas.facturaId, f.id));
-    cuotasPorFactura[f.id] = links.length;
-  }
+  const pendientes = liqs.filter((l) => l.status === "pagada").map(ser);
+  const historial = liqs.filter((l) => l.status !== "pagada").map((l) => ({ ...ser(l), anulada: l.status === "anulada" }));
 
-  const MES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-
-  const cuotasSerializadas = cuotasDisp.map(c => ({
-    id:       c.id,
-    producto: c.producto,
-    cliente:  c.cliente,
-    mes:      `${MES[c.periodoMes - 1]} ${c.periodoAnio}`,
-    cuota:    c.numeroCuota,
-    monto:    parseFloat(c.monto),
-  }));
-
-  const facturasSerializadas = facturasList.map(f => ({
-    id:      f.id,
-    monto:   parseFloat(f.monto),
-    cuotas:  cuotasPorFactura[f.id] ?? 0,
-    nota:    f.nota ?? "",
-    subida:  f.subidaEn.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }),
-    pagada:  f.pagada,
+  const legacy = facturasLegacy.map((f) => ({
+    id: f.id,
+    monto: Number(f.monto),
+    nota: f.nota ?? "",
+    subida: f.subidaEn.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" }),
+    pagada: f.pagada,
   }));
 
   return (
     <div className="p-10 max-w-[860px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Facturas</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-        Seleccioná las cuotas que querés cobrar, adjuntá tu factura y enviala a Grupo Globaliza.
+        A principio de mes te transferimos todo lo que acumulaste el mes anterior. Después subís acá la
+        factura correspondiente a nombre de <strong>Grupo Globaliza</strong>.
       </p>
 
       <div className="mt-5 bg-[#F1F8FC] border border-[#C6DDEF] rounded-[14px] px-5 py-4 flex items-start gap-3.5">
         <div className="w-8 h-8 rounded-[9px] bg-[#E1EFF8] flex-shrink-0 flex items-center justify-center font-extrabold text-[#0B5A8F] text-[14px]">i</div>
         <div className="text-[13.5px] text-[#3F6280] leading-relaxed">
-          La factura debe ser a nombre de <strong>Grupo Globaliza</strong> por el monto exacto de las cuotas seleccionadas.
-          Una vez que la revisemos, realizamos la transferencia y la marcamos como pagada.
+          Cada factura tiene que ser a nombre de <strong>Grupo Globaliza</strong> por el monto exacto de la
+          liquidación, con tu mismo CUIT/CUIL y CBU/alias de cobro. Si no la enviás antes de la fecha límite,
+          quedás excluido de la liquidación del mes siguiente hasta ponerte al día — las comisiones se te
+          siguen acumulando igual.
         </div>
       </div>
 
-      <FacturasClient
-        cuotasIniciales={cuotasSerializadas}
-        facturasIniciales={facturasSerializadas}
-      />
+      <FacturasClient pendientes={pendientes} historial={historial} legacy={legacy} />
     </div>
   );
 }

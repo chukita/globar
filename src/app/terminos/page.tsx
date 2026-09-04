@@ -16,7 +16,7 @@ export default function TerminosPage() {
           Términos y Condiciones
         </h1>
         <p className="text-[13.5px] text-[#9AA3B2] mt-2 mb-10">
-          Última actualización: 12 de agosto de 2026
+          Última actualización: 3 de septiembre de 2026
         </p>
 
         <article className="space-y-7 text-[14.5px] leading-relaxed text-[#3F4A5A]">
@@ -78,40 +78,63 @@ export default function TerminosPage() {
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">6. Cómo funciona el programa</h2>
             <p>
-              El monto por cuota, la cantidad de cuotas y el resto de las condiciones de la
-              comisión son configurables y pueden cambiar en el tiempo — las cuotas ya
-              generadas antes de un cambio no se recalculan. La comisión se genera cuando el
-              producto le informa a glob.ar que el cliente referido pagó, y queda disponible
-              para que el revendedor la facture apenas se genera. No hay ningún costo ni
-              suscripción que el revendedor deba pagarle a glob.ar para participar.
+              El monto por cuota, la cantidad de cuotas, el plazo de gracia para facturar y el
+              resto de las condiciones de la comisión son configurables y pueden cambiar en el
+              tiempo — las cuotas ya generadas antes de un cambio no se recalculan. La comisión
+              se genera cuando el producto le informa a glob.ar que el cliente referido pagó, y
+              se va acumulando. A principio de cada mes glob.ar liquida (paga) a cada revendedor
+              todo lo que acumuló hasta el fin del mes anterior, y recién después le solicita la
+              factura correspondiente. No hay ningún costo ni suscripción que el revendedor deba
+              pagarle a glob.ar para participar.
             </p>
           </section>
 
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">7. Registro y cuenta</h2>
             <p>
-              Para participar del programa hay que registrarse brindando información veraz
-              (nombre, email, DNI, fecha de nacimiento, provincia, localidad y,
-              opcionalmente, teléfono) y mantenerla actualizada desde el panel. El
-              revendedor es responsable de la confidencialidad de sus credenciales de acceso
-              y de toda actividad realizada con su cuenta, y debe ser mayor de edad y
-              residente en Argentina.
+              Para registrarse hay que brindar información veraz (nombre y email) y declarar
+              que se puede emitir factura por las comisiones de venta (Monotributo u otro
+              régimen ante la AFIP): esa condición es obligatoria para participar del programa.
+              El resto de los datos (DNI, fecha de nacimiento, provincia, localidad, teléfono,
+              CBU o alias, nombre del titular de la cuenta y CUIT/CUIL) se pueden completar más
+              tarde desde el panel, pero son necesarios para poder cobrar (ver punto 8). El
+              revendedor es responsable de la confidencialidad de sus credenciales de acceso y
+              de toda actividad realizada con su cuenta, debe ser mayor de edad y residente en
+              Argentina, y debe mantener sus datos actualizados.
             </p>
           </section>
 
           <section>
-            <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">8. Pago de comisiones</h2>
+            <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">8. Pago de comisiones y facturación</h2>
             <p>
-              Las comisiones se pagan por transferencia bancaria al CBU o alias que el
-              revendedor cargue en su perfil, a nombre de quien indique como titular de la
-              cuenta. Para cobrar, el revendedor debe estar inscrito ante la AFIP (Monotributo
-              u otro régimen) y cargar su CUIT/CUIL en el perfil. La factura electrónica
-              correspondiente debe presentarse dentro de los primeros 5 días hábiles de cada
-              mes por las cuotas generadas el mes anterior. glob.ar marca cada cuota como
-              pagada una vez que el revendedor sube su factura y el pago se realiza. Como no
-              hay ningún cobro previo del revendedor hacia glob.ar, no corresponde un derecho
-              de arrepentimiento sobre la comisión: es un ingreso a favor del revendedor, no
-              un cargo que se le haga.
+              <strong>Liquidación mensual.</strong> A principio de cada mes glob.ar transfiere a
+              cada revendedor, por transferencia bancaria al CBU o alias cargado en su perfil, la
+              suma de todas las comisiones acumuladas hasta el fin del mes anterior. Para que un
+              revendedor entre en la liquidación de un mes debe tener cargados y vigentes: CBU o
+              alias, nombre del titular de la cuenta, CUIT/CUIL, y sus datos personales (DNI,
+              fecha de nacimiento, provincia, localidad y teléfono). La cuenta de cobro debe
+              estar a nombre de la misma persona que emitirá la factura. Lo que falte se puede
+              completar en cualquier momento; hasta entonces las comisiones se siguen acumulando
+              pero no se liquidan.
+            </p>
+            <p>
+              <strong>Factura.</strong> Recibida la transferencia, el revendedor debe emitir y
+              subir al panel la factura electrónica correspondiente, a nombre de{" "}
+              <strong>Grupo Globaliza</strong>, por el monto exacto de esa liquidación, dentro de
+              los 3 meses siguientes al pago (plazo configurable). glob.ar envía recordatorios
+              por email mientras la factura esté pendiente.
+            </p>
+            <p>
+              <strong>Retención por factura pendiente.</strong> Si un revendedor mantiene una
+              liquidación sin su factura por más del plazo de gracia, queda excluido de las
+              liquidaciones siguientes hasta regularizar todas las facturas adeudadas. Durante
+              ese período las comisiones se siguen acumulando y se pagan todas juntas en la
+              primera liquidación posterior a la regularización.
+            </p>
+            <p>
+              Como no hay ningún cobro previo del revendedor hacia glob.ar, no corresponde un
+              derecho de arrepentimiento sobre la comisión: es un ingreso a favor del revendedor,
+              no un cargo que se le haga.
             </p>
           </section>
 
@@ -133,6 +156,7 @@ export default function TerminosPage() {
               <li>Usar el código y el link de referido de buena fe, sin fines fraudulentos.</li>
               <li>No hacerse pasar por glob.ar, agendaonline o nume, ni prometer condiciones que no existen.</li>
               <li>Mantener actualizados sus datos personales y de cobro.</li>
+              <li>Emitir y subir al panel la factura de cada liquidación cobrada, dentro del plazo de gracia.</li>
               <li>No compartir su código de ventas de forma que induzca a error sobre su origen.</li>
             </ul>
           </section>

@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, registros, users, contactos, productos } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendEmail, emailFacturaPagada, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
+import { sendEmail, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
 import { signImpersonationToken } from "@/lib/impersonar";
 import { validarQuiz } from "@/lib/capacitacionQuiz";
 import { validarOnboardingQuiz } from "@/lib/onboardingQuiz";
@@ -238,36 +238,7 @@ export async function actualizarProductoAction(productoId: string, values: {
   revalidatePath("/");
 }
 
-export async function marcarFacturaPagadaAction(facturaId: string) {
-  await requireSuperadmin();
-
-  const [factura] = await db
-    .select({ monto: facturas.monto, revendedorId: facturas.revendedorId })
-    .from(facturas)
-    .where(eq(facturas.id, facturaId));
-
-  await db.transaction(async (tx) => {
-    await tx.update(facturas).set({ pagada: true, pagadaEn: new Date() }).where(eq(facturas.id, facturaId));
-
-    const vinculos = await tx.select().from(cuotasFacturas).where(eq(cuotasFacturas.facturaId, facturaId));
-    const cuotaIds = vinculos.map((v) => v.cuotaId);
-    if (cuotaIds.length > 0) {
-      await tx.update(cuotas).set({ status: "pagada", pagadoEn: new Date() }).where(inArray(cuotas.id, cuotaIds));
-    }
-  });
-
-  revalidatePath("/admin/facturas");
-  revalidatePath("/admin");
-
-  if (factura) {
-    const [rev] = await db
-      .select({ email: users.email, nombre: users.name, notifFacturaPagada: revendedores.notifFacturaPagada })
-      .from(revendedores)
-      .innerJoin(users, eq(revendedores.userId, users.id))
-      .where(eq(revendedores.id, factura.revendedorId));
-    if (rev?.notifFacturaPagada) {
-      const { subject, html } = emailFacturaPagada(Number(factura.monto));
-      await sendEmail({ to: rev.email, toName: rev.nombre ?? undefined, subject, html });
-    }
-  }
-}
+// El flujo de "marcar factura como pagada" del superadmin se movió a
+// src/lib/liquidaciones-actions.ts (confirmarLiquidacionAction) con el rediseño
+// de sept. 2026: ahora se paga primero (liquidación mensual) y la factura llega
+// después.

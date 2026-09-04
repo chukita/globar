@@ -18,7 +18,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await db.execute(sql`
-    TRUNCATE TABLE cuotas_facturas, facturas, cuotas, habilitaciones, ventas,
+    TRUNCATE TABLE cuotas_facturas, facturas, cuotas, liquidaciones, habilitaciones, ventas,
       revendedores, productos, configuracion, users
     RESTART IDENTITY CASCADE
   `);

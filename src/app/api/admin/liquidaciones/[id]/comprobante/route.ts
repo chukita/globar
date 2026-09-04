@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { facturas } from "@/db/schema";
+import { liquidaciones } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -17,9 +17,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const [factura] = await db.select().from(facturas).where(eq(facturas.id, id)).limit(1);
-  if (!factura) {
-    return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
+  const [liq] = await db.select().from(liquidaciones).where(eq(liquidaciones.id, id)).limit(1);
+  if (!liq) {
+    return NextResponse.json({ error: "Liquidación no encontrada" }, { status: 404 });
   }
 
   let formData: FormData;
@@ -41,13 +41,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const ext = archivo.type === "application/pdf" ? "pdf" : archivo.type.split("/")[1];
-  const nombreArchivo = `comprobante_${Date.now()}.${ext}`;
-  const rutaDir = path.join(UPLOAD_DIR, factura.revendedorId);
+  const nombreArchivo = `comprobante_liq_${id}_${Date.now()}.${ext}`;
+  const rutaDir = path.join(UPLOAD_DIR, liq.revendedorId);
   await mkdir(rutaDir, { recursive: true });
   const buffer = Buffer.from(await archivo.arrayBuffer());
   await writeFile(path.join(rutaDir, nombreArchivo), buffer);
 
-  await db.update(facturas).set({ comprobanteUrl: nombreArchivo }).where(eq(facturas.id, id));
+  await db.update(liquidaciones).set({ comprobanteUrl: nombreArchivo }).where(eq(liquidaciones.id, id));
 
   return NextResponse.json({ ok: true });
 }
@@ -59,15 +59,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const [factura] = await db.select().from(facturas).where(eq(facturas.id, id)).limit(1);
-  if (!factura?.comprobanteUrl) {
+  const [liq] = await db.select().from(liquidaciones).where(eq(liquidaciones.id, id)).limit(1);
+  if (!liq?.comprobanteUrl) {
     return NextResponse.json({ error: "Comprobante no encontrado" }, { status: 404 });
   }
 
-  // Igual que /archivo: solo confiamos en el basename guardado, el directorio
-  // sale del revendedorId de la factura, no de la URL.
-  const nombreArchivo = path.basename(factura.comprobanteUrl);
-  const rutaArchivo = path.join(UPLOAD_DIR, factura.revendedorId, nombreArchivo);
+  // Solo confiamos en el basename guardado; el directorio sale del revendedorId
+  // de la liquidación, no de la URL.
+  const nombreArchivo = path.basename(liq.comprobanteUrl);
+  const rutaArchivo = path.join(UPLOAD_DIR, liq.revendedorId, nombreArchivo);
 
   let buffer: Buffer;
   try {

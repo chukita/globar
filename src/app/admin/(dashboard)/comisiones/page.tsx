@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 const STATUS_MAP = {
   pendiente:  { label: "Pendiente",  bg: "#F7F8FA",  fg: "#9AA3B2",  border: "#E9ECEF" },
-  generada:   { label: "Generada",   bg: "#E1EFF8",  fg: "#0B5A8F",  border: "#C6DDEF" },
-  facturada:  { label: "Facturada",  bg: "#FFF3CD",  fg: "#856404",  border: "#FFD97D" },
+  generada:   { label: "Por liquidar", bg: "#E1EFF8", fg: "#0B5A8F", border: "#C6DDEF" },
+  liquidada:  { label: "Liquidada · falta factura", bg: "#FFF3CD", fg: "#856404", border: "#FFD97D" },
+  facturada:  { label: "Facturada (legacy)", bg: "#EEF0F2", fg: "#5B6577", border: "#DCE0E5" },
   pagada:     { label: "Pagada",     bg: "#E7F5EE",  fg: "#0B6B47",  border: "#9BD3B6" },
   anulada:    { label: "Anulada",    bg: "#FCE6E9",  fg: "#9B4A57",  border: "#E7A9B3" },
 } as const;
@@ -19,7 +20,7 @@ export default async function AdminComisionesPage() {
 
   const totales = {
     generadas:  cuotas.filter(c => c.status === "generada").length,
-    facturadas: cuotas.filter(c => c.status === "facturada").length,
+    liquidadas: cuotas.filter(c => c.status === "liquidada").length,
     pagadas:    cuotas.filter(c => c.status === "pagada").length,
     pendientes: cuotas.filter(c => c.status === "pendiente").length,
     anuladas:   cuotas.filter(c => c.status === "anulada").length,
@@ -36,8 +37,8 @@ export default async function AdminComisionesPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
         {[
-          { label: "Generadas",  value: totales.generadas,  color: "#0B5A8F", bg: "#E1EFF8" },
-          { label: "Facturadas", value: totales.facturadas, color: "#856404", bg: "#FFF3CD" },
+          { label: "Por liquidar", value: totales.generadas,  color: "#0B5A8F", bg: "#E1EFF8" },
+          { label: "Falta factura", value: totales.liquidadas, color: "#856404", bg: "#FFF3CD" },
           { label: "Pagadas",    value: totales.pagadas,    color: "#0B6B47", bg: "#E7F5EE" },
           { label: "Pendientes", value: totales.pendientes, color: "#9AA3B2", bg: "#F7F8FA" },
           { label: "Anuladas",   value: totales.anuladas,   color: "#9B4A57", bg: "#FCE6E9" },

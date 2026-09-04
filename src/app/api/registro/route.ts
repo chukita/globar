@@ -15,13 +15,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { nombre, email, password } = body;
+    const { nombre, email, password, puedeFacturar } = body;
 
     if (!nombre || !email || !password) {
       return NextResponse.json({ error: "Completá todos los campos obligatorios." }, { status: 400 });
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres." }, { status: 400 });
+    }
+    if (puedeFacturar !== true) {
+      return NextResponse.json({ error: "Necesitás poder emitir factura por tus comisiones para registrarte como revendedor." }, { status: 400 });
     }
 
     const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
@@ -35,11 +38,12 @@ export async function POST(req: NextRequest) {
     await db.transaction(async (tx) => {
       await tx.insert(users).values({ id: userId, name: nombre, email, password: hash, role: "revendedor" });
 
-      // Datos de vendedor (DNI, provincia, teléfono, etc.) se completan en
-      // /panel/completar-perfil, después de verificar el email — mismo shape
-      // que ensureRevendedor() ya usa para las altas por Google.
+      // Datos personales (DNI, provincia, teléfono, etc.) son opcionales y se
+      // completan después en /panel/perfil — hacen falta recién para cobrar,
+      // no para usar el panel. El "puede emitir factura" sí es obligatorio en
+      // el alta (checkbox en /registro).
       const codigoVentas = await generarCodigoVendedor(nombre);
-      await tx.insert(revendedores).values({ userId, codigoVentas });
+      await tx.insert(revendedores).values({ userId, codigoVentas, puedeFacturar: true });
     });
 
     const { codigo, token } = await crearVerificacion(userId);

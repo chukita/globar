@@ -15,11 +15,14 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   const role = session?.user?.role ?? undefined;
 
-  // Encadenado: cuenta desactivada → perfil incompleto (completar-perfil) →
-  // onboarding general no aprobado (onboarding). Quien se registra con
-  // Google nunca pasó por /registro (que sí pide estos datos) —
-  // ensureRevendedor() le crea una fila vacía. Todas estas páginas viven
-  // afuera de este route group a propósito (si no, se redirigirían a sí mismas).
+  // Encadenado: cuenta desactivada → no confirmó que puede facturar
+  // (confirmar-facturacion) → onboarding general no aprobado (onboarding).
+  // Los datos personales (DNI, teléfono, etc.) YA NO bloquean el panel — son
+  // opcionales y se completan después; hacen falta recién para cobrar. Quien
+  // se registra por email ya marcó "puedo facturar" en /registro; quien entra
+  // con Google no pasó por ese form y lo confirma en /panel/confirmar-facturacion.
+  // Todas estas páginas viven afuera de este route group a propósito (si no, se
+  // redirigirían a sí mismas).
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
     // Sesión JWT: activo=false no invalida el token ya emitido, así que hay
@@ -28,8 +31,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     if (rev && !rev.activo) {
       redirect("/panel/cuenta-desactivada");
     }
-    if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad || !rev.telefono) {
-      redirect("/panel/completar-perfil");
+    if (!rev || !rev.puedeFacturar) {
+      redirect("/panel/confirmar-facturacion");
     }
     if (!rev.onboardingCompletedAt) {
       redirect("/panel/onboarding");

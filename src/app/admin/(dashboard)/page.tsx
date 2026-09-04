@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardStats, getFacturasPendientesResumen, getUltimasVentas } from "@/lib/admin-data";
+import { getDashboardStats, getLiquidacionesEsperandoFacturaResumen, getUltimasVentas, periodoLabel } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
 import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
 
@@ -15,18 +15,18 @@ function conEstadoSuscripcion<T extends { ultimoPagoEn: Date }>(rows: T[]) {
 }
 
 export default async function AdminDashboard() {
-  const [stats, facturasPendientes, ultimasVentasRaw] = await Promise.all([
+  const [stats, esperandoFactura, ultimasVentasRaw] = await Promise.all([
     getDashboardStats(),
-    getFacturasPendientesResumen(),
+    getLiquidacionesEsperandoFacturaResumen(),
     getUltimasVentas(),
   ]);
   const ultimasVentas = conEstadoSuscripcion(ultimasVentasRaw);
 
   const statCards = [
-    { label: "Ventas totales",       value: String(stats.ventasTotales),          accent: "#0C2A45", sub: "todos los productos" },
-    { label: "Revendedores activos", value: String(stats.revendedoresActivos),    accent: "#0B5A8F", sub: "con cuenta activa" },
-    { label: "Comisiones pagadas",   value: fmtARS(stats.comisionesPagadas),      accent: "#0B6B47", sub: "acumulado histórico" },
-    { label: "Facturas por pagar",   value: String(stats.facturasPendientes),     accent: "#9B4A57", sub: "pendientes de revisión" },
+    { label: "Ventas totales",         value: String(stats.ventasTotales),          accent: "#0C2A45", sub: "todos los productos" },
+    { label: "Revendedores activos",   value: String(stats.revendedoresActivos),    accent: "#0B5A8F", sub: "con cuenta activa" },
+    { label: "Comisiones liquidadas",  value: fmtARS(stats.comisionesLiquidadas),   accent: "#0B6B47", sub: "acumulado histórico" },
+    { label: "Facturas pendientes",    value: String(stats.facturasPendientes),     accent: "#9B4A57", sub: "liquidaciones sin factura" },
   ];
 
   return (
@@ -47,27 +47,31 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-5 mt-5">
         <div className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden">
           <div className="px-6 py-4 border-b border-[#EEF0F2] flex items-center justify-between">
-            <span className="font-semibold text-[17px]">Facturas por pagar</span>
-            <Link href="/admin/facturas" className="text-[13px] font-semibold text-[#0B5A8F]">Ver todas</Link>
+            <span className="font-semibold text-[17px]">Facturas pendientes</span>
+            <Link href="/admin/liquidaciones" className="text-[13px] font-semibold text-[#0B5A8F]">Ver todas</Link>
           </div>
-          {facturasPendientes.length === 0 ? (
-            <div className="px-6 py-10 text-center text-[14px] text-[#9AA3B2]">No hay facturas pendientes.</div>
+          {esperandoFactura.length === 0 ? (
+            <div className="px-6 py-10 text-center text-[14px] text-[#9AA3B2]">No hay liquidaciones esperando factura.</div>
           ) : (
-            facturasPendientes.map((f) => (
-              <div key={f.id} className="px-6 py-4 border-t border-[#F1F3F5] first:border-t-0 flex items-center justify-between gap-4">
-                <div>
-                  <div className="font-semibold text-[14.5px]">{f.revendedorNombre} <span className="text-[#9AA3B2] font-normal">· {f.revendedor}</span></div>
-                  <div className="text-[12.5px] text-[#9AA3B2] mt-0.5">{f.nota || "Sin nota"} · Subida {new Date(f.subidaEn).toLocaleDateString("es-AR")}</div>
+            esperandoFactura.map((f) => {
+              const vencida = new Date(f.facturaVenceEn) < new Date();
+              return (
+                <div key={f.id} className="px-6 py-4 border-t border-[#F1F3F5] first:border-t-0 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="font-semibold text-[14.5px]">{f.revendedorNombre} <span className="text-[#9AA3B2] font-normal">· {f.revendedor}</span></div>
+                    <div className="text-[12.5px] text-[#9AA3B2] mt-0.5">
+                      {periodoLabel(f.periodoMes, f.periodoAnio)} · vence {new Date(f.facturaVenceEn).toLocaleDateString("es-AR")}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="font-bold text-[16px] text-[#0C2A45]">{fmtARS(Number(f.monto))}</span>
+                    {vencida && (
+                      <span className="text-[11.5px] font-semibold bg-[#FCE6E9] text-[#9B4A57] rounded-[9px] px-2.5 py-1">Vencida</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="font-bold text-[16px] text-[#0C2A45]">{fmtARS(Number(f.monto))}</span>
-                  <Link href="/admin/facturas"
-                    className="text-[12.5px] font-semibold bg-[#0E6BA8] text-white rounded-[9px] px-3.5 py-2">
-                    Pagar
-                  </Link>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

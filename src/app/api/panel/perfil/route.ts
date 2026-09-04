@@ -20,10 +20,6 @@ interface PerfilPatchBody {
   notifComisionGenerada?: boolean;
 }
 
-function perfilCompleto(v: { dni: string | null; fechaNacimiento: string | null; provincia: string | null; localidad: string | null; telefono: string | null }) {
-  return !!(v.dni && v.fechaNacimiento && v.provincia && v.localidad && v.telefono);
-}
-
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
@@ -69,24 +65,16 @@ export async function PATCH(req: NextRequest) {
   if (notifFacturaPagada !== undefined) values.notifFacturaPagada = !!notifFacturaPagada;
   if (notifComisionGenerada !== undefined) values.notifComisionGenerada = !!notifComisionGenerada;
 
-  // Se avisa al superadmin la primera vez que el perfil pasa de incompleto a
-  // completo — cubre tanto el alta por Google (que llega acá vacío desde
-  // completar-perfil) como cualquier edición posterior desde /panel/perfil,
-  // sin mandar el aviso de nuevo en cada edición de un perfil ya completo.
-  const eraCompleto = perfilCompleto(rev);
-  const esCompletoAhora = perfilCompleto({
-    dni: dni !== undefined ? (dni || null) : rev.dni,
-    fechaNacimiento: fechaNacimiento !== undefined ? (fechaNacimiento || null) : rev.fechaNacimiento,
-    provincia: provincia !== undefined ? (provincia || null) : rev.provincia,
-    localidad: localidad !== undefined ? (localidad || null) : rev.localidad,
-    telefono: telefono !== undefined ? (telefono || null) : rev.telefono,
-  });
-
   if (Object.keys(values).length > 0) {
     await db.update(revendedores).set(values).where(eq(revendedores.userId, user.id));
   }
 
-  if (!eraCompleto && esCompletoAhora) {
+  // Aviso al superadmin cuando el revendedor confirma que puede facturar
+  // (false → true). Para el alta por email eso ya viene en true desde
+  // /registro, así que esto sólo dispara en el alta por Google, que lo
+  // confirma en /panel/confirmar-facturacion. El alta por email se avisa
+  // desde /api/registro/verificar al confirmar el email.
+  if (puedeFacturar === true && !rev.puedeFacturar) {
     const { subject, html } = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
     await notifyAdmins(subject, html, "revendedorNuevo");
   }

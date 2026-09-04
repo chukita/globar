@@ -16,13 +16,37 @@ import {
 
 export const roleEnum = pgEnum("role", ["superadmin", "revendedor"]);
 
-// Estado de una cuota de comisión en el ciclo de cobro
+// Estado de una cuota de comisión en el ciclo de cobro.
+//
+// Flujo vigente (desde el rediseño de sept. 2026 — pago mensual antes de la factura):
+//   pendiente → generada → liquidada → pagada
+//                  └────────────────────→ anulada
+//
+//   generada   — el cliente pagó, la comisión se acumuló, todavía no se transfirió.
+//   liquidada  — entró en una liquidación mensual pagada; la plata ya se transfirió;
+//                falta que el revendedor mande la factura.
+//   pagada     — plata transferida Y factura recibida (terminal).
+//   facturada  — LEGACY del flujo viejo (el revendedor facturaba antes de cobrar). Ya
+//                no se escribe; se conserva el valor por filas históricas.
+//   anulada    — el cliente ejerció derecho de arrepentimiento — solo alcanzable desde
+//                "generada".
 export const cuotaStatusEnum = pgEnum("cuota_status", [
-  "pendiente",   // el cliente aún no pagó este mes
-  "generada",    // el cliente pagó → cuota disponible para facturar
-  "facturada",   // el revendedor subió la factura
-  "pagada",      // el superadmin realizó la transferencia
-  "anulada",     // el cliente ejerció derecho de arrepentimiento (baja + reembolso dentro de los 10 días) — solo si seguía "generada"
+  "pendiente",
+  "generada",
+  "liquidada",
+  "facturada",
+  "pagada",
+  "anulada",
+]);
+
+// Estado de una liquidación mensual (una por revendedor por corrida).
+//   pagada    — el superadmin confirmó la transferencia; esperando la factura.
+//   facturada — el revendedor subió la factura (terminal).
+//   anulada   — corrección manual (solo por SQL en v1, igual que cuotas.anulada).
+export const liquidacionStatusEnum = pgEnum("liquidacion_status", [
+  "pagada",
+  "facturada",
+  "anulada",
 ]);
 
 export const productoStatusEnum = pgEnum("producto_status", [
@@ -188,14 +212,45 @@ export const cuotas = pgTable("cuotas", {
   periodoAnio:    integer("periodo_anio").notNull(),
   status:         cuotaStatusEnum("status").notNull().default("pendiente"),
   pagoExternoId:  text("pago_externo_id").unique(),    // ID del pago en el producto digital (idempotencia)
+  // Liquidación mensual que pagó esta cuota (null mientras sigue "generada").
+  // Una cuota pertenece a exactamente una liquidación → FK simple, sin tabla puente.
+  liquidacionId:  text("liquidacion_id").references(() => liquidaciones.id),
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),
   generadoEn:     timestamp("generado_en"),  // cuando el cliente pagó
+  liquidadoEn:    timestamp("liquidado_en"),  // cuando el superadmin transfirió la plata
   facturadoEn:    timestamp("facturado_en"),
   pagadoEn:       timestamp("pagado_en"),
   anuladoEn:      timestamp("anulado_en"),  // derecho de arrepentimiento del cliente
 });
 
-// ─── Facturas ─────────────────────────────────────────────────────────────────
+// ─── Liquidaciones mensuales ──────────────────────────────────────────────────
+// Una fila por revendedor por corrida mensual. El superadmin la crea al confirmar
+// la transferencia (por Mercado Pago, a mano) de todo lo que el revendedor acumuló
+// hasta fin del mes anterior. Desde ese momento el revendedor tiene `mesesGraciaFactura`
+// meses para subir la factura (snapshoteado en `facturaVenceEn`).
+
+export const liquidaciones = pgTable("liquidaciones", {
+  id:               text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  revendedorId:     text("revendedor_id").notNull().references(() => revendedores.id),
+  periodoMes:       integer("periodo_mes").notNull(),   // mes calendario que se paga (mes anterior) — solo etiqueta
+  periodoAnio:      integer("periodo_anio").notNull(),
+  monto:            numeric("monto", { precision: 12, scale: 2 }).notNull(),  // suma de cuotas.monto ligadas
+  cantidadCuotas:   integer("cantidad_cuotas").notNull(),
+  status:           liquidacionStatusEnum("status").notNull().default("pagada"),
+  pagadaEn:         timestamp("pagada_en").defaultNow().notNull(),  // fecha de transferencia — arranca el reloj de gracia
+  comprobanteUrl:   text("comprobante_url"),   // basename del comprobante de transferencia (superadmin)
+  facturaUrl:       text("factura_url"),       // basename del PDF de factura (revendedor)
+  facturaRecibidaEn: timestamp("factura_recibida_en"),
+  facturaVenceEn:   timestamp("factura_vence_en").notNull(),  // snapshot addMonths(pagadaEn, config.mesesGraciaFactura)
+  nota:             text("nota"),
+  recordatoriosEnviados: integer("recordatorios_enviados").notNull().default(0),
+  ultimoRecordatorioEn:  timestamp("ultimo_recordatorio_en"),
+  creadoEn:         timestamp("creado_en").defaultNow().notNull(),
+}, (t) => [unique().on(t.revendedorId, t.periodoMes, t.periodoAnio)]);
+
+// ─── Facturas (LEGACY) ────────────────────────────────────────────────────────
+// Flujo viejo: el revendedor subía la factura ANTES de cobrar. Reemplazado por
+// `liquidaciones` (sept. 2026). No se escribe más; se conserva para histórico.
 
 export const facturas = pgTable("facturas", {
   id:            text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -210,7 +265,7 @@ export const facturas = pgTable("facturas", {
   comprobanteUrl: text("comprobante_url"),        // comprobante de transferencia, subido por el superadmin al pagar
 });
 
-// ─── Cuota ↔ Factura (una factura puede cubrir varias cuotas) ─────────────────
+// ─── Cuota ↔ Factura (LEGACY, una factura puede cubrir varias cuotas) ─────────
 
 export const cuotasFacturas = pgTable("cuotas_facturas", {
   cuotaId:    text("cuota_id").notNull().references(() => cuotas.id),
@@ -237,6 +292,11 @@ export const configuracion = pgTable("configuracion", {
   id:            integer("id").primaryKey().default(1),
   comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
+  // Meses que tiene el revendedor, desde que se le liquidó (pagó), para subir la
+  // factura. Pasado ese plazo se lo excluye de la liquidación siguiente hasta que
+  // se ponga al día. Se snapshotea en liquidaciones.facturaVenceEn al crear cada
+  // liquidación, así un cambio acá no mueve vencimientos ya emitidos.
+  mesesGraciaFactura: integer("meses_gracia_factura").notNull().default(3),
   // Lista de emails separados por coma que reciben los avisos de "revendedor
   // nuevo" y "factura subida" — no hay usuario superadmin en `users` (login
   // solo por contraseña), así que no hay otra forma de saber a quién avisar.
@@ -246,5 +306,8 @@ export const configuracion = pgTable("configuracion", {
   // notifComisionGenerada más arriba), pero a nivel global de superadmin.
   notifRevendedorNuevo: boolean("notif_revendedor_nuevo").notNull().default(true),
   notifFacturaSubida: boolean("notif_factura_subida").notNull().default(true),
+  // Aviso al admin cuando uno o más revendedores entran en bloqueo por factura
+  // vencida (deuda de factura de más de mesesGraciaFactura meses).
+  notifLiquidacionBloqueada: boolean("notif_liquidacion_bloqueada").notNull().default(true),
   actualizadoEn: timestamp("actualizado_en").defaultNow().notNull(),
 }, (t) => [check("configuracion_singleton", sql`${t.id} = 1`)]);

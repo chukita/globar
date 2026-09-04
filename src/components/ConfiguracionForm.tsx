@@ -5,21 +5,27 @@ import { useState } from "react";
 export function ConfiguracionForm({
   comisionMonto,
   comisionMeses,
+  mesesGraciaFactura,
   notifAdminEmails,
   notifRevendedorNuevo,
   notifFacturaSubida,
+  notifLiquidacionBloqueada,
 }: {
   comisionMonto: number;
   comisionMeses: number;
+  mesesGraciaFactura: number;
   notifAdminEmails: string;
   notifRevendedorNuevo: boolean;
   notifFacturaSubida: boolean;
+  notifLiquidacionBloqueada: boolean;
 }) {
   const [monto, setMonto] = useState(String(comisionMonto));
   const [meses, setMeses] = useState(String(comisionMeses));
+  const [mesesGracia, setMesesGracia] = useState(String(mesesGraciaFactura));
   const [emails, setEmails] = useState(notifAdminEmails);
   const [avisoRevendedorNuevo, setAvisoRevendedorNuevo] = useState(notifRevendedorNuevo);
   const [avisoFacturaSubida, setAvisoFacturaSubida] = useState(notifFacturaSubida);
+  const [avisoLiquidacionBloqueada, setAvisoLiquidacionBloqueada] = useState(notifLiquidacionBloqueada);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -36,9 +42,11 @@ export function ConfiguracionForm({
       body: JSON.stringify({
         comisionMonto: Number(monto),
         comisionMeses: Number(meses),
+        mesesGraciaFactura: Number(mesesGracia),
         notifAdminEmails: emails,
         notifRevendedorNuevo: avisoRevendedorNuevo,
         notifFacturaSubida: avisoFacturaSubida,
+        notifLiquidacionBloqueada: avisoLiquidacionBloqueada,
       }),
     });
 
@@ -88,6 +96,22 @@ export function ConfiguracionForm({
         </label>
       </div>
 
+      <label className="block mt-5">
+        <span className="text-[12.5px] text-[#5B6577] font-medium">Meses de gracia para enviar la factura</span>
+        <input
+          type="number"
+          min={1}
+          step="1"
+          value={mesesGracia}
+          onChange={(e) => setMesesGracia(e.target.value)}
+          required
+          className="mt-1.5 w-full bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-4 py-3 text-[15px] font-semibold text-[#0C2A45]"
+        />
+        <span className="block text-[12.5px] text-[#9AA3B2] mt-1.5">
+          Plazo desde que se le liquida (paga) a un revendedor para que suba la factura. Pasado ese plazo queda excluido de la liquidación siguiente hasta ponerse al día. Cambiarlo no afecta liquidaciones ya emitidas.
+        </span>
+      </label>
+
       <div className="text-[13px] text-[#9AA3B2] font-semibold uppercase tracking-[.05em] mt-7">Notificaciones al superadmin</div>
       <p className="text-[13.5px] text-[#5B6577] mt-1.5 mb-0">
         Emails que reciben el aviso de &ldquo;nuevo revendedor&rdquo; y &ldquo;factura subida&rdquo;. No hay usuario de superadmin ligado a una cuenta, así que hay que indicarlo acá.
@@ -121,6 +145,15 @@ export function ConfiguracionForm({
             className="w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
           />
           <span className="text-[14px] text-[#0C2A45]">Avisarme cuando un revendedor sube una factura</span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={avisoLiquidacionBloqueada}
+            onChange={(e) => setAvisoLiquidacionBloqueada(e.target.checked)}
+            className="w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
+          />
+          <span className="text-[14px] text-[#0C2A45]">Avisarme cuando un revendedor entra en bloqueo por factura vencida</span>
         </label>
       </div>
 

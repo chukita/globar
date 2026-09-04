@@ -25,20 +25,23 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  let body: { comisionMonto?: number; comisionMeses?: number; notifAdminEmails?: string; notifRevendedorNuevo?: boolean; notifFacturaSubida?: boolean };
+  let body: { comisionMonto?: number; comisionMeses?: number; mesesGraciaFactura?: number; notifAdminEmails?: string; notifRevendedorNuevo?: boolean; notifFacturaSubida?: boolean; notifLiquidacionBloqueada?: boolean };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { comisionMonto, comisionMeses, notifAdminEmails, notifRevendedorNuevo, notifFacturaSubida } = body;
+  const { comisionMonto, comisionMeses, mesesGraciaFactura, notifAdminEmails, notifRevendedorNuevo, notifFacturaSubida, notifLiquidacionBloqueada } = body;
 
   if (typeof comisionMonto !== "number" || !Number.isFinite(comisionMonto) || comisionMonto <= 0) {
     return NextResponse.json({ error: "comisionMonto debe ser un número mayor a 0" }, { status: 400 });
   }
   if (typeof comisionMeses !== "number" || !Number.isInteger(comisionMeses) || comisionMeses <= 0) {
     return NextResponse.json({ error: "comisionMeses debe ser un entero mayor a 0" }, { status: 400 });
+  }
+  if (mesesGraciaFactura !== undefined && (!Number.isInteger(mesesGraciaFactura) || mesesGraciaFactura < 1)) {
+    return NextResponse.json({ error: "mesesGraciaFactura debe ser un entero mayor o igual a 1" }, { status: 400 });
   }
 
   let notifAdminEmailsNormalizado: string | null | undefined;
@@ -54,9 +57,11 @@ export async function PUT(req: NextRequest) {
   const config = await updateConfiguracion({
     comisionMonto,
     comisionMeses,
+    mesesGraciaFactura,
     notifAdminEmails: notifAdminEmailsNormalizado,
     notifRevendedorNuevo,
     notifFacturaSubida,
+    notifLiquidacionBloqueada,
   });
   return NextResponse.json({ config });
 }

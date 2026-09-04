@@ -41,9 +41,17 @@ export function DatosCobroForm({
   const inputClass = "w-full border border-[#DCE0E5] rounded-xl px-4 py-3 text-[15px] text-[#0C2A45] placeholder-[#B0B8C4] outline-none focus:border-[#0E6BA8] focus:ring-2 focus:ring-[#0E6BA8]/10";
   const labelClass = "block text-[12.5px] text-[#9AA3B2] font-medium mb-1.5";
 
+  const faltaAlgo = !cbuAlias || !titularNombre || !titularCuit || !puedeFacturar;
+
   if (!editing) {
     return (
       <div className="flex flex-col gap-4">
+        {faltaAlgo && (
+          <div className="bg-[#FFF3CD] border border-[#FFD97D] rounded-xl px-4 py-3 text-[13px] text-[#856404] leading-relaxed">
+            Te faltan datos de cobro. Necesitás CBU/alias, titular de la cuenta y CUIT/CUIL cargados
+            (y tus datos personales completos) para entrar en la liquidación mensual y cobrar tus comisiones.
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <div>
             <div className="text-[12.5px] text-[#9AA3B2]">CBU o alias</div>
@@ -73,7 +81,8 @@ export function DatosCobroForm({
   return (
     <div className="flex flex-col gap-3 max-w-[480px]">
       <div className="bg-[#FFF8E6] border border-[#F0DCA0] rounded-xl px-4 py-3 text-[13px] text-[#8A6D1E] leading-relaxed">
-        Quien emite la factura tiene que ser el mismo titular de esta cuenta — Mercado Pago rechaza el pago si el CBU/alias no coincide con el CUIT/CUIL de la factura.
+        La cuenta de cobro tiene que estar a nombre de la misma persona que emite la factura: el CBU/alias, el titular
+        y el CUIT/CUIL de acá son los que van a figurar en cada factura a Grupo Globaliza. Sin estos datos no entrás en la liquidación mensual.
       </div>
       <div>
         <label className={labelClass}>CBU o alias</label>

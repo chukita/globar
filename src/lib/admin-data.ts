@@ -1,6 +1,37 @@
 import { db } from "@/db";
-import { revendedores, users, productos, habilitaciones, ventas, cuotas, facturas, cuotasFacturas, contactos } from "@/db/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { revendedores, users, productos, habilitaciones, ventas, cuotas, liquidaciones, contactos } from "@/db/schema";
+import { eq, and, lt, inArray, sql, desc, asc } from "drizzle-orm";
+import { inicioDeMesArgentina, mesAnteriorArgentina, periodoLabel } from "@/lib/fecha";
+
+export { periodoLabel };
+
+// Campos que un revendedor tiene que tener cargados para entrar en la liquidación
+// mensual. Lo que falte → se lo excluye y se le avisa.
+export function camposFaltantesParaCobrar(r: {
+  puedeFacturar: boolean | null;
+  cbuAlias: string | null;
+  titularNombre: string | null;
+  titularCuit: string | null;
+  dni: string | null;
+  fechaNacimiento: string | null;
+  provincia: string | null;
+  localidad: string | null;
+  telefono: string | null;
+  activo: boolean | null;
+}): string[] {
+  const faltan: string[] = [];
+  if (!r.activo) faltan.push("cuenta desactivada");
+  if (!r.puedeFacturar) faltan.push("no confirmó que puede facturar");
+  if (!r.cbuAlias) faltan.push("CBU/alias");
+  if (!r.titularNombre) faltan.push("titular de la cuenta");
+  if (!r.titularCuit) faltan.push("CUIT/CUIL");
+  if (!r.dni) faltan.push("DNI");
+  if (!r.fechaNacimiento) faltan.push("fecha de nacimiento");
+  if (!r.provincia) faltan.push("provincia");
+  if (!r.localidad) faltan.push("localidad");
+  if (!r.telefono) faltan.push("teléfono");
+  return faltan;
+}
 
 export async function getDashboardStats() {
   const [ventasCount] = await db.select({ count: sql<number>`count(*)::int` }).from(ventas);
@@ -8,40 +39,41 @@ export async function getDashboardStats() {
     .select({ count: sql<number>`count(*)::int` })
     .from(revendedores)
     .where(eq(revendedores.activo, true));
-  const [pagadas] = await db
+  const [liquidado] = await db
     .select({ total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
     .from(cuotas)
-    .where(eq(cuotas.status, "pagada"));
+    .where(inArray(cuotas.status, ["liquidada", "pagada"]));
   const [facturasPendientes] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(facturas)
-    .where(eq(facturas.pagada, false));
+    .from(liquidaciones)
+    .where(eq(liquidaciones.status, "pagada"));
 
   return {
     ventasTotales: ventasCount?.count ?? 0,
     revendedoresActivos: revendedoresActivos?.count ?? 0,
-    comisionesPagadas: Number(pagadas?.total ?? 0),
+    comisionesLiquidadas: Number(liquidado?.total ?? 0),
     facturasPendientes: facturasPendientes?.count ?? 0,
   };
 }
 
-export async function getFacturasPendientesResumen(limit = 5) {
+/** Liquidaciones ya pagadas que todavía esperan la factura del revendedor (para el dashboard). */
+export async function getLiquidacionesEsperandoFacturaResumen(limit = 5) {
   return db
     .select({
-      id: facturas.id,
-      monto: facturas.monto,
-      nota: facturas.nota,
-      subidaEn: facturas.subidaEn,
+      id: liquidaciones.id,
+      monto: liquidaciones.monto,
+      periodoMes: liquidaciones.periodoMes,
+      periodoAnio: liquidaciones.periodoAnio,
+      pagadaEn: liquidaciones.pagadaEn,
+      facturaVenceEn: liquidaciones.facturaVenceEn,
       revendedor: revendedores.codigoVentas,
       revendedorNombre: users.name,
-      cbuAlias: revendedores.cbuAlias,
-      titularNombre: revendedores.titularNombre,
     })
-    .from(facturas)
-    .innerJoin(revendedores, eq(facturas.revendedorId, revendedores.id))
+    .from(liquidaciones)
+    .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
     .innerJoin(users, eq(revendedores.userId, users.id))
-    .where(eq(facturas.pagada, false))
-    .orderBy(desc(facturas.subidaEn))
+    .where(eq(liquidaciones.status, "pagada"))
+    .orderBy(asc(liquidaciones.facturaVenceEn))
     .limit(limit);
 }
 
@@ -100,34 +132,124 @@ export async function getTodasLasComisiones() {
     .orderBy(desc(cuotas.periodoAnio), desc(cuotas.periodoMes));
 }
 
-export async function getTodasLasFacturas() {
+// ─── Liquidaciones mensuales ──────────────────────────────────────────────────
+
+const CAMPOS_COBRO_REVENDEDOR = {
+  puedeFacturar: revendedores.puedeFacturar,
+  cbuAlias: revendedores.cbuAlias,
+  titularNombre: revendedores.titularNombre,
+  titularCuit: revendedores.titularCuit,
+  dni: revendedores.dni,
+  fechaNacimiento: revendedores.fechaNacimiento,
+  provincia: revendedores.provincia,
+  localidad: revendedores.localidad,
+  telefono: revendedores.telefono,
+  activo: revendedores.activo,
+} as const;
+
+/**
+ * Preview de la liquidación del mes: un renglón por revendedor con ≥1 cuota
+ * "generada" acumulada hasta fin del mes pasado (por `generadoEn`, no por el
+ * período de suscripción del cliente). Marca elegibilidad y bloqueo.
+ */
+export async function getPreviewLiquidacionMesAnterior(ahora = new Date()) {
+  const corte = inicioDeMesArgentina(ahora);
+  const { mes, anio } = mesAnteriorArgentina(ahora);
+
   const filas = await db
     .select({
-      id: facturas.id,
-      monto: facturas.monto,
-      nota: facturas.nota,
-      archivoUrl: facturas.archivoUrl,
-      comprobanteUrl: facturas.comprobanteUrl,
-      pagada: facturas.pagada,
-      subidaEn: facturas.subidaEn,
-      pagadaEn: facturas.pagadaEn,
+      revendedorId: cuotas.revendedorId,
+      codigoVentas: revendedores.codigoVentas,
+      nombre: users.name,
+      email: users.email,
+      cantidadCuotas: sql<number>`count(*)::int`,
+      monto: sql<string>`coalesce(sum(${cuotas.monto}), 0)`,
+      ...CAMPOS_COBRO_REVENDEDOR,
+    })
+    .from(cuotas)
+    .innerJoin(revendedores, eq(cuotas.revendedorId, revendedores.id))
+    .innerJoin(users, eq(revendedores.userId, users.id))
+    .where(and(eq(cuotas.status, "generada"), lt(cuotas.generadoEn, corte)))
+    .groupBy(cuotas.revendedorId, revendedores.id, users.id);
+
+  // Bloqueados: tienen al menos una liquidación pagada con la factura vencida.
+  const bloqueados = await db
+    .select({ revendedorId: liquidaciones.revendedorId })
+    .from(liquidaciones)
+    .where(and(eq(liquidaciones.status, "pagada"), lt(liquidaciones.facturaVenceEn, ahora)))
+    .groupBy(liquidaciones.revendedorId);
+  const bloqueadosSet = new Set(bloqueados.map((b) => b.revendedorId));
+
+  return {
+    periodoMes: mes,
+    periodoAnio: anio,
+    filas: filas.map((f) => {
+      const faltantes = camposFaltantesParaCobrar(f);
+      const bloqueado = bloqueadosSet.has(f.revendedorId);
+      return {
+        revendedorId: f.revendedorId,
+        codigoVentas: f.codigoVentas,
+        nombre: f.nombre,
+        email: f.email,
+        cantidadCuotas: f.cantidadCuotas,
+        monto: Number(f.monto),
+        cbuAlias: f.cbuAlias,
+        titularNombre: f.titularNombre,
+        titularCuit: f.titularCuit,
+        camposFaltantes: faltantes,
+        bloqueado,
+        incluible: faltantes.length === 0 && !bloqueado,
+      };
+    }),
+  };
+}
+
+export async function getLiquidacionesEsperandoFactura(ahora = new Date()) {
+  const filas = await db
+    .select({
+      id: liquidaciones.id,
+      monto: liquidaciones.monto,
+      periodoMes: liquidaciones.periodoMes,
+      periodoAnio: liquidaciones.periodoAnio,
+      pagadaEn: liquidaciones.pagadaEn,
+      facturaVenceEn: liquidaciones.facturaVenceEn,
+      cantidadCuotas: liquidaciones.cantidadCuotas,
+      comprobanteUrl: liquidaciones.comprobanteUrl,
+      recordatoriosEnviados: liquidaciones.recordatoriosEnviados,
+      ultimoRecordatorioEn: liquidaciones.ultimoRecordatorioEn,
       revendedor: revendedores.codigoVentas,
       revendedorNombre: users.name,
-      cbuAlias: revendedores.cbuAlias,
-      titularNombre: revendedores.titularNombre,
     })
-    .from(facturas)
-    .innerJoin(revendedores, eq(facturas.revendedorId, revendedores.id))
+    .from(liquidaciones)
+    .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
     .innerJoin(users, eq(revendedores.userId, users.id))
-    .orderBy(desc(facturas.subidaEn));
+    .where(eq(liquidaciones.status, "pagada"))
+    .orderBy(asc(liquidaciones.facturaVenceEn));
 
-  const cuotasPorFactura = await db
-    .select({ facturaId: cuotasFacturas.facturaId, count: sql<number>`count(*)::int` })
-    .from(cuotasFacturas)
-    .groupBy(cuotasFacturas.facturaId);
-  const cuotasMap = new Map(cuotasPorFactura.map((c) => [c.facturaId, c.count]));
+  return filas.map((f) => ({ ...f, vencida: f.facturaVenceEn < ahora }));
+}
 
-  return filas.map((f) => ({ ...f, cuotas: cuotasMap.get(f.id) ?? 0 }));
+export async function getHistorialLiquidaciones() {
+  return db
+    .select({
+      id: liquidaciones.id,
+      monto: liquidaciones.monto,
+      periodoMes: liquidaciones.periodoMes,
+      periodoAnio: liquidaciones.periodoAnio,
+      pagadaEn: liquidaciones.pagadaEn,
+      facturaRecibidaEn: liquidaciones.facturaRecibidaEn,
+      facturaUrl: liquidaciones.facturaUrl,
+      comprobanteUrl: liquidaciones.comprobanteUrl,
+      cantidadCuotas: liquidaciones.cantidadCuotas,
+      status: liquidaciones.status,
+      revendedor: revendedores.codigoVentas,
+      revendedorNombre: users.name,
+    })
+    .from(liquidaciones)
+    .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
+    .innerJoin(users, eq(revendedores.userId, users.id))
+    .where(inArray(liquidaciones.status, ["facturada", "anulada"]))
+    .orderBy(desc(liquidaciones.pagadaEn));
 }
 
 export async function getTodosLosRevendedores() {
@@ -154,7 +276,7 @@ export async function getTodosLosRevendedores() {
   const cobradoPorRevendedor = await db
     .select({ revendedorId: cuotas.revendedorId, total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
     .from(cuotas)
-    .where(eq(cuotas.status, "pagada"))
+    .where(inArray(cuotas.status, ["liquidada", "pagada"]))
     .groupBy(cuotas.revendedorId);
   const cobradoMap = new Map(cobradoPorRevendedor.map((c) => [c.revendedorId, Number(c.total)]));
 
@@ -218,7 +340,7 @@ export async function getRevendedorDetalle(id: string) {
   const [cobrado] = await db
     .select({ total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
     .from(cuotas)
-    .where(and(eq(cuotas.revendedorId, id), eq(cuotas.status, "pagada")));
+    .where(and(eq(cuotas.revendedorId, id), inArray(cuotas.status, ["liquidada", "pagada"])));
 
   const todosProductos = await db.select().from(productos).where(eq(productos.status, "activo"));
   const habilitacionesDelRevendedor = await db

@@ -12,6 +12,7 @@ export default function RegistroPage() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [puedeFacturar, setPuedeFacturar] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,10 @@ export default function RegistroPage() {
     e.preventDefault();
     setError("");
 
+    if (!puedeFacturar) {
+      setError("Para ser revendedor necesitás poder emitir factura por tus comisiones de venta.");
+      return;
+    }
     if (!termsAccepted) {
       setError("Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para continuar.");
       return;
@@ -33,7 +38,7 @@ export default function RegistroPage() {
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, email, password }),
+      body: JSON.stringify({ nombre, email, password, puedeFacturar }),
     });
     const text = await res.text();
     const data = text ? JSON.parse(text) : {};
@@ -48,7 +53,7 @@ export default function RegistroPage() {
   }
 
   async function handleGoogle() {
-    await signIn("google", { callbackUrl: "/panel/completar-perfil" });
+    await signIn("google", { callbackUrl: "/panel/confirmar-facturacion" });
   }
 
   const inputClass = "w-full border border-[#DCE0E5] rounded-xl px-4 py-3 text-[14.5px] text-[#0C2A45] placeholder-[#B0B8C4] outline-none focus:border-[#0E6BA8] focus:ring-2 focus:ring-[#0E6BA8]/10 transition-colors bg-white";
@@ -105,6 +110,20 @@ export default function RegistroPage() {
               <label className={labelClass}>Contraseña</label>
               <PasswordInput value={password} onChange={setPassword} required placeholder="Mínimo 8 caracteres" />
             </div>
+
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={puedeFacturar}
+                onChange={(e) => setPuedeFacturar(e.target.checked)}
+                required
+                className="mt-0.5 w-4 h-4 accent-[#0E6BA8] flex-shrink-0"
+              />
+              <span className="text-[13.5px] text-[#0C2A45] leading-snug">
+                Puedo emitir factura por mis comisiones de venta (monotributo u otro régimen).
+                La cuenta de cobro va a estar a mi nombre.
+              </span>
+            </label>
 
             <label className="flex items-start gap-3 cursor-pointer select-none">
               <input

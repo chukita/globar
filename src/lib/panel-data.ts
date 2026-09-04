@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { cuotas, ventas, productos, habilitaciones, facturas, registros } from "@/db/schema";
+import { cuotas, ventas, productos, habilitaciones, facturas, liquidaciones, registros } from "@/db/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 
 export async function getRevendedorStats(revendedorId: string) {
@@ -8,11 +8,13 @@ export async function getRevendedorStats(revendedorId: string) {
     .from(ventas)
     .where(eq(ventas.revendedorId, revendedorId));
 
+  // "Cobrado" = plata ya transferida: cuotas liquidadas (falta solo la factura) + pagadas.
   const [cobradas] = await db
     .select({ total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
     .from(cuotas)
-    .where(and(eq(cuotas.revendedorId, revendedorId), eq(cuotas.status, "pagada")));
+    .where(and(eq(cuotas.revendedorId, revendedorId), inArray(cuotas.status, ["liquidada", "pagada"])));
 
+  // "Pendiente" = comisiones acumuladas todavía sin liquidar.
   const [pendientes] = await db
     .select({ total: sql<string>`coalesce(sum(${cuotas.monto}), 0)` })
     .from(cuotas)
@@ -103,12 +105,37 @@ export async function getProductosConHabilitacion(revendedorId: string) {
   return todos.map((p) => ({ ...p, habilitado: habilitadosSet.has(p.id) }));
 }
 
+/** Facturas del flujo viejo (legacy) — se muestran read-only en el histórico. */
 export async function getFacturasDelRevendedor(revendedorId: string) {
   return db
     .select()
     .from(facturas)
     .where(eq(facturas.revendedorId, revendedorId))
     .orderBy(sql`${facturas.subidaEn} desc`);
+}
+
+/**
+ * Liquidaciones mensuales del revendedor: las que ya cobró (status "pagada",
+ * esperando que suba la factura) y el histórico (status "facturada"/"anulada").
+ */
+export async function getLiquidacionesDelRevendedor(revendedorId: string) {
+  return db
+    .select({
+      id: liquidaciones.id,
+      periodoMes: liquidaciones.periodoMes,
+      periodoAnio: liquidaciones.periodoAnio,
+      monto: liquidaciones.monto,
+      cantidadCuotas: liquidaciones.cantidadCuotas,
+      status: liquidaciones.status,
+      pagadaEn: liquidaciones.pagadaEn,
+      facturaVenceEn: liquidaciones.facturaVenceEn,
+      facturaRecibidaEn: liquidaciones.facturaRecibidaEn,
+      facturaUrl: liquidaciones.facturaUrl,
+      comprobanteUrl: liquidaciones.comprobanteUrl,
+    })
+    .from(liquidaciones)
+    .where(eq(liquidaciones.revendedorId, revendedorId))
+    .orderBy(sql`${liquidaciones.pagadaEn} desc`);
 }
 
 /**

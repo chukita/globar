@@ -173,7 +173,7 @@ export default async function LandingPage() {
                 <h3 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{s.title}</h3>
                 <p style={{ fontSize: 16, lineHeight: 1.6, color: "#5B648E", margin: 0 }}>
                   {s.n === "03"
-                    ? `Cada suscripción se registra sola y cobrás tu comisión en ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""} mensuales mientras el cliente siga activo.`
+                    ? `Cada suscripción se registra sola: acumulás una comisión por mes (hasta ${comisionMeses}) mientras el cliente siga activo y te la transferimos a principio del mes siguiente. Después subís tu factura.`
                     : s.desc}
                 </p>
               </div>

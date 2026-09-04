@@ -134,6 +134,13 @@
       "when": 1787769619309,
       "tag": "0018_thankful_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788478875882,
+      "tag": "0019_salty_mastermind",
+      "breakpoints": true
     }
   ]
 }
