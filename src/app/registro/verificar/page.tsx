@@ -39,7 +39,7 @@ function VerificarForm() {
     }
 
     await signIn("email-verificado", { token: data.token, redirect: false });
-    router.push("/panel/completar-perfil");
+    router.push("/panel/productos");
   }
 
   async function handleReenviar() {

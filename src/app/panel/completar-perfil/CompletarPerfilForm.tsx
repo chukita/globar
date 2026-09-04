@@ -4,19 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProvinciaLocalidadFields } from "@/components/ProvinciaLocalidadFields";
 
-// Calculado una sola vez al cargar el módulo — Date.now() es impuro y React 19
-// rechaza llamarlo durante el render, incluso en useMemo (mismo motivo que en /registro).
-const MAX_FECHA_NACIMIENTO = new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10);
-
 export function CompletarPerfilForm({
   dni: dniInicial,
-  fechaNacimiento: fechaInicial,
   telefono: telefonoInicial,
   provincia: provinciaInicial,
   localidad: localidadInicial,
 }: {
   dni: string;
-  fechaNacimiento: string;
   telefono: string;
   provincia: string;
   localidad: string;
@@ -24,7 +18,6 @@ export function CompletarPerfilForm({
   const router = useRouter();
   const [form, setForm] = useState({
     dni: dniInicial,
-    fechaNacimiento: fechaInicial,
     telefono: telefonoInicial,
     provincia: provinciaInicial,
     localidad: localidadInicial,
@@ -62,17 +55,10 @@ export function CompletarPerfilForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>DNI</label>
-          <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value.replace(/\D/g, ""))}
-            maxLength={8} placeholder="12345678" className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Fecha de nacimiento</label>
-          <input type="date" value={form.fechaNacimiento} onChange={(e) => set("fechaNacimiento", e.target.value)}
-            max={MAX_FECHA_NACIMIENTO} className={inputClass} />
-        </div>
+      <div>
+        <label className={labelClass}>DNI</label>
+        <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value.replace(/\D/g, ""))}
+          maxLength={8} placeholder="12345678" className={inputClass} />
       </div>
 
       <ProvinciaLocalidadFields

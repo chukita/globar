@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validarCodigo, validarToken, marcarEmailVerificado } from "@/lib/verificacionEmail";
-import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
+import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida } from "@/lib/email";
 import { signEmailVerificadoToken } from "@/lib/impersonar";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 
@@ -33,8 +33,10 @@ export async function POST(req: NextRequest) {
 
     const [user] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, resultado.userId)).limit(1);
     if (user) {
-      const { subject, html } = emailRevendedorNuevo(user.name ?? user.email, user.email);
-      await notifyAdmins(subject, html, "revendedorNuevo");
+      const nuevo = emailRevendedorNuevo(user.name ?? user.email, user.email);
+      await notifyAdmins(nuevo.subject, nuevo.html, "revendedorNuevo");
+      const bienvenida = emailBienvenida(user.name ?? undefined);
+      await sendEmail({ to: user.email, toName: user.name ?? undefined, subject: bienvenida.subject, html: bienvenida.html });
     }
 
     const signInToken = signEmailVerificadoToken(resultado.userId);

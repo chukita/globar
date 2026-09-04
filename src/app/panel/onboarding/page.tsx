@@ -11,9 +11,7 @@ export default async function OnboardingPage() {
 
   const rev = await getRevendedorByUserId(session.user.id);
   if (rev && !rev.activo) redirect("/panel/cuenta-desactivada");
-  if (!rev || !rev.dni || !rev.fechaNacimiento || !rev.provincia || !rev.localidad || !rev.telefono) {
-    redirect("/panel/completar-perfil");
-  }
+  if (!rev || !rev.puedeFacturar || !rev.fechaNacimiento) redirect("/panel/confirmar-facturacion");
   if (rev.onboardingCompletedAt) redirect("/panel/productos");
 
   const { comisionMeses } = await getConfiguracion();

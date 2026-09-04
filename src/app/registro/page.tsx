@@ -6,12 +6,17 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { PasswordInput } from "@/components/PasswordInput";
+import { esMayorDeEdad } from "@/lib/validacion";
+
+// Calculado al cargar el módulo — Date.now() es impuro y React 19 lo rechaza en render.
+const MAX_FECHA_NACIMIENTO = new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10);
 
 export default function RegistroPage() {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [puedeFacturar, setPuedeFacturar] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
@@ -21,6 +26,10 @@ export default function RegistroPage() {
     e.preventDefault();
     setError("");
 
+    if (!fechaNacimiento || !esMayorDeEdad(fechaNacimiento)) {
+      setError("Tenés que ser mayor de 18 años para registrarte como revendedor.");
+      return;
+    }
     if (!puedeFacturar) {
       setError("Para ser revendedor necesitás poder emitir factura por tus comisiones de venta.");
       return;
@@ -38,7 +47,7 @@ export default function RegistroPage() {
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, email, password, puedeFacturar }),
+      body: JSON.stringify({ nombre, email, password, fechaNacimiento, puedeFacturar }),
     });
     const text = await res.text();
     const data = text ? JSON.parse(text) : {};
@@ -109,6 +118,13 @@ export default function RegistroPage() {
             <div>
               <label className={labelClass}>Contraseña</label>
               <PasswordInput value={password} onChange={setPassword} required placeholder="Mínimo 8 caracteres" />
+            </div>
+
+            <div>
+              <label className={labelClass}>Fecha de nacimiento</label>
+              <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)}
+                required max={MAX_FECHA_NACIMIENTO} className={inputClass} />
+              <span className="block text-[12px] text-[#9AA3B2] mt-1">Tenés que ser mayor de 18 años.</span>
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer select-none">

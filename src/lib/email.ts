@@ -138,6 +138,21 @@ export function emailFacturaLiquidacionSubida(revendedorNombre: string, codigoVe
   };
 }
 
+export function emailBienvenida(nombre?: string) {
+  const saludo = nombre ? `¡Hola ${nombre}!` : "¡Bienvenido/a a glob.ar!";
+  return {
+    subject: "Tu cuenta de revendedor está lista — próximos pasos",
+    html: wrapHtml("¡Tu cuenta ya está creada!", `
+      <p>${saludo} Ya sos revendedor de glob.ar. Dos cosas para dejar todo listo:</p>
+      <ol style="padding-left:18px; margin:12px 0;">
+        <li style="margin-bottom:8px;"><strong>Hacé la capacitación de glob.ar</strong> desde tu panel — es un video corto y un cuestionario. Recién ahí se te habilita el panel completo.</li>
+        <li><strong>Completá tus datos personales y de cobro</strong> (DNI, provincia, localidad, teléfono, CBU o alias, titular de la cuenta y CUIT/CUIL) en <strong>Perfil → Datos de cobro</strong>. No son obligatorios para arrancar, pero los necesitás cargados para entrar en la liquidación mensual y cobrar tus comisiones.</li>
+      </ol>
+      <p>Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
+    `),
+  };
+}
+
 export function emailRevendedorNuevo(nombre: string, email: string) {
   return {
     subject: "Se registró un nuevo revendedor",

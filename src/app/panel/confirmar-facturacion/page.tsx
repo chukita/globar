@@ -9,7 +9,7 @@ export default async function ConfirmarFacturacionPage() {
 
   const rev = await getRevendedorByUserId(session.user.id);
   if (rev && !rev.activo) redirect("/panel/cuenta-desactivada");
-  if (rev?.puedeFacturar) redirect("/panel/productos");
+  if (rev?.puedeFacturar && rev?.fechaNacimiento) redirect("/panel/productos");
 
   return (
     <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-8">
@@ -17,11 +17,11 @@ export default async function ConfirmarFacturacionPage() {
         Un último paso
       </h1>
       <p className="text-[14px] text-[#5B6577] mb-6">
-        Para ser revendedor de glob.ar tenés que poder emitir factura por tus comisiones de venta.
-        El resto de tus datos (DNI, CBU/alias, etc.) los completás después desde tu perfil — hacen
-        falta recién cuando te toque cobrar.
+        Para ser revendedor de glob.ar tenés que ser mayor de 18 años y poder emitir factura por tus
+        comisiones de venta. El resto de tus datos (DNI, CBU/alias, etc.) los completás después desde
+        tu perfil — hacen falta recién cuando te toque cobrar.
       </p>
-      <ConfirmarFacturacionForm />
+      <ConfirmarFacturacionForm fechaNacimiento={rev?.fechaNacimiento ?? ""} />
     </div>
   );
 }

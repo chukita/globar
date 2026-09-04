@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { esMayorDeEdad } from "@/lib/validacion";
 
-export function ConfirmarFacturacionForm() {
+const MAX_FECHA_NACIMIENTO = new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10);
+
+export function ConfirmarFacturacionForm({ fechaNacimiento: fechaInicial }: { fechaNacimiento: string }) {
   const router = useRouter();
+  const [fechaNacimiento, setFechaNacimiento] = useState(fechaInicial);
   const [puedeFacturar, setPuedeFacturar] = useState(false);
   const [terms, setTerms] = useState(false);
   const [error, setError] = useState("");
@@ -14,6 +18,10 @@ export function ConfirmarFacturacionForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!fechaNacimiento || !esMayorDeEdad(fechaNacimiento)) {
+      setError("Tenés que ser mayor de 18 años para continuar.");
+      return;
+    }
     if (!puedeFacturar) {
       setError("Necesitás poder emitir factura por tus comisiones para continuar.");
       return;
@@ -26,7 +34,7 @@ export function ConfirmarFacturacionForm() {
     const res = await fetch("/api/panel/perfil", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ puedeFacturar: true }),
+      body: JSON.stringify({ puedeFacturar: true, fechaNacimiento }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
@@ -37,8 +45,17 @@ export function ConfirmarFacturacionForm() {
     router.push("/panel/productos");
   }
 
+  const inputClass = "w-full border border-[#DCE0E5] rounded-xl px-4 py-3 text-[14.5px] text-[#0C2A45] outline-none focus:border-[#0E6BA8] focus:ring-2 focus:ring-[#0E6BA8]/10 transition-colors bg-white";
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <div>
+        <label className="block text-[13px] font-semibold text-[#0C2A45] mb-1.5">Fecha de nacimiento</label>
+        <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} required
+          max={MAX_FECHA_NACIMIENTO} className={inputClass} />
+        <span className="block text-[12px] text-[#9AA3B2] mt-1">Tenés que ser mayor de 18 años.</span>
+      </div>
+
       <label className="flex items-start gap-3 cursor-pointer select-none">
         <input type="checkbox" checked={puedeFacturar} onChange={(e) => setPuedeFacturar(e.target.checked)} required
           className="mt-0.5 w-4 h-4 accent-[#0E6BA8] flex-shrink-0" />

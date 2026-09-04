@@ -9,7 +9,7 @@ export default async function CompletarPerfilPage() {
 
   const rev = await getRevendedorByUserId(session.user.id);
   if (rev && !rev.activo) redirect("/panel/cuenta-desactivada");
-  if (rev && !rev.puedeFacturar) redirect("/panel/confirmar-facturacion");
+  if (rev && (!rev.puedeFacturar || !rev.fechaNacimiento)) redirect("/panel/confirmar-facturacion");
 
   return (
     <div className="bg-white border border-[#E9ECEF] rounded-[20px] p-8">
@@ -22,7 +22,6 @@ export default async function CompletarPerfilPage() {
       </p>
       <CompletarPerfilForm
         dni={rev?.dni ?? ""}
-        fechaNacimiento={rev?.fechaNacimiento ?? ""}
         telefono={rev?.telefono ?? ""}
         provincia={rev?.provincia ?? ""}
         localidad={rev?.localidad ?? ""}

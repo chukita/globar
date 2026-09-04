@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { esDniValido, esCbuOAliasValido, esCuitValido, normalizarCuit } from "@/lib/validacion";
-import { notifyAdmins, emailRevendedorNuevo } from "@/lib/email";
+import { esDniValido, esCbuOAliasValido, esCuitValido, normalizarCuit, esMayorDeEdad } from "@/lib/validacion";
+import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida } from "@/lib/email";
 
 interface PerfilPatchBody {
   dni?: string;
@@ -35,6 +35,9 @@ export async function PATCH(req: NextRequest) {
 
   if (dni !== undefined && dni !== "" && !esDniValido(dni)) {
     return NextResponse.json({ error: "El DNI debe tener 7 u 8 dígitos." }, { status: 400 });
+  }
+  if (fechaNacimiento !== undefined && fechaNacimiento !== "" && !esMayorDeEdad(fechaNacimiento)) {
+    return NextResponse.json({ error: "Tenés que ser mayor de 18 años." }, { status: 400 });
   }
   if (cbuAlias !== undefined && cbuAlias !== "" && !esCbuOAliasValido(cbuAlias)) {
     return NextResponse.json({ error: "Ingresá un CBU de 22 dígitos o un alias válido (6 a 20 caracteres)." }, { status: 400 });
@@ -69,14 +72,15 @@ export async function PATCH(req: NextRequest) {
     await db.update(revendedores).set(values).where(eq(revendedores.userId, user.id));
   }
 
-  // Aviso al superadmin cuando el revendedor confirma que puede facturar
-  // (false → true). Para el alta por email eso ya viene en true desde
-  // /registro, así que esto sólo dispara en el alta por Google, que lo
-  // confirma en /panel/confirmar-facturacion. El alta por email se avisa
-  // desde /api/registro/verificar al confirmar el email.
+  // Cuando el revendedor confirma que puede facturar (false → true): para el
+  // alta por email eso ya viene en true desde /registro, así que esto sólo
+  // dispara en el alta por Google (que lo confirma en /panel/confirmar-facturacion).
+  // El alta por email avisa al admin y da la bienvenida desde /api/registro/verificar.
   if (puedeFacturar === true && !rev.puedeFacturar) {
-    const { subject, html } = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
-    await notifyAdmins(subject, html, "revendedorNuevo");
+    const nuevo = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
+    await notifyAdmins(nuevo.subject, nuevo.html, "revendedorNuevo");
+    const bienvenida = emailBienvenida(user.name ?? undefined);
+    await sendEmail({ to: session.user.email, toName: user.name ?? undefined, subject: bienvenida.subject, html: bienvenida.html });
   }
 
   return NextResponse.json({ ok: true });

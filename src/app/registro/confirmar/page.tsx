@@ -29,7 +29,7 @@ function ConfirmarContent() {
           return;
         }
         await signIn("email-verificado", { token: data.token, redirect: false });
-        router.replace("/panel/completar-perfil");
+        router.replace("/panel/productos");
       } catch {
         if (!cancelled) setError("Error de red. Probá de nuevo.");
       }

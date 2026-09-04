@@ -7,6 +7,7 @@ import { generarCodigoVendedor } from "@/lib/codigoVendedor";
 import { crearVerificacion } from "@/lib/verificacionEmail";
 import { sendEmail, emailVerificarCuenta } from "@/lib/email";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
+import { esMayorDeEdad } from "@/lib/validacion";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,13 +16,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { nombre, email, password, puedeFacturar } = body;
+    const { nombre, email, password, fechaNacimiento, puedeFacturar } = body;
 
-    if (!nombre || !email || !password) {
+    if (!nombre || !email || !password || !fechaNacimiento) {
       return NextResponse.json({ error: "Completá todos los campos obligatorios." }, { status: 400 });
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres." }, { status: 400 });
+    }
+    if (!esMayorDeEdad(fechaNacimiento)) {
+      return NextResponse.json({ error: "Tenés que ser mayor de 18 años para registrarte como revendedor." }, { status: 400 });
     }
     if (puedeFacturar !== true) {
       return NextResponse.json({ error: "Necesitás poder emitir factura por tus comisiones para registrarte como revendedor." }, { status: 400 });
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
       // no para usar el panel. El "puede emitir factura" sí es obligatorio en
       // el alta (checkbox en /registro).
       const codigoVentas = await generarCodigoVendedor(nombre);
-      await tx.insert(revendedores).values({ userId, codigoVentas, puedeFacturar: true });
+      await tx.insert(revendedores).values({ userId, codigoVentas, fechaNacimiento, puedeFacturar: true });
     });
 
     const { codigo, token } = await crearVerificacion(userId);
