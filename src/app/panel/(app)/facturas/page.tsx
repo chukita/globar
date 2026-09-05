@@ -73,7 +73,6 @@ export default async function FacturasPage() {
           <dt className="text-[#7A8CA0]">A nombre de</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.nombre}</dd>
           <dt className="text-[#7A8CA0]">CUIT</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.cuit}</dd>
           <dt className="text-[#7A8CA0]">Condición IVA</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.condicionIva}</dd>
-          <dt className="text-[#7A8CA0]">Domicilio</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.domicilio}</dd>
           <dt className="text-[#7A8CA0]">Importe</dt><dd className="m-0 font-semibold">el monto exacto de cada liquidación</dd>
         </dl>
         <p className="text-[12px] text-[#7A8CA0] leading-relaxed mt-3 mb-0">

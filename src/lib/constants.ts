@@ -18,7 +18,6 @@ export const DATOS_FISCALES = {
   nombreComercial: "Grupo Globaliza",
   cuit: "20-29739072-5",
   condicionIva: "Responsable Monotributo",
-  domicilio: "Barrio 212 Viviendas Productivas M80 C5 5 Dpto 1 — San Luis (5700)",
   tipoComprobante: "Factura C",
 } as const;
 

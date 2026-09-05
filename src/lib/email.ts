@@ -80,7 +80,6 @@ function datosFacturaHtml(monto: number): string {
       <tr><td style="padding:8px 14px; color:#5B6577;">A nombre de</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.nombre}</td></tr>
       <tr><td style="padding:8px 14px; color:#5B6577;">CUIT</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.cuit}</td></tr>
       <tr><td style="padding:8px 14px; color:#5B6577;">Condición IVA</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.condicionIva}</td></tr>
-      <tr><td style="padding:8px 14px; color:#5B6577;">Domicilio</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.domicilio}</td></tr>
       <tr><td style="padding:8px 14px; color:#5B6577;">Importe</td><td style="padding:8px 14px; font-weight:600;">${fmtARS(monto)} (monto exacto)</td></tr>
     </table>
     <p style="font-size:12px; color:#9AA3B2;">Al cargar el CUIT en ARCA, el nombre lo completa el sistema. "${DATOS_FISCALES.nombreComercial}" es el nombre comercial.</p>
