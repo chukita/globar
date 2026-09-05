@@ -23,9 +23,11 @@ export default async function AdminLiquidacionesPage() {
     <div className="p-10">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Liquidaciones</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-        A principio de mes: mandá los recordatorios pendientes, transferí por Mercado Pago lo que
-        cada revendedor acumuló y confirmá cada pago. La factura la suben ellos después
+        A principio de mes: transferí por Mercado Pago lo que cada revendedor acumuló y confirmá
+        cada pago. La factura la suben ellos después
         ({config.mesesGraciaFactura} {config.mesesGraciaFactura === 1 ? "mes" : "meses"} de plazo).
+        Los recordatorios de factura pendiente salen solos todos los días; el botón de abajo es
+        solo para forzar un envío puntual.
       </p>
 
       <LiquidacionesClient

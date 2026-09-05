@@ -80,6 +80,7 @@ No hay `.env.example` en el repo todavía para desarrollo local — pedirle a Cy
   ```
   **Ojo al pegarlo en el `.env` de la VM**: los hashes bcrypt empiezan con `$2b$12$...` y `docker compose` interpreta `$` como referencia a variables al parsear `.env` (incluso si la variable no se usa en el compose file) — hay que escapar cada `$` como `$$`, si no el valor queda vacío/corrupto sin ningún error visible más que un warning de "variable not set".
 - `WEBHOOK_SECRET` — el que deben mandar agendaonline/nume en el header `x-webhook-secret` al pegarle a `/api/webhooks/pago`.
+- `CRON_SECRET` — Bearer token que valida `POST /api/cron/recordatorios-liquidacion`. Tiene que valer lo mismo en el `.env` de la VM y en el secret `CRON_SECRET` del repo de GitHub (lo usa `.github/workflows/recordatorios-liquidacion.yml`, cron diario 12:00 UTC). Sin cron propio en la VM: el disparo vive en GitHub Actions.
 - `UPLOAD_DIR` (opcional) — dónde se guardan las facturas subidas, default `/app/uploads` en el contenedor.
 
 ## Estructura clave
@@ -90,6 +91,8 @@ src/app/
   api/
     admin/configuracion/   # GET/PUT reglas de negocio (solo superadmin)
     auth/[...nextauth]/
+    cron/recordatorios-liquidacion/  # POST protegido por Bearer $CRON_SECRET — cron diario de
+                                     # recordatorios de factura pendiente (workflow recordatorios-liquidacion.yml)
     panel/facturas/         # subida de factura + listado, real desde el día 1
     webhooks/pago/          # recibe pagos de agendaonline/nume, genera cuotas de comisión
     webhooks/registro/      # recibe registros (leads) de agendaonline/nume, antes del pago
@@ -110,6 +113,9 @@ src/lib/
   panel-data.ts                # queries del panel del revendedor
   admin-data.ts                # queries del panel de superadmin
   actions.ts                   # server actions (logout, marcar factura pagada, toggles de admin, impersonarRevendedorAction, etc.)
+  liquidaciones-actions.ts     # server actions de superadmin: confirmar liquidación mensual + forzar recordatorios
+  recordatorios-liquidacion.ts # procesarRecordatoriosLiquidacion() — lógica compartida por la action y el cron
+                               #   (suave = 30 días antes del vencimiento, bloqueo = al vencer; forzar = sin throttle)
 src/components/
 scripts/
   seed-admin.ts

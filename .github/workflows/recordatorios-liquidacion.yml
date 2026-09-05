@@ -1,0 +1,23 @@
+name: Recordatorios de liquidación
+
+# Cron diario que le pega al endpoint protegido de glob.ar para que mande los
+# recordatorios de factura pendiente (suave antes de vencer, bloqueo al vencer).
+# La VM no tiene cron propio; el disparo vive acá, junto al resto del CI/CD.
+#
+# Requiere el secret CRON_SECRET en el repo (Settings → Secrets → Actions) y la
+# misma variable en el .env de la VM (ver deploy/env.production.example).
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # 12:00 UTC = 09:00 ART, todos los días
+  workflow_dispatch: {} # permite dispararlo a mano desde la pestaña Actions
+
+jobs:
+  recordatorios:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/cron/recordatorios-liquidacion
+        run: |
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://glob.ar/api/cron/recordatorios-liquidacion

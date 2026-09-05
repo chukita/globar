@@ -3,19 +3,13 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { revendedores, users, cuotas, liquidaciones } from "@/db/schema";
-import { eq, and, lt, inArray, sql } from "drizzle-orm";
+import { eq, and, lt, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getConfiguracion } from "@/lib/configuracion";
 import { camposFaltantesParaCobrar, periodoLabel } from "@/lib/admin-data";
 import { addMonths, inicioDeMesArgentina, mesAnteriorArgentina } from "@/lib/fecha";
-import {
-  sendEmail,
-  notifyAdmins,
-  emailLiquidacionPagada,
-  emailRecordatorioFacturaPendiente,
-  emailFacturaVencidaBloqueo,
-  emailAdminResellersBloqueados,
-} from "@/lib/email";
+import { procesarRecordatoriosLiquidacion } from "@/lib/recordatorios-liquidacion";
+import { sendEmail, emailLiquidacionPagada } from "@/lib/email";
 
 async function requireSuperadmin() {
   const session = await auth();
@@ -123,10 +117,11 @@ export async function confirmarLiquidacionAction(
 }
 
 /**
- * Recordatorios de factura pendiente. El superadmin lo dispara a mano (una vez
- * por mes, como parte de la rutina de liquidación) — no hay cron. Para una
- * liquidación puntual o para todas las que estén en "pagada" (esperando factura).
- * `ahora` es inyectable para tests.
+ * Recordatorios de factura pendiente disparados a mano por el superadmin desde
+ * /admin/liquidaciones (para una liquidación puntual o para todas las que estén
+ * en "pagada"). Manda siempre, sin throttle (`forzar: true`) — el envío
+ * automático diario lo hace el cron (`POST /api/cron/recordatorios-liquidacion`
+ * → `procesarRecordatoriosLiquidacion`). `ahora` es inyectable para tests.
  */
 export async function enviarRecordatoriosLiquidacionAction(
   liquidacionId?: string,
@@ -134,57 +129,8 @@ export async function enviarRecordatoriosLiquidacionAction(
 ): Promise<{ enviados: number; bloqueadosNuevos: number }> {
   await requireSuperadmin();
 
-  const filas = await db
-    .select({
-      id: liquidaciones.id,
-      monto: liquidaciones.monto,
-      periodoMes: liquidaciones.periodoMes,
-      periodoAnio: liquidaciones.periodoAnio,
-      facturaVenceEn: liquidaciones.facturaVenceEn,
-      ultimoRecordatorioEn: liquidaciones.ultimoRecordatorioEn,
-      codigoVentas: revendedores.codigoVentas,
-      email: users.email,
-      nombre: users.name,
-    })
-    .from(liquidaciones)
-    .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
-    .innerJoin(users, eq(revendedores.userId, users.id))
-    .where(and(
-      eq(liquidaciones.status, "pagada"),
-      liquidacionId ? eq(liquidaciones.id, liquidacionId) : undefined,
-    ));
-
-  const nuevosBloqueados: { nombre: string; codigo: string; periodoLabel: string; monto: number }[] = [];
-
-  for (const f of filas) {
-    const label = periodoLabel(f.periodoMes, f.periodoAnio);
-    const monto = Number(f.monto);
-    const vencida = f.facturaVenceEn < ahora;
-    const cruzaAhora = vencida && (!f.ultimoRecordatorioEn || f.ultimoRecordatorioEn < f.facturaVenceEn);
-
-    const { subject, html } = vencida
-      ? emailFacturaVencidaBloqueo(monto, label)
-      : emailRecordatorioFacturaPendiente(monto, label, f.facturaVenceEn);
-    await sendEmail({ to: f.email, toName: f.nombre ?? undefined, subject, html });
-
-    await db
-      .update(liquidaciones)
-      .set({
-        recordatoriosEnviados: sql`${liquidaciones.recordatoriosEnviados} + 1`,
-        ultimoRecordatorioEn: ahora,
-      })
-      .where(eq(liquidaciones.id, f.id));
-
-    if (cruzaAhora) {
-      nuevosBloqueados.push({ nombre: f.nombre ?? f.email, codigo: f.codigoVentas, periodoLabel: label, monto });
-    }
-  }
-
-  if (nuevosBloqueados.length > 0) {
-    const { subject, html } = emailAdminResellersBloqueados(nuevosBloqueados);
-    await notifyAdmins(subject, html, "liquidacionBloqueada");
-  }
+  const res = await procesarRecordatoriosLiquidacion({ ahora, forzar: true, liquidacionId });
 
   revalidatePath("/admin/liquidaciones");
-  return { enviados: filas.length, bloqueadosNuevos: nuevosBloqueados.length };
+  return res;
 }
