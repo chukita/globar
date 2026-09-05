@@ -17,6 +17,16 @@ fi
 COMPOSE="docker compose -f docker-compose.prod.yml"
 HEALTH_URL="https://glob.ar/api/health"
 
+# Un deploy anterior que cortó por el timeout de SSH de GitHub Actions deja el
+# `docker compose pull` corriendo huérfano en la VM; ese proceso mantiene tomado
+# el lock del image store y hace que el pull de este deploy se arrastre hasta
+# volver a timeoutear (espiral). Lo matamos antes de empezar.
+if pgrep -f 'docker.*compose.*pull' > /dev/null; then
+  echo "==> Matando 'docker compose pull' huérfano de un deploy anterior..."
+  pkill -f 'docker.*compose.*pull' || true
+  sleep 3
+fi
+
 # La imagen ya viene compilada desde GitHub Actions (GHCR) — acá solo se
 # descarga, nunca se compila (la VM no tiene RAM para un build de Next.js).
 echo "==> Pulling latest image..."

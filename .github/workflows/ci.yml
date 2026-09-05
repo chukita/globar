@@ -75,6 +75,11 @@ jobs:
           host: ${{ secrets.ORACLE_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          # La VM (1GB RAM) a veces tarda >10min en `docker compose pull` cuando
+          # está bajo carga; con el default de 10min el paso corta a la mitad y
+          # deja un pull huérfano que traba el siguiente deploy. deploy.sh mata
+          # esos huérfanos al arrancar; acá le damos aire para que termine.
+          command_timeout: 25m
           script: |
             cd ~/globar
             bash deploy/deploy.sh
