@@ -67,13 +67,13 @@ const QUIZZES: Record<string, QuizInterno[]> = {
     },
     {
       id: "q3",
-      q: "¿Cómo cobra la comisión el revendedor por una venta?",
+      q: "Cuando un cliente reserva un turno desde la página pública del negocio, ¿qué pasa?",
       options: [
-        "Un pago único apenas se registra el cliente",
-        `En cuotas mensuales — hasta ${MESES_PLACEHOLDER} meses — mientras el cliente siga pagando su suscripción`,
-        "De por vida, mientras el cliente siga siendo suscriptor",
+        "El turno queda cargado en la agenda del negocio y el cliente recibe la confirmación",
+        "Queda pendiente hasta que el negocio llame al cliente para confirmarlo",
+        "El cliente tiene que pagar el turno por adelantado para que se registre",
       ],
-      correct: 1,
+      correct: 0,
     },
   ],
 };
