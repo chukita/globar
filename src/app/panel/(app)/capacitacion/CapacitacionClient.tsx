@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { completarCapacitacionAction } from "@/lib/actions";
 import { EvaluacionStepper } from "@/components/EvaluacionStepper";
 import type { QuizQuestion } from "@/lib/capacitacionQuiz";
@@ -46,24 +47,23 @@ const ICON_LINK = (
   </svg>
 );
 
-function initialAbierto(productos: Producto[]): string | null {
-  if (typeof window !== "undefined") {
-    const hash = window.location.hash.replace("#", "");
-    const match = productos.find(p => p.nombre === hash);
-    if (match) return match.id;
-  }
-  return productos[0]?.id ?? null;
-}
-
 export function CapacitacionClient({ productos }: { productos: Producto[] }) {
-  const [abierto, setAbierto] = useState<string | null>(() => initialAbierto(productos));
+  // Init determinista (mismo valor en SSR y en la hidratación) para no romper la
+  // hidratación; el deep-link por hash (#agendaonline) se resuelve en el effect.
+  const [abierto, setAbierto] = useState<string | null>(productos[0]?.id ?? null);
 
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
+    const hash = decodeURIComponent(window.location.hash.replace("#", ""));
     if (!hash) return;
-    const el = document.getElementById(hash);
-    if (!el) return;
-    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    const match = productos.find(p => p.nombre === hash);
+    if (!match) return;
+    // Deep-link (#agendaonline) al montar: abrir esa card y scrollear al video.
+    // setState de única vez en mount — el flash del primer render es imperceptible.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAbierto(match.id);
+    const el = document.getElementById(match.nombre);
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (productos.length === 0) {
@@ -130,7 +130,7 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                       quiz={p.quiz}
                       onSubmit={(respuestas) => completarCapacitacionAction(p.nombre, respuestas)}
                       successTitle="¡Aprobaste la capacitación!"
-                      successBody={<>{p.nombre} ya está activado en tu cuenta — recargá la página para ver tu link en &quot;Mis productos&quot;.</>}
+                      successBody={<>{p.nombre} ya está activado en tu cuenta — recargá la página para ver tu link en <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.</>}
                     />
                   ) : (
                     <>
@@ -162,7 +162,7 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                         <div className="mt-5 bg-[#E7F5EE] border border-[#9BD3B6] rounded-[14px] px-5 py-4">
                           <div className="font-bold text-[14.5px] text-[#0B6B47]">Producto activado</div>
                           <div className="text-[13px] text-[#3F7A5E] mt-0.5">
-                            Ya aprobaste la capacitación de {p.nombre}. Podés compartir tu link de ventas desde &quot;Mis productos&quot;.
+                            Ya aprobaste la capacitación de {p.nombre}. Podés compartir tu link de ventas desde <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.
                           </div>
                         </div>
                       ) : !p.requiereEvaluacion ? (
