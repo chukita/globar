@@ -1,5 +1,5 @@
 import { getConfiguracion } from "@/lib/configuracion";
-import { fmtARS } from "@/lib/constants";
+import { fmtARS, DATOS_FISCALES } from "@/lib/constants";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const SENDER = { name: "glob.ar", email: "notificaciones@glob.ar" };
@@ -72,6 +72,21 @@ export async function notifyAdmins(subject: string, html: string, tipo: "revende
 const fmtFecha = (d: Date) =>
   new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
 
+/** Bloque con los datos del receptor para la factura del revendedor. */
+function datosFacturaHtml(monto: number): string {
+  return `
+    <table style="width:100%; border-collapse:collapse; background:#F7F8FA; border:1px solid #E9ECEF; border-radius:10px; margin:14px 0; font-size:13px;">
+      <tr><td style="padding:8px 14px; color:#5B6577;">Tipo</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.tipoComprobante}</td></tr>
+      <tr><td style="padding:8px 14px; color:#5B6577;">A nombre de</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.nombre}</td></tr>
+      <tr><td style="padding:8px 14px; color:#5B6577;">CUIT</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.cuit}</td></tr>
+      <tr><td style="padding:8px 14px; color:#5B6577;">Condición IVA</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.condicionIva}</td></tr>
+      <tr><td style="padding:8px 14px; color:#5B6577;">Domicilio</td><td style="padding:8px 14px; font-weight:600;">${DATOS_FISCALES.domicilio}</td></tr>
+      <tr><td style="padding:8px 14px; color:#5B6577;">Importe</td><td style="padding:8px 14px; font-weight:600;">${fmtARS(monto)} (monto exacto)</td></tr>
+    </table>
+    <p style="font-size:12px; color:#9AA3B2;">Al cargar el CUIT en ARCA, el nombre lo completa el sistema. "${DATOS_FISCALES.nombreComercial}" es el nombre comercial.</p>
+  `;
+}
+
 export function emailComisionGenerada(monto: number, numeroCuota: number, comisionMeses: number) {
   return {
     subject: "Se generó una nueva cuota de comisión",
@@ -87,7 +102,8 @@ export function emailLiquidacionPagada(monto: number, periodoLabel: string, fact
     subject: `Te transferimos tu liquidación de ${periodoLabel}`,
     html: wrapHtml("Recibiste tu liquidación mensual", `
       <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong>.</p>
-      <p>Ahora necesitamos tu factura a nombre de <strong>Grupo Globaliza</strong> por ese mismo monto exacto. Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>.</p>
+      <p>Ahora necesitamos que subas tu factura desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>, con estos datos:</p>
+      ${datosFacturaHtml(monto)}
       <p style="font-size:13px; color:#5B6577;">Si no la enviás antes de esa fecha, vas a quedar excluido de la liquidación del mes siguiente hasta ponerte al día — tus comisiones se siguen acumulando igual.</p>
     `),
   };
@@ -97,8 +113,9 @@ export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: s
   return {
     subject: `Nos falta tu factura de ${periodoLabel}`,
     html: wrapHtml("Todavía no recibimos tu factura", `
-      <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y todavía no nos llegó tu factura a nombre de <strong>Grupo Globaliza</strong>.</p>
+      <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y todavía no nos llegó tu factura.</p>
       <p>Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>. Pasada esa fecha vas a quedar excluido de la liquidación del mes siguiente hasta enviarla.</p>
+      ${datosFacturaHtml(monto)}
     `),
   };
 }
@@ -107,7 +124,7 @@ export function emailFacturaVencidaBloqueo(monto: number, periodoLabel: string) 
   return {
     subject: `Quedás excluido de la próxima liquidación — falta tu factura de ${periodoLabel}`,
     html: wrapHtml("Factura vencida: liquidación en pausa", `
-      <p>Pasaron más de los meses de gracia desde que te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y seguimos sin tu factura a nombre de <strong>Grupo Globaliza</strong>.</p>
+      <p>Pasaron más de los meses de gracia desde que te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y seguimos sin tu factura.</p>
       <p>Mientras siga pendiente, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
       <p>Subí la factura que falta desde tu panel, sección Facturas, para destrabar el cobro.</p>
     `),
@@ -153,7 +170,8 @@ export function emailFacturaLiquidacionRechazada(periodoLabel: string, monto: nu
     html: wrapHtml("Factura rechazada", `
       <p>Revisamos tu factura de <strong>${periodoLabel}</strong> por <strong>${fmtARS(monto)}</strong> y no la pudimos aceptar.</p>
       <p><strong>Motivo:</strong> ${motivo}</p>
-      <p>Subí una factura corregida desde tu panel, sección Facturas. El plazo de vencimiento sigue corriendo, así que no la dejes pasar.</p>
+      <p>Subí una factura corregida desde tu panel, sección Facturas. El plazo de vencimiento sigue corriendo, así que no la dejes pasar. Datos para la factura:</p>
+      ${datosFacturaHtml(monto)}
     `),
   };
 }

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { FacturasClient } from "./FacturasClient";
 import { getLiquidacionesDelRevendedor, getFacturasDelRevendedor } from "@/lib/panel-data";
 import { periodoLabel } from "@/lib/fecha";
+import { DATOS_FISCALES } from "@/lib/constants";
 
 export default async function FacturasPage() {
   const session = await auth();
@@ -59,17 +60,28 @@ export default async function FacturasPage() {
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Facturas</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
         A principio de mes te transferimos todo lo que acumulaste el mes anterior. Después subís acá la
-        factura correspondiente a nombre de <strong>Grupo Globaliza</strong>.
+        factura correspondiente, por el <strong>monto exacto</strong> de la liquidación.
       </p>
 
-      <div className="mt-5 bg-[#F1F8FC] border border-[#C6DDEF] rounded-[14px] px-5 py-4 flex items-start gap-3.5">
-        <div className="w-8 h-8 rounded-[9px] bg-[#E1EFF8] flex-shrink-0 flex items-center justify-center font-extrabold text-[#0B5A8F] text-[14px]">i</div>
-        <div className="text-[13.5px] text-[#3F6280] leading-relaxed">
-          Cada factura tiene que ser a nombre de <strong>Grupo Globaliza</strong> por el monto exacto de la
-          liquidación, con tu mismo CUIT/CUIL y CBU/alias de cobro. Si no la enviás antes de la fecha límite,
-          quedás excluido de la liquidación del mes siguiente hasta ponerte al día — las comisiones se te
-          siguen acumulando igual.
+      <div className="mt-5 bg-[#F1F8FC] border border-[#C6DDEF] rounded-[14px] px-5 py-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-8 h-8 rounded-[9px] bg-[#E1EFF8] flex-shrink-0 flex items-center justify-center font-extrabold text-[#0B5A8F] text-[14px]">i</div>
+          <div className="text-[13.5px] font-bold text-[#0B5A8F]">Datos para hacer la factura</div>
         </div>
+        <dl className="grid grid-cols-[130px_1fr] gap-x-3 gap-y-1.5 text-[13px] text-[#3F6280] m-0">
+          <dt className="text-[#7A8CA0]">Tipo</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.tipoComprobante}</dd>
+          <dt className="text-[#7A8CA0]">A nombre de</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.nombre}</dd>
+          <dt className="text-[#7A8CA0]">CUIT</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.cuit}</dd>
+          <dt className="text-[#7A8CA0]">Condición IVA</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.condicionIva}</dd>
+          <dt className="text-[#7A8CA0]">Domicilio</dt><dd className="m-0 font-semibold">{DATOS_FISCALES.domicilio}</dd>
+          <dt className="text-[#7A8CA0]">Importe</dt><dd className="m-0 font-semibold">el monto exacto de cada liquidación</dd>
+        </dl>
+        <p className="text-[12px] text-[#7A8CA0] leading-relaxed mt-3 mb-0">
+          Al cargar el CUIT en ARCA, el nombre lo completa el sistema. &quot;{DATOS_FISCALES.nombreComercial}&quot; es
+          el nombre comercial. La factura la hacés con tu mismo CUIT/CUIL y CBU/alias de cobro. Si no la enviás
+          antes de la fecha límite, quedás excluido de la liquidación del mes siguiente hasta ponerte al día —
+          las comisiones se te siguen acumulando igual.
+        </p>
       </div>
 
       <FacturasClient pendientes={pendientes} enRevision={enRevision} historial={historial} legacy={legacy} />

@@ -8,6 +8,20 @@ export function fmtARS(n: number): string {
   return "$" + Math.round(n).toLocaleString("es-AR");
 }
 
+// Datos fiscales de glob.ar — es lo que el revendedor tiene que poner como
+// RECEPTOR en su factura. "Grupo Globaliza" es el nombre comercial; quien
+// factura y transfiere las comisiones es Carlos Hugo Costantino (monotributo).
+// Al cargar el CUIT en ARCA, el sistema completa solo el nombre legal.
+// Fuente: constancia de inscripción ARCA/AFIP.
+export const DATOS_FISCALES = {
+  nombre: "Carlos Hugo Costantino",
+  nombreComercial: "Grupo Globaliza",
+  cuit: "20-29739072-5",
+  condicionIva: "Responsable Monotributo",
+  domicilio: "Barrio 212 Viviendas Productivas M80 C5 5 Dpto 1 — San Luis (5700)",
+  tipoComprobante: "Factura C",
+} as const;
+
 // Línea de WhatsApp de soporte para revendedores (chip propio de glob.ar,
 // separado de los celulares personales del equipo).
 export const SOPORTE_WHATSAPP = "+54 9 11 7280-5803";
