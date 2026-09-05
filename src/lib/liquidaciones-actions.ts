@@ -9,7 +9,12 @@ import { getConfiguracion } from "@/lib/configuracion";
 import { camposFaltantesParaCobrar, periodoLabel } from "@/lib/admin-data";
 import { addMonths, inicioDeMesArgentina, mesAnteriorArgentina } from "@/lib/fecha";
 import { procesarRecordatoriosLiquidacion } from "@/lib/recordatorios-liquidacion";
-import { sendEmail, emailLiquidacionPagada } from "@/lib/email";
+import {
+  sendEmail,
+  emailLiquidacionPagada,
+  emailFacturaLiquidacionAprobada,
+  emailFacturaLiquidacionRechazada,
+} from "@/lib/email";
 
 async function requireSuperadmin() {
   const session = await auth();
@@ -52,17 +57,24 @@ export async function confirmarLiquidacionAction(
       throw new Error(`No se puede liquidar: al revendedor le falta ${faltantes.join(", ")}.`);
     }
 
+    // Bloquea cualquier liquidación vencida cuya factura todavía no esté
+    // aprobada: "pagada" (no subió nada) o "en_revision" (subió pero falta
+    // aprobarla). Solo una factura aprobada destraba.
     const [bloqueo] = await tx
-      .select({ id: liquidaciones.id })
+      .select({ id: liquidaciones.id, status: liquidaciones.status })
       .from(liquidaciones)
       .where(and(
         eq(liquidaciones.revendedorId, revendedorId),
-        eq(liquidaciones.status, "pagada"),
+        inArray(liquidaciones.status, ["pagada", "en_revision"]),
         lt(liquidaciones.facturaVenceEn, ahora),
       ))
       .limit(1);
     if (bloqueo) {
-      throw new Error("No se puede liquidar: el revendedor tiene una factura vencida sin enviar. Se pone al día y recién ahí entra.");
+      throw new Error(
+        bloqueo.status === "en_revision"
+          ? "No se puede liquidar: el revendedor tiene una factura vencida esperando tu aprobación. Aprobala o rechazala y recién ahí entra."
+          : "No se puede liquidar: el revendedor tiene una factura vencida sin enviar. Se pone al día y recién ahí entra.",
+      );
     }
 
     const [yaLiquidado] = await tx
@@ -133,4 +145,105 @@ export async function enviarRecordatoriosLiquidacionAction(
 
   revalidatePath("/admin/liquidaciones");
   return res;
+}
+
+/**
+ * El superadmin aprueba la factura que subió el revendedor: la liquidación pasa
+ * de "en_revision" a "facturada" (terminal) y recién acá sus cuotas pasan a
+ * "pagada". Avisa al revendedor.
+ */
+export async function aprobarFacturaLiquidacionAction(liquidacionId: string): Promise<{ ok: true }> {
+  await requireSuperadmin();
+
+  const ahora = new Date();
+
+  const info = await db.transaction(async (tx) => {
+    const [liq] = await tx.select().from(liquidaciones).where(eq(liquidaciones.id, liquidacionId)).limit(1);
+    if (!liq) throw new Error("Liquidación no encontrada");
+    if (liq.status !== "en_revision") {
+      throw new Error("Esta liquidación no tiene una factura en revisión.");
+    }
+
+    await tx
+      .update(liquidaciones)
+      .set({ status: "facturada", facturaAprobadaEn: ahora })
+      .where(eq(liquidaciones.id, liq.id));
+
+    await tx
+      .update(cuotas)
+      .set({ status: "pagada", facturadoEn: ahora, pagadoEn: ahora })
+      .where(eq(cuotas.liquidacionId, liq.id));
+
+    const [rev] = await tx.select().from(revendedores).where(eq(revendedores.id, liq.revendedorId)).limit(1);
+    const [u] = rev
+      ? await tx.select({ email: users.email, nombre: users.name }).from(users).where(eq(users.id, rev.userId))
+      : [undefined];
+    return { liq, notif: rev?.notifFacturaPagada ?? false, u };
+  });
+
+  if (info.notif && info.u) {
+    const { subject, html } = emailFacturaLiquidacionAprobada(
+      periodoLabel(info.liq.periodoMes, info.liq.periodoAnio),
+      Number(info.liq.monto),
+    );
+    await sendEmail({ to: info.u.email, toName: info.u.nombre ?? undefined, subject, html });
+  }
+
+  revalidatePath("/admin/liquidaciones");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/**
+ * El superadmin rechaza la factura que subió el revendedor: la liquidación
+ * vuelve a "pagada" (el revendedor tiene que subir una nueva), se limpia el
+ * PDF cargado y se guarda el motivo. El plazo de vencimiento no se mueve.
+ * Avisa al revendedor con el motivo.
+ */
+export async function rechazarFacturaLiquidacionAction(
+  liquidacionId: string,
+  motivo: string,
+): Promise<{ ok: true }> {
+  await requireSuperadmin();
+
+  const motivoLimpio = motivo.trim();
+  if (motivoLimpio.length < 3) {
+    throw new Error("Escribí un motivo del rechazo — se le muestra al revendedor.");
+  }
+
+  const ahora = new Date();
+
+  const [liq] = await db.select().from(liquidaciones).where(eq(liquidaciones.id, liquidacionId)).limit(1);
+  if (!liq) throw new Error("Liquidación no encontrada");
+  if (liq.status !== "en_revision") {
+    throw new Error("Esta liquidación no tiene una factura en revisión.");
+  }
+
+  await db
+    .update(liquidaciones)
+    .set({
+      status: "pagada",
+      facturaUrl: null,
+      facturaRecibidaEn: null,
+      facturaRechazadaEn: ahora,
+      facturaRechazoMotivo: motivoLimpio,
+    })
+    .where(eq(liquidaciones.id, liq.id));
+
+  const [rev] = await db.select().from(revendedores).where(eq(revendedores.id, liq.revendedorId)).limit(1);
+  if (rev?.notifFacturaPagada) {
+    const [u] = await db.select({ email: users.email, nombre: users.name }).from(users).where(eq(users.id, rev.userId));
+    if (u) {
+      const { subject, html } = emailFacturaLiquidacionRechazada(
+        periodoLabel(liq.periodoMes, liq.periodoAnio),
+        Number(liq.monto),
+        motivoLimpio,
+      );
+      await sendEmail({ to: u.email, toName: u.nombre ?? undefined, subject, html });
+    }
+  }
+
+  revalidatePath("/admin/liquidaciones");
+  revalidatePath("/admin");
+  return { ok: true };
 }

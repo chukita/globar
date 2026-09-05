@@ -173,7 +173,15 @@ describe("POST /api/panel/facturas", () => {
     expect(res.status).toBe(422);
   });
 
-  it("marca la liquidación como facturada y sus cuotas como pagadas", async () => {
+  it("responde 422 si la liquidación ya tiene una factura en revisión", async () => {
+    const rev = await seedRevendedorConUsuario();
+    mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
+    const liq = await seedLiquidacion(rev.id, { status: "en_revision" });
+    const res = await POST(facturasRequest({ liquidacionId: liq.id }));
+    expect(res.status).toBe(422);
+  });
+
+  it("deja la liquidación en revisión sin tocar las cuotas", async () => {
     const rev = await seedRevendedorConUsuario();
     mockAuth.mockResolvedValue({ user: { id: rev.userId, role: "revendedor" } } as never);
     const liq = await seedLiquidacion(rev.id, { cuotas: 2 });
@@ -186,15 +194,15 @@ describe("POST /api/panel/facturas", () => {
     expect(data.monto).toBe(10000);
 
     const [liqActualizada] = await db.select().from(schema.liquidaciones).where(eq(schema.liquidaciones.id, liq.id));
-    expect(liqActualizada.status).toBe("facturada");
+    expect(liqActualizada.status).toBe("en_revision");
     expect(liqActualizada.facturaUrl).toBeTruthy();
     expect(liqActualizada.facturaRecibidaEn).not.toBeNull();
 
     const cuotas = await db.select().from(schema.cuotas).where(eq(schema.cuotas.liquidacionId, liq.id));
     expect(cuotas).toHaveLength(2);
     for (const c of cuotas) {
-      expect(c.status).toBe("pagada");
-      expect(c.pagadoEn).not.toBeNull();
+      expect(c.status).toBe("liquidada");
+      expect(c.pagadoEn).toBeNull();
     }
 
     const nombreArchivo = path.basename(liqActualizada.facturaUrl!);

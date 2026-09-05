@@ -40,11 +40,17 @@ export const cuotaStatusEnum = pgEnum("cuota_status", [
 ]);
 
 // Estado de una liquidación mensual (una por revendedor por corrida).
-//   pagada    — el superadmin confirmó la transferencia; esperando la factura.
-//   facturada — el revendedor subió la factura (terminal).
-//   anulada   — corrección manual (solo por SQL en v1, igual que cuotas.anulada).
+//   pagada      — el superadmin confirmó la transferencia; esperando que el
+//                 revendedor suba la factura (o que suba una nueva tras un rechazo).
+//   en_revision — el revendedor subió la factura; falta que el superadmin la
+//                 apruebe o la rechace. NO destraba al revendedor: hasta que la
+//                 factura no esté aprobada sigue contando como deuda de factura.
+//   facturada   — el superadmin aprobó la factura (terminal). Recién acá las
+//                 cuotas asociadas pasan a "pagada".
+//   anulada     — corrección manual (solo por SQL en v1, igual que cuotas.anulada).
 export const liquidacionStatusEnum = pgEnum("liquidacion_status", [
   "pagada",
+  "en_revision",
   "facturada",
   "anulada",
 ]);
@@ -239,8 +245,11 @@ export const liquidaciones = pgTable("liquidaciones", {
   status:           liquidacionStatusEnum("status").notNull().default("pagada"),
   pagadaEn:         timestamp("pagada_en").defaultNow().notNull(),  // fecha de transferencia — arranca el reloj de gracia
   comprobanteUrl:   text("comprobante_url"),   // basename del comprobante de transferencia (superadmin)
-  facturaUrl:       text("factura_url"),       // basename del PDF de factura (revendedor)
-  facturaRecibidaEn: timestamp("factura_recibida_en"),
+  facturaUrl:       text("factura_url"),       // basename del PDF de factura (revendedor) — se limpia si el superadmin la rechaza
+  facturaRecibidaEn: timestamp("factura_recibida_en"),  // cuándo el revendedor subió el PDF que está en revisión / fue aprobado
+  facturaAprobadaEn: timestamp("factura_aprobada_en"),  // cuándo el superadmin la aprobó (status → facturada)
+  facturaRechazadaEn: timestamp("factura_rechazada_en"),  // último rechazo (status volvió a "pagada")
+  facturaRechazoMotivo: text("factura_rechazo_motivo"),   // motivo del último rechazo — se le muestra al revendedor
   facturaVenceEn:   timestamp("factura_vence_en").notNull(),  // snapshot addMonths(pagadaEn, config.mesesGraciaFactura)
   nota:             text("nota"),
   recordatoriosEnviados: integer("recordatorios_enviados").notNull().default(0),

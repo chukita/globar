@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { cuotas, liquidaciones, revendedores, users } from "@/db/schema";
+import { liquidaciones, revendedores, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -73,7 +73,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Liquidación no encontrada" }, { status: 404 });
   }
   if (liq.status !== "pagada") {
-    return NextResponse.json({ error: "Esta liquidación ya tiene factura o fue anulada" }, { status: 422 });
+    const detalle = liq.status === "en_revision"
+      ? "Ya subiste una factura para esta liquidación y está en revisión."
+      : "Esta liquidación ya tiene factura aprobada o fue anulada.";
+    return NextResponse.json({ error: detalle }, { status: 422 });
   }
 
   // ── Guardar el archivo ────────────────────────────────────────────────────
@@ -83,23 +86,22 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await archivo.arrayBuffer());
   await writeFile(path.join(rutaDir, nombreArchivo), buffer);
 
+  // Subir el PDF NO cierra la liquidación: queda "en_revision" hasta que el
+  // superadmin la apruebe (recién ahí las cuotas pasan a "pagada", en
+  // aprobarFacturaLiquidacionAction). Mientras tanto el revendedor sigue
+  // contando como deuda de factura para el bloqueo.
   const ahora = new Date();
-  await db.transaction(async (tx) => {
-    await tx
-      .update(liquidaciones)
-      .set({
-        status: "facturada",
-        facturaUrl: nombreArchivo,
-        facturaRecibidaEn: ahora,
-        nota: nota || liq.nota,
-      })
-      .where(eq(liquidaciones.id, liq.id));
-
-    await tx
-      .update(cuotas)
-      .set({ status: "pagada", facturadoEn: ahora, pagadoEn: ahora })
-      .where(eq(cuotas.liquidacionId, liq.id));
-  });
+  await db
+    .update(liquidaciones)
+    .set({
+      status: "en_revision",
+      facturaUrl: nombreArchivo,
+      facturaRecibidaEn: ahora,
+      facturaRechazadaEn: null,
+      facturaRechazoMotivo: null,
+      nota: nota || liq.nota,
+    })
+    .where(eq(liquidaciones.id, liq.id));
 
   const [user] = await db.select({ nombre: users.name }).from(users).where(eq(users.id, revendedor.userId));
   const { subject, html } = emailFacturaLiquidacionSubida(user?.nombre ?? revendedor.codigoVentas, revendedor.codigoVentas, Number(liq.monto));

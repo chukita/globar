@@ -14,12 +14,19 @@ vi.mock("@/lib/email", () => ({
   emailRecordatorioFacturaPendiente: () => ({ subject: "gentle", html: "h" }),
   emailFacturaVencidaBloqueo: () => ({ subject: "escalado", html: "h" }),
   emailAdminResellersBloqueados: () => ({ subject: "admin", html: "h" }),
+  emailFacturaLiquidacionAprobada: () => ({ subject: "aprobada", html: "h" }),
+  emailFacturaLiquidacionRechazada: () => ({ subject: "rechazada", html: "h" }),
 }));
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { confirmarLiquidacionAction, enviarRecordatoriosLiquidacionAction } from "./liquidaciones-actions";
+import {
+  confirmarLiquidacionAction,
+  enviarRecordatoriosLiquidacionAction,
+  aprobarFacturaLiquidacionAction,
+  rechazarFacturaLiquidacionAction,
+} from "./liquidaciones-actions";
 
 const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
 const AHORA = new Date("2026-09-10T12:00:00Z"); // corte = 2026-09-01T03:00Z
@@ -176,5 +183,90 @@ describe("enviarRecordatoriosLiquidacionAction", () => {
     const res2 = await enviarRecordatoriosLiquidacionAction(undefined, AHORA);
     expect(res2.bloqueadosNuevos).toBe(0);
     expect(notifyAdmins).not.toHaveBeenCalled();
+  });
+});
+
+describe("aprobar / rechazar factura de liquidación", () => {
+  async function seedLiqEnRevision(revId: string, nCuotas = 2) {
+    const [prod] = await db
+      .insert(schema.productos)
+      .values({ nombre: `p-${Math.random().toString(36).slice(2, 6)}`, dominio: "d", urlRegistro: "u", tag: "t", precioMensual: "9000" })
+      .returning();
+    const [venta] = await db
+      .insert(schema.ventas)
+      .values({ revendedorId: revId, productoId: prod.id, clienteNombre: "C", precioMensual: "9000" })
+      .returning();
+    const [liq] = await db
+      .insert(schema.liquidaciones)
+      .values({
+        revendedorId: revId, periodoMes: 8, periodoAnio: 2026, monto: "10000", cantidadCuotas: nCuotas,
+        status: "en_revision", facturaUrl: "f.pdf", facturaRecibidaEn: AHORA,
+        facturaVenceEn: new Date("2026-11-10T12:00:00Z"),
+      })
+      .returning();
+    for (let i = 1; i <= nCuotas; i++) {
+      await db.insert(schema.cuotas).values({
+        ventaId: venta.id, revendedorId: revId, numeroCuota: i, monto: "5000",
+        periodoMes: 8, periodoAnio: 2026, status: "liquidada", liquidacionId: liq.id, liquidadoEn: AHORA,
+      });
+    }
+    return liq;
+  }
+
+  it("aprobar: pasa a facturada y las cuotas a pagada", async () => {
+    const rev = await seedRevendedor();
+    const liq = await seedLiqEnRevision(rev.id, 2);
+
+    await aprobarFacturaLiquidacionAction(liq.id);
+
+    const [actualizada] = await db.select().from(schema.liquidaciones).where(eq(schema.liquidaciones.id, liq.id));
+    expect(actualizada.status).toBe("facturada");
+    expect(actualizada.facturaAprobadaEn).not.toBeNull();
+
+    const cuotas = await db.select().from(schema.cuotas).where(eq(schema.cuotas.liquidacionId, liq.id));
+    expect(cuotas.every((c) => c.status === "pagada" && c.pagadoEn !== null)).toBe(true);
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ subject: "aprobada" }));
+  });
+
+  it("aprobar: falla si no está en revisión", async () => {
+    const rev = await seedRevendedor();
+    const [liq] = await db.insert(schema.liquidaciones).values({
+      revendedorId: rev.id, periodoMes: 8, periodoAnio: 2026, monto: "5000", cantidadCuotas: 1,
+      status: "pagada", facturaVenceEn: new Date("2026-11-10T12:00:00Z"),
+    }).returning();
+    await expect(aprobarFacturaLiquidacionAction(liq.id)).rejects.toThrow(/revisión/i);
+  });
+
+  it("rechazar: vuelve a pagada, limpia el PDF y guarda el motivo", async () => {
+    const rev = await seedRevendedor();
+    const liq = await seedLiqEnRevision(rev.id, 1);
+
+    await rechazarFacturaLiquidacionAction(liq.id, "El monto no coincide con la transferencia");
+
+    const [actualizada] = await db.select().from(schema.liquidaciones).where(eq(schema.liquidaciones.id, liq.id));
+    expect(actualizada.status).toBe("pagada");
+    expect(actualizada.facturaUrl).toBeNull();
+    expect(actualizada.facturaRechazoMotivo).toBe("El monto no coincide con la transferencia");
+    expect(actualizada.facturaRechazadaEn).not.toBeNull();
+
+    const cuotas = await db.select().from(schema.cuotas).where(eq(schema.cuotas.liquidacionId, liq.id));
+    expect(cuotas.every((c) => c.status === "liquidada")).toBe(true);
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ subject: "rechazada" }));
+  });
+
+  it("rechazar: exige un motivo", async () => {
+    const rev = await seedRevendedor();
+    const liq = await seedLiqEnRevision(rev.id, 1);
+    await expect(rechazarFacturaLiquidacionAction(liq.id, "  ")).rejects.toThrow(/motivo/i);
+  });
+
+  it("confirmarLiquidacion: bloquea si hay una factura en revisión vencida", async () => {
+    const rev = await seedRevendedor();
+    await db.insert(schema.liquidaciones).values({
+      revendedorId: rev.id, periodoMes: 6, periodoAnio: 2026, monto: "5000", cantidadCuotas: 1,
+      status: "en_revision", facturaUrl: "f.pdf", facturaVenceEn: new Date("2026-08-01T12:00:00Z"),
+    });
+    await seedCuota(rev.id, new Date("2026-08-20T12:00:00Z"));
+    await expect(confirmarLiquidacionAction(rev.id, AHORA)).rejects.toThrow(/aprobaci/i);
   });
 });

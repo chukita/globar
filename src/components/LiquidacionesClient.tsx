@@ -3,7 +3,12 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { fmtARS } from "@/lib/constants";
-import { confirmarLiquidacionAction, enviarRecordatoriosLiquidacionAction } from "@/lib/liquidaciones-actions";
+import {
+  confirmarLiquidacionAction,
+  enviarRecordatoriosLiquidacionAction,
+  aprobarFacturaLiquidacionAction,
+  rechazarFacturaLiquidacionAction,
+} from "@/lib/liquidaciones-actions";
 
 type PreviewRow = {
   revendedorId: string;
@@ -17,6 +22,7 @@ type PreviewRow = {
   titularCuit: string | null;
   camposFaltantes: string[];
   bloqueado: boolean;
+  bloqueoMotivo: string | null;
   incluible: boolean;
 };
 
@@ -29,7 +35,11 @@ type EsperandoRow = {
   ultimoRecordatorioEn: string | null;
   recordatoriosEnviados: number;
   cantidadCuotas: number;
+  status: "pagada" | "en_revision";
   comprobanteUrl: string | null;
+  facturaUrl: string | null;
+  facturaRecibidaEn: string | null;
+  facturaRechazadaEn: string | null;
   revendedor: string;
   revendedorNombre: string | null;
   vencida: boolean;
@@ -119,6 +129,42 @@ export function LiquidacionesClient({
     }
   }
 
+  async function aprobarFactura(id: string) {
+    setError(null);
+    setMsg(null);
+    setBusy(id);
+    try {
+      await aprobarFacturaLiquidacionAction(id);
+      setMsg("Factura aprobada. La liquidación quedó cerrada.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al aprobar la factura.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function rechazarFactura(id: string) {
+    const motivo = window.prompt("Motivo del rechazo (se le manda al revendedor):");
+    if (motivo === null) return;
+    if (motivo.trim().length < 3) {
+      setError("El motivo del rechazo es obligatorio.");
+      return;
+    }
+    setError(null);
+    setMsg(null);
+    setBusy(id);
+    try {
+      await rechazarFacturaLiquidacionAction(id, motivo);
+      setMsg("Factura rechazada. El revendedor tiene que subir una nueva.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al rechazar la factura.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="mt-6 flex flex-col gap-8">
       {error && (
@@ -187,7 +233,7 @@ export function LiquidacionesClient({
                       {r.nombre ?? r.email} <span className="text-[#9AA3B2] font-normal">· {r.codigoVentas}</span>
                     </div>
                     <div className="text-[12.5px] text-[#9B4A57] mt-1">
-                      No entra: {r.bloqueado ? "factura vencida sin enviar" : `falta ${r.camposFaltantes.join(", ")}`}
+                      No entra: {r.bloqueado ? r.bloqueoMotivo : `falta ${r.camposFaltantes.join(", ")}`}
                     </div>
                     <div className="text-[12px] text-[#9AA3B2] mt-0.5">
                       {r.cantidadCuotas} cuota{r.cantidadCuotas !== 1 ? "s" : ""} acumulada{r.cantidadCuotas !== 1 ? "s" : ""} — se cobran cuando se ponga al día
@@ -231,6 +277,8 @@ export function LiquidacionesClient({
                   </div>
                   <div className="text-[12.5px] text-[#9AA3B2] mt-0.5">
                     {e.periodoLabel} · pagada {fmtFecha(e.pagadaEn)} · vence {fmtFecha(e.facturaVenceEn)}
+                    {e.status === "en_revision" && e.facturaRecibidaEn && ` · factura subida ${fmtFecha(e.facturaRecibidaEn)}`}
+                    {e.status === "pagada" && e.facturaRechazadaEn && ` · factura rechazada ${fmtFecha(e.facturaRechazadaEn)}`}
                     {e.recordatoriosEnviados > 0 && ` · ${e.recordatoriosEnviados} recordatorio${e.recordatoriosEnviados !== 1 ? "s" : ""}`}
                   </div>
                 </div>
@@ -240,18 +288,46 @@ export function LiquidacionesClient({
                       Ver comprobante
                     </a>
                   )}
-                  {e.vencida && (
+                  {e.status === "en_revision" ? (
+                    <span className="text-[11.5px] font-semibold bg-[#FFF3CD] text-[#856404] rounded-[9px] px-2.5 py-1">En revisión</span>
+                  ) : e.vencida && (
                     <span className="text-[11.5px] font-semibold bg-[#FCE6E9] text-[#9B4A57] rounded-[9px] px-2.5 py-1">Bloquea al revendedor</span>
                   )}
                   <span className="font-bold text-[15px]">{fmtARS(e.monto)}</span>
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => recordar(e.id)}
-                    className="text-[12.5px] font-semibold border border-[#DCE0E5] text-[#5B6577] bg-white rounded-[9px] px-3 py-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    {busy === e.id ? "…" : "Enviar recordatorio"}
-                  </button>
+                  {e.status === "en_revision" ? (
+                    <>
+                      {e.facturaUrl && (
+                        <a href={`/api/admin/liquidaciones/${e.id}/factura`} target="_blank" rel="noopener noreferrer" className="text-[12.5px] font-semibold text-[#0B5A8F]">
+                          Ver factura
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => aprobarFactura(e.id)}
+                        className="text-[12.5px] font-semibold border-0 text-white bg-[#1B9462] rounded-[9px] px-3 py-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {busy === e.id ? "…" : "Aprobar"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => rechazarFactura(e.id)}
+                        className="text-[12.5px] font-semibold border border-[#E7A9B3] text-[#9B4A57] bg-white rounded-[9px] px-3 py-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        Rechazar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy !== null}
+                      onClick={() => recordar(e.id)}
+                      className="text-[12.5px] font-semibold border border-[#DCE0E5] text-[#5B6577] bg-white rounded-[9px] px-3 py-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {busy === e.id ? "…" : "Enviar recordatorio"}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

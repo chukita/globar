@@ -46,7 +46,7 @@ export async function getDashboardStats() {
   const [facturasPendientes] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(liquidaciones)
-    .where(eq(liquidaciones.status, "pagada"));
+    .where(inArray(liquidaciones.status, ["pagada", "en_revision"]));
 
   return {
     ventasTotales: ventasCount?.count ?? 0,
@@ -66,13 +66,14 @@ export async function getLiquidacionesEsperandoFacturaResumen(limit = 5) {
       periodoAnio: liquidaciones.periodoAnio,
       pagadaEn: liquidaciones.pagadaEn,
       facturaVenceEn: liquidaciones.facturaVenceEn,
+      status: liquidaciones.status,
       revendedor: revendedores.codigoVentas,
       revendedorNombre: users.name,
     })
     .from(liquidaciones)
     .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
     .innerJoin(users, eq(revendedores.userId, users.id))
-    .where(eq(liquidaciones.status, "pagada"))
+    .where(inArray(liquidaciones.status, ["pagada", "en_revision"]))
     .orderBy(asc(liquidaciones.facturaVenceEn))
     .limit(limit);
 }
@@ -172,12 +173,23 @@ export async function getPreviewLiquidacionMesAnterior(ahora = new Date()) {
     .where(and(eq(cuotas.status, "generada"), lt(cuotas.generadoEn, corte)))
     .groupBy(cuotas.revendedorId, revendedores.id, users.id);
 
-  // Bloqueados: tienen al menos una liquidación pagada con la factura vencida.
+  // Bloqueados: tienen al menos una liquidación vencida cuya factura todavía no
+  // está aprobada — "pagada" (no subió nada) o "en_revision" (subió, falta
+  // aprobarla). Solo una factura aprobada ("facturada") destraba.
   const bloqueados = await db
-    .select({ revendedorId: liquidaciones.revendedorId })
+    .select({ revendedorId: liquidaciones.revendedorId, status: liquidaciones.status })
     .from(liquidaciones)
-    .where(and(eq(liquidaciones.status, "pagada"), lt(liquidaciones.facturaVenceEn, ahora)))
-    .groupBy(liquidaciones.revendedorId);
+    .where(and(
+      inArray(liquidaciones.status, ["pagada", "en_revision"]),
+      lt(liquidaciones.facturaVenceEn, ahora),
+    ))
+    .groupBy(liquidaciones.revendedorId, liquidaciones.status);
+  // revendedorId → true si el bloqueo es por una factura en revisión sin aprobar
+  // (aunque tenga también una "pagada" vencida, priorizamos avisar que hay algo
+  // para revisar).
+  const bloqueoRevisionSet = new Set(
+    bloqueados.filter((b) => b.status === "en_revision").map((b) => b.revendedorId),
+  );
   const bloqueadosSet = new Set(bloqueados.map((b) => b.revendedorId));
 
   return {
@@ -198,6 +210,9 @@ export async function getPreviewLiquidacionMesAnterior(ahora = new Date()) {
         titularCuit: f.titularCuit,
         camposFaltantes: faltantes,
         bloqueado,
+        bloqueoMotivo: bloqueado
+          ? (bloqueoRevisionSet.has(f.revendedorId) ? "factura en revisión sin aprobar" : "factura vencida sin enviar")
+          : null,
         incluible: faltantes.length === 0 && !bloqueado,
       };
     }),
@@ -214,7 +229,11 @@ export async function getLiquidacionesEsperandoFactura(ahora = new Date()) {
       pagadaEn: liquidaciones.pagadaEn,
       facturaVenceEn: liquidaciones.facturaVenceEn,
       cantidadCuotas: liquidaciones.cantidadCuotas,
+      status: liquidaciones.status,
       comprobanteUrl: liquidaciones.comprobanteUrl,
+      facturaUrl: liquidaciones.facturaUrl,
+      facturaRecibidaEn: liquidaciones.facturaRecibidaEn,
+      facturaRechazadaEn: liquidaciones.facturaRechazadaEn,
       recordatoriosEnviados: liquidaciones.recordatoriosEnviados,
       ultimoRecordatorioEn: liquidaciones.ultimoRecordatorioEn,
       revendedor: revendedores.codigoVentas,
@@ -223,7 +242,7 @@ export async function getLiquidacionesEsperandoFactura(ahora = new Date()) {
     .from(liquidaciones)
     .innerJoin(revendedores, eq(liquidaciones.revendedorId, revendedores.id))
     .innerJoin(users, eq(revendedores.userId, users.id))
-    .where(eq(liquidaciones.status, "pagada"))
+    .where(inArray(liquidaciones.status, ["pagada", "en_revision"]))
     .orderBy(asc(liquidaciones.facturaVenceEn));
 
   return filas.map((f) => ({ ...f, vencida: f.facturaVenceEn < ahora }));

@@ -16,6 +16,7 @@ type Pendiente = {
   pagadaEn: string;
   facturaVenceEn: string;
   facturaRecibidaEn: string | null;
+  rechazoMotivo: string | null;
   tieneFactura: boolean;
 };
 type Historial = Pendiente & { anulada: boolean };
@@ -23,10 +24,12 @@ type Legacy = { id: string; monto: number; nota: string; subida: string; pagada:
 
 export function FacturasClient({
   pendientes,
+  enRevision,
   historial,
   legacy,
 }: {
   pendientes: Pendiente[];
+  enRevision: Pendiente[];
   historial: Historial[];
   legacy: Legacy[];
 }) {
@@ -89,6 +92,12 @@ export function FacturasClient({
                           ? `Venció el ${fmtFecha(l.facturaVenceEn)} — estás excluido de la próxima liquidación hasta enviarla`
                           : `Tenés tiempo hasta el ${fmtFecha(l.facturaVenceEn)}`}
                       </div>
+                      {l.rechazoMotivo && (
+                        <div className="text-[12.5px] mt-2 bg-[#FCE6E9] border border-[#E7A9B3] text-[#9B4A57] rounded-lg px-3 py-2">
+                          <strong>Tu factura anterior fue rechazada:</strong> {l.rechazoMotivo}<br />
+                          Subí una corregida.
+                        </div>
+                      )}
                     </div>
                     <div className="font-extrabold text-[22px] text-[#0C2A45] flex-shrink-0">{fmtARS(l.monto)}</div>
                   </div>
@@ -124,6 +133,32 @@ export function FacturasClient({
           </div>
         )}
       </div>
+
+      {/* En revisión */}
+      {enRevision.length > 0 && (
+        <div className="mt-8">
+          <h2 className="font-bold text-[17px] m-0 mb-3">En revisión</h2>
+          <div className="flex flex-col gap-3">
+            {enRevision.map((l) => (
+              <div key={l.id} className="bg-white border-2 border-[#F0D89B] rounded-[16px] px-5 py-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <div className="font-semibold text-[14.5px]">Liquidación de {l.periodo}</div>
+                    <div className="text-[12.5px] text-[#9AA3B2] mt-0.5">
+                      {l.facturaRecibidaEn && `Subiste la factura el ${fmtFecha(l.facturaRecibidaEn)}. `}
+                      La estamos revisando — no tenés que hacer nada. Te avisamos por mail cuando la aprobemos.
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="font-extrabold text-[20px] text-[#0C2A45]">{fmtARS(l.monto)}</span>
+                    <span className="text-[12px] font-semibold rounded-full px-3 py-1.5 bg-[#FFF3CD] text-[#856404]">En revisión</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Histórico */}
       <div className="mt-8">

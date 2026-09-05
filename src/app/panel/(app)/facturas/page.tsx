@@ -36,11 +36,15 @@ export default async function FacturasPage() {
     pagadaEn: l.pagadaEn.toISOString(),
     facturaVenceEn: l.facturaVenceEn.toISOString(),
     facturaRecibidaEn: l.facturaRecibidaEn ? l.facturaRecibidaEn.toISOString() : null,
+    rechazoMotivo: l.facturaRechazoMotivo ?? null,
     tieneFactura: !!l.facturaUrl,
   });
 
   const pendientes = liqs.filter((l) => l.status === "pagada").map(ser);
-  const historial = liqs.filter((l) => l.status !== "pagada").map((l) => ({ ...ser(l), anulada: l.status === "anulada" }));
+  const enRevision = liqs.filter((l) => l.status === "en_revision").map(ser);
+  const historial = liqs
+    .filter((l) => l.status === "facturada" || l.status === "anulada")
+    .map((l) => ({ ...ser(l), anulada: l.status === "anulada" }));
 
   const legacy = facturasLegacy.map((f) => ({
     id: f.id,
@@ -68,7 +72,7 @@ export default async function FacturasPage() {
         </div>
       </div>
 
-      <FacturasClient pendientes={pendientes} historial={historial} legacy={legacy} />
+      <FacturasClient pendientes={pendientes} enRevision={enRevision} historial={historial} legacy={legacy} />
     </div>
   );
 }

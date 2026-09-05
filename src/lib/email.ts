@@ -130,10 +130,30 @@ export function emailAdminResellersBloqueados(items: { nombre: string; codigo: s
 
 export function emailFacturaLiquidacionSubida(revendedorNombre: string, codigoVentas: string, monto: number) {
   return {
-    subject: "Un revendedor subió la factura de su liquidación",
-    html: wrapHtml("Factura de liquidación recibida", `
+    subject: "Un revendedor subió una factura para revisar",
+    html: wrapHtml("Factura de liquidación para revisar", `
       <p><strong>${revendedorNombre}</strong> (${codigoVentas}) subió la factura de su liquidación por <strong>${fmtARS(monto)}</strong>.</p>
-      <p>Podés verla en el panel de superadmin, sección Liquidaciones.</p>
+      <p>Revisala y aprobala (o rechazala) en el panel de superadmin, sección Liquidaciones. Hasta que la apruebes, el revendedor sigue contando como deuda de factura.</p>
+    `),
+  };
+}
+
+export function emailFacturaLiquidacionAprobada(periodoLabel: string, monto: number) {
+  return {
+    subject: `Aprobamos tu factura de ${periodoLabel}`,
+    html: wrapHtml("Factura aprobada", `
+      <p>Revisamos y <strong>aprobamos</strong> tu factura de <strong>${periodoLabel}</strong> por <strong>${fmtARS(monto)}</strong>. No tenés que hacer nada más.</p>
+    `),
+  };
+}
+
+export function emailFacturaLiquidacionRechazada(periodoLabel: string, monto: number, motivo: string) {
+  return {
+    subject: `Necesitamos que corrijas tu factura de ${periodoLabel}`,
+    html: wrapHtml("Factura rechazada", `
+      <p>Revisamos tu factura de <strong>${periodoLabel}</strong> por <strong>${fmtARS(monto)}</strong> y no la pudimos aceptar.</p>
+      <p><strong>Motivo:</strong> ${motivo}</p>
+      <p>Subí una factura corregida desde tu panel, sección Facturas. El plazo de vencimiento sigue corriendo, así que no la dejes pasar.</p>
     `),
   };
 }

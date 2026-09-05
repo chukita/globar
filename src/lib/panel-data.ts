@@ -130,6 +130,7 @@ export async function getLiquidacionesDelRevendedor(revendedorId: string) {
       pagadaEn: liquidaciones.pagadaEn,
       facturaVenceEn: liquidaciones.facturaVenceEn,
       facturaRecibidaEn: liquidaciones.facturaRecibidaEn,
+      facturaRechazoMotivo: liquidaciones.facturaRechazoMotivo,
       facturaUrl: liquidaciones.facturaUrl,
       comprobanteUrl: liquidaciones.comprobanteUrl,
     })

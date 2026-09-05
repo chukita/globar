@@ -113,7 +113,10 @@ src/lib/
   panel-data.ts                # queries del panel del revendedor
   admin-data.ts                # queries del panel de superadmin
   actions.ts                   # server actions (logout, marcar factura pagada, toggles de admin, impersonarRevendedorAction, etc.)
-  liquidaciones-actions.ts     # server actions de superadmin: confirmar liquidación mensual + forzar recordatorios
+  liquidaciones-actions.ts     # server actions de superadmin: confirmar liquidación mensual, forzar recordatorios,
+                               #   aprobar/rechazar la factura que sube el revendedor (liquidacion: pagada → en_revision
+                               #   → facturada; rechazo vuelve a "pagada" con motivo). Solo una factura APROBADA
+                               #   destraba el bloqueo por factura vencida — "en_revision" vencida sigue bloqueando.
   recordatorios-liquidacion.ts # procesarRecordatoriosLiquidacion() — lógica compartida por la action y el cron
                                #   (suave = 30 días antes del vencimiento, bloqueo = al vencer; forzar = sin throttle)
 src/components/

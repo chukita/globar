@@ -35,14 +35,18 @@ export default async function AdminLiquidacionesPage() {
         preview={preview.filas}
         esperando={esperando.map((e) => ({
           ...e,
+          status: e.status as "pagada" | "en_revision",
           monto: Number(e.monto),
           pagadaEn: e.pagadaEn.toISOString(),
           facturaVenceEn: e.facturaVenceEn.toISOString(),
+          facturaRecibidaEn: e.facturaRecibidaEn ? e.facturaRecibidaEn.toISOString() : null,
+          facturaRechazadaEn: e.facturaRechazadaEn ? e.facturaRechazadaEn.toISOString() : null,
           ultimoRecordatorioEn: e.ultimoRecordatorioEn ? e.ultimoRecordatorioEn.toISOString() : null,
           periodoLabel: periodoLabel(e.periodoMes, e.periodoAnio),
         }))}
         historial={historial.map((h) => ({
           ...h,
+          status: h.status as "pagada" | "facturada" | "anulada",
           monto: Number(h.monto),
           pagadaEn: h.pagadaEn.toISOString(),
           facturaRecibidaEn: h.facturaRecibidaEn ? h.facturaRecibidaEn.toISOString() : null,
