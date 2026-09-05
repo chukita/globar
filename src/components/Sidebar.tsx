@@ -14,7 +14,7 @@ const NAV = [
   { href: "/panel/comisiones",   label: "Comisiones" },
   { href: "/panel/facturas",     label: "Facturas" },
   { href: "/panel/capacitacion", label: "Capacitación" },
-  { href: "/panel/perfil",       label: "Perfil y código" },
+  { href: "/panel/perfil",       label: "Perfil" },
 ];
 
 interface SidebarProps {
