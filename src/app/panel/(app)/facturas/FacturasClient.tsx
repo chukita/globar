@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { FacturaGuia } from "@/components/FacturaGuia";
 
 const fmtARS = (n: number) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
@@ -11,6 +12,8 @@ const fmtFecha = (iso: string) =>
 type Pendiente = {
   id: string;
   periodo: string;
+  periodoMes: number;
+  periodoAnio: number;
   monto: number;
   cantidadCuotas: number;
   pagadaEn: string;
@@ -118,6 +121,8 @@ export function FacturasClient({
                       {subiendo === l.id ? "Enviando…" : "Enviar factura en PDF"}
                     </button>
                   </div>
+
+                  <FacturaGuia periodoMes={l.periodoMes} periodoAnio={l.periodoAnio} monto={l.monto} />
                 </div>
               );
             })}

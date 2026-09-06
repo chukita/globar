@@ -3,8 +3,11 @@ import { db } from "@/db";
 import { revendedores, cuotas, ventas, productos, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getConfiguracion } from "@/lib/configuracion";
+import { getLiquidacionesDelRevendedor } from "@/lib/panel-data";
 import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
+import { periodoLabel } from "@/lib/fecha";
 
 const fmtARS = (n: number) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
@@ -37,6 +40,11 @@ export default async function ComisionesPage() {
   }
 
   const { comisionMonto, comisionMeses } = await getConfiguracion();
+
+  // Liquidaciones ya cobradas que todavía esperan factura del revendedor.
+  const liqsPendientesFactura = (await getLiquidacionesDelRevendedor(rev.id))
+    .filter((l) => l.status === "pagada")
+    .sort((a, b) => a.facturaVenceEn.getTime() - b.facturaVenceEn.getTime());
 
   // Todas las cuotas del revendedor con info de venta y producto
   const rows = await db
@@ -123,6 +131,25 @@ export default async function ComisionesPage() {
           <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">Seguimiento de tus comisiones por cobrar y el historial de ventas.</p>
         </div>
       </div>
+
+      {/* Aviso: liquidaciones cobradas que esperan factura */}
+      {liqsPendientesFactura.length > 0 && (
+        <div className="mt-6 bg-[#FFF8E6] border border-[#F0D89B] rounded-[16px] px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="text-[13.5px] text-[#7A6020] leading-snug">
+            <strong>
+              {liqsPendientesFactura.length === 1
+                ? `Cobraste la liquidación de ${periodoLabel(liqsPendientesFactura[0].periodoMes, liqsPendientesFactura[0].periodoAnio)} y falta que subas tu factura`
+                : `Tenés ${liqsPendientesFactura.length} liquidaciones cobradas y falta que subas la factura`}
+            </strong>
+            <br />
+            Vencimiento más próximo: {liqsPendientesFactura[0].facturaVenceEn.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}. En Facturas tenés la guía paso a paso para hacerla en AFIP.
+          </div>
+          <Link href="/panel/facturas"
+            className="font-semibold text-[13px] bg-[#0E6BA8] text-white rounded-xl px-4 py-2.5 no-underline whitespace-nowrap">
+            Hacé tu factura →
+          </Link>
+        </div>
+      )}
 
       {/* Próxima liquidación banner */}
       {proximoMes && (

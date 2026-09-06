@@ -55,9 +55,9 @@ async function seedLiquidacionPagada(revId: string, facturaVenceEn: Date) {
 }
 
 describe("procesarRecordatoriosLiquidacion — automático (forzar: false)", () => {
-  it("manda el recordatorio suave una sola vez dentro de la ventana de 30 días", async () => {
+  it("manda el recordatorio suave una sola vez dentro de la ventana previa", async () => {
     const rev = await seedRevendedor();
-    const l = await seedLiquidacionPagada(rev.id, new Date("2026-09-25T12:00:00Z")); // faltan 15 días
+    const l = await seedLiquidacionPagada(rev.id, new Date("2026-09-15T12:00:00Z")); // faltan 5 días
 
     const r1 = await procesarRecordatoriosLiquidacion({ ahora: AHORA });
     expect(r1).toEqual({ enviados: 1, bloqueadosNuevos: 0 });
@@ -74,9 +74,9 @@ describe("procesarRecordatoriosLiquidacion — automático (forzar: false)", () 
     expect(row.recordatoriosEnviados).toBe(1);
   });
 
-  it("no manda nada si al vencimiento le faltan más de 30 días", async () => {
+  it("no manda nada si al vencimiento le faltan más días que la ventana previa", async () => {
     const rev = await seedRevendedor();
-    await seedLiquidacionPagada(rev.id, new Date("2026-11-01T12:00:00Z")); // faltan ~52 días
+    await seedLiquidacionPagada(rev.id, new Date("2026-09-25T12:00:00Z")); // faltan 15 días
 
     const r = await procesarRecordatoriosLiquidacion({ ahora: AHORA });
     expect(r.enviados).toBe(0);
@@ -125,7 +125,7 @@ describe("procesarRecordatoriosLiquidacion — automático (forzar: false)", () 
 });
 
 describe("procesarRecordatoriosLiquidacion — forzado (forzar: true)", () => {
-  it("manda aunque falten más de 30 días y no esté vencida", async () => {
+  it("manda aunque falte mucho para el vencimiento y no esté vencida", async () => {
     const rev = await seedRevendedor();
     await seedLiquidacionPagada(rev.id, new Date("2026-12-01T12:00:00Z"));
 

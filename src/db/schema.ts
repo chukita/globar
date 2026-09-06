@@ -305,7 +305,7 @@ export const configuracion = pgTable("configuracion", {
   // factura. Pasado ese plazo se lo excluye de la liquidación siguiente hasta que
   // se ponga al día. Se snapshotea en liquidaciones.facturaVenceEn al crear cada
   // liquidación, así un cambio acá no mueve vencimientos ya emitidos.
-  mesesGraciaFactura: integer("meses_gracia_factura").notNull().default(3),
+  mesesGraciaFactura: integer("meses_gracia_factura").notNull().default(1),
   // Lista de emails separados por coma que reciben los avisos de "revendedor
   // nuevo" y "factura subida" — no hay usuario superadmin en `users` (login
   // solo por contraseña), así que no hay otra forma de saber a quién avisar.

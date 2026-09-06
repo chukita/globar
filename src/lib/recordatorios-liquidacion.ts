@@ -14,9 +14,10 @@ import { periodoLabel } from "@/lib/fecha";
  * Cuántos días antes del vencimiento de la factura sale el recordatorio "suave"
  * automático. El aviso de bloqueo sale el día del vencimiento (o el primer día
  * que corra el cron después). No está en `configuracion` a propósito: es una
- * regla de tono, no de negocio — el plazo real lo fija `mesesGraciaFactura`.
+ * regla de tono, no de negocio — el plazo real lo fija `mesesGraciaFactura`
+ * (hoy 1 mes, así que 10 días antes ≈ mitad del plazo).
  */
-export const RECORDATORIO_SUAVE_DIAS_ANTES = 30;
+export const RECORDATORIO_SUAVE_DIAS_ANTES = 10;
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 

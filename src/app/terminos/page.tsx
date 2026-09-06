@@ -120,9 +120,10 @@ export default function TerminosPage() {
             <p>
               <strong>Factura.</strong> Recibida la transferencia, el revendedor debe emitir y
               subir al panel la factura electrónica correspondiente, a nombre de{" "}
-              <strong>Grupo Globaliza</strong>, por el monto exacto de esa liquidación, dentro de
-              los 3 meses siguientes al pago (plazo configurable). glob.ar envía recordatorios
-              por email mientras la factura esté pendiente.
+              <strong>Grupo Globaliza</strong>, por el monto exacto de esa liquidación, dentro del
+              plazo de gracia posterior al pago (por defecto, un mes; configurable). Cada factura
+              queda en revisión hasta que glob.ar la apruebe. glob.ar envía recordatorios por
+              email mientras la factura esté pendiente.
             </p>
             <p>
               <strong>Retención por factura pendiente.</strong> Si un revendedor mantiene una

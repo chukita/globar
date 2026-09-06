@@ -32,6 +32,8 @@ export default async function FacturasPage() {
   const ser = (l: (typeof liqs)[number]) => ({
     id: l.id,
     periodo: periodoLabel(l.periodoMes, l.periodoAnio),
+    periodoMes: l.periodoMes,
+    periodoAnio: l.periodoAnio,
     monto: Number(l.monto),
     cantidadCuotas: l.cantidadCuotas,
     pagadaEn: l.pagadaEn.toISOString(),
