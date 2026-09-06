@@ -97,9 +97,14 @@ export function FacturaGuia({
           </div>
 
           <div className="text-[12.5px] font-semibold text-[#9AA3B2] uppercase tracking-[.05em] mb-2">Pasos</div>
+          <p className="text-[12px] text-[#7A8CA0] leading-relaxed mt-0 mb-3">
+            La primera vez que facturás, AFIP te pide dar de alta un <strong>punto de venta</strong>
+            (en Comprobantes en línea → ABM Puntos de Venta) y completar los <strong>datos adicionales</strong>
+            del comprobante (inicio de actividad, ingresos brutos). Después de eso, cada factura son los pasos de abajo.
+          </p>
           <ol className="text-[13px] text-[#3F4A5A] leading-relaxed pl-5 m-0 flex flex-col gap-2">
             <li>Entrá a AFIP con tu CUIT y clave fiscal y abrí el servicio <strong>Comprobantes en línea</strong>.</li>
-            <li>Elegí tu empresa (tu CUIT) y entrá a <strong>Generar Comprobantes</strong>.</li>
+            <li>Si te aparece la lista de empresas, elegí la tuya (tu CUIT). Entrá a <strong>Generar Comprobantes</strong>.</li>
             <li><strong>Punto de venta</strong>: el tuyo habitual. <strong>Tipo de comprobante</strong>: <strong>Factura C</strong>. → Continuar.</li>
             <li>
               <strong>Concepto</strong>: <strong>Servicios</strong>. <strong>Fecha del comprobante</strong>: {fmtDMY(hoy)}.
