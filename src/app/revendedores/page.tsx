@@ -136,7 +136,7 @@ export default function RevendedoresPage() {
               ¿Cumplís con los requisitos?
             </h2>
             <p className="text-base text-[#DCEAF4] mt-2 mb-0">
-              Registrate gratis y obtené tu código de ventas hoy mismo.
+              Registrate gratis y obtené tu link de referido hoy mismo.
             </p>
           </div>
           <div className="relative flex gap-3 flex-wrap">

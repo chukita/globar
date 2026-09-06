@@ -56,7 +56,7 @@ export const STEPS = [
   {
     n: "01",
     title: "Registrate gratis",
-    desc: "Creá tu cuenta de revendedor en minutos y obtené tu código de ventas único.",
+    desc: "Creá tu cuenta de revendedor en minutos y obtené tu link de referido por producto.",
     tint: "#E1EFF8",
     accent: "#0B5A8F",
   },

@@ -16,16 +16,17 @@ export default function TerminosPage() {
           Términos y Condiciones
         </h1>
         <p className="text-[13.5px] text-[#9AA3B2] mt-2 mb-10">
-          Última actualización: 3 de septiembre de 2026
+          Última actualización: 6 de septiembre de 2026
         </p>
 
         <article className="space-y-7 text-[14.5px] leading-relaxed text-[#3F4A5A]">
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">1. Identidad del proveedor</h2>
             <p>
-              glob.ar es operado por <strong>Grupo Globaliza</strong>,
-              CUIT 20-29739072-5, con domicilio en Berta Vidal de Battini 1343, San Luis,
-              Provincia de San Luis, República Argentina. Contacto:{" "}
+              glob.ar es operado por <strong>Carlos Hugo Costantino</strong>, CUIT
+              20-29739072-5, monotributista, que gira comercialmente como{" "}
+              <strong>Grupo Globaliza</strong>, con domicilio en Berta Vidal de Battini 1343,
+              San Luis, Provincia de San Luis, República Argentina. Contacto:{" "}
               <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
             </p>
           </section>
@@ -44,9 +45,9 @@ export default function TerminosPage() {
             <p>
               glob.ar es una plataforma de reventa de productos digitales SaaS propios
               (actualmente agendaonline.com.ar y nume.com.ar). Le da a cada revendedor un
-              código de ventas único y un link de referido por producto para compartir con
-              sus contactos; cuando alguien se registra en el producto usando ese link y paga
-              su suscripción, glob.ar le genera una comisión al revendedor.
+              link de referido por producto (con un código de ventas único incluido) para
+              compartir con sus contactos; cuando alguien se registra en el producto usando
+              ese link y paga su suscripción, glob.ar le genera una comisión al revendedor.
             </p>
           </section>
 
@@ -119,18 +120,23 @@ export default function TerminosPage() {
             </p>
             <p>
               <strong>Factura.</strong> Recibida la transferencia, el revendedor debe emitir y
-              subir al panel la factura electrónica correspondiente, a nombre de{" "}
-              <strong>Grupo Globaliza</strong>, por el monto exacto de esa liquidación, dentro del
-              plazo de gracia posterior al pago (por defecto, un mes; configurable). Cada factura
-              queda en revisión hasta que glob.ar la apruebe. glob.ar envía recordatorios por
-              email mientras la factura esté pendiente.
+              subir al panel, <strong>dentro del mes posterior al pago</strong>, la factura
+              electrónica correspondiente: <strong>Factura C</strong>, a nombre de{" "}
+              <strong>Carlos Hugo Costantino</strong> (CUIT 20-29739072-5, IVA Responsable
+              Monotributo), por el monto exacto de esa liquidación. El panel muestra todos los
+              datos y un instructivo paso a paso para emitirla. Cada factura queda en revisión
+              hasta que glob.ar la apruebe; si no cumple los requisitos (monto, datos o tipo de
+              comprobante), glob.ar puede rechazarla indicando el motivo, y el revendedor debe
+              subir una corregida dentro del mismo plazo, que no se reinicia. glob.ar envía
+              recordatorios por email mientras la factura esté pendiente.
             </p>
             <p>
-              <strong>Retención por factura pendiente.</strong> Si un revendedor mantiene una
-              liquidación sin su factura por más del plazo de gracia, queda excluido de las
-              liquidaciones siguientes hasta regularizar todas las facturas adeudadas. Durante
-              ese período las comisiones se siguen acumulando y se pagan todas juntas en la
-              primera liquidación posterior a la regularización.
+              <strong>Retención por factura pendiente.</strong> Si al cierre de un mes el
+              revendedor tiene una liquidación sin su factura <strong>aprobada</strong> — no
+              subida, o subida y todavía en revisión o rechazada —, no entra en la liquidación
+              del mes siguiente hasta regularizar todas las facturas adeudadas. Durante ese
+              período las comisiones se siguen acumulando y se pagan todas juntas en la primera
+              liquidación posterior a la regularización.
             </p>
             <p>
               Como no hay ningún cobro previo del revendedor hacia glob.ar, no corresponde un
@@ -154,11 +160,11 @@ export default function TerminosPage() {
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">10. Obligaciones del revendedor</h2>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Usar el código y el link de referido de buena fe, sin fines fraudulentos.</li>
+              <li>Usar su link de referido de buena fe, sin fines fraudulentos.</li>
               <li>No hacerse pasar por glob.ar, agendaonline o nume, ni prometer condiciones que no existen.</li>
               <li>Mantener actualizados sus datos personales y de cobro.</li>
-              <li>Emitir y subir al panel la factura de cada liquidación cobrada, dentro del plazo de gracia.</li>
-              <li>No compartir su código de ventas de forma que induzca a error sobre su origen.</li>
+              <li>Emitir y subir al panel la factura de cada liquidación cobrada, dentro del mes posterior al pago.</li>
+              <li>No compartir su link de referido de forma que induzca a error sobre su origen.</li>
             </ul>
           </section>
 

@@ -16,7 +16,7 @@ export default function PrivacidadPage() {
           Política de Privacidad
         </h1>
         <p className="text-[13.5px] text-[#9AA3B2] mt-2 mb-10">
-          Última actualización: 12 de agosto de 2026
+          Última actualización: 6 de septiembre de 2026
         </p>
 
         <article className="space-y-7 text-[14.5px] leading-relaxed text-[#3F4A5A]">
@@ -24,8 +24,9 @@ export default function PrivacidadPage() {
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">1. Responsable del tratamiento</h2>
             <p>
               El responsable del tratamiento de tus datos personales es{" "}
-              <strong>Grupo Globaliza</strong>, CUIT 20-29739072-5,
-              con domicilio en Berta Vidal de Battini 1343, San Luis, Provincia de San Luis,
+              <strong>Carlos Hugo Costantino</strong>, CUIT 20-29739072-5, que gira
+              comercialmente como <strong>Grupo Globaliza</strong>, con domicilio en Berta
+              Vidal de Battini 1343, San Luis, Provincia de San Luis,
               República Argentina. Contacto:{" "}
               <a href="mailto:hola@glob.ar" className="text-[#0E6BA8] font-medium">hola@glob.ar</a>.
             </p>
@@ -45,10 +46,11 @@ export default function PrivacidadPage() {
             <ul className="list-disc pl-6 space-y-1">
               <li>
                 Cuando alguien se registra en agendaonline o nume usando tu link de
-                referido y paga, ese producto le informa a glob.ar el nombre y el email de
-                esa persona junto con el pago — únicamente para vincular la venta a tu
-                comisión. glob.ar no recibe ni almacena datos de pago de esos clientes
-                (tarjetas, CBU, etc.), eso lo procesa cada producto directamente.
+                referido, ese producto le informa a glob.ar el nombre y el email de esa
+                persona — primero al registrarse y luego cuando paga —, únicamente para
+                mostrarte tus clientes registrados y vincular la venta a tu comisión.
+                glob.ar no recibe ni almacena datos de pago de esos clientes (tarjetas,
+                CBU, etc.), eso lo procesa cada producto directamente.
               </li>
             </ul>
             <p className="mt-3">
@@ -80,7 +82,8 @@ export default function PrivacidadPage() {
               <li>
                 <strong>agendaonline y nume</strong> — cada producto es responsable del
                 tratamiento de los datos de sus propios clientes; nos informan solo lo
-                necesario (nombre, email, monto y fecha del pago) para calcular tu comisión.
+                necesario (nombre y email al registrarse; nombre, email, monto y fecha al
+                pagar) para mostrarte tus clientes y calcular tu comisión.
               </li>
               <li>Proveedores de hosting e infraestructura para operar la plataforma.</li>
             </ul>

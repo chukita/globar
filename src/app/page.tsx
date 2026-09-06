@@ -103,7 +103,7 @@ export default async function LandingPage() {
                 <span style={{ color: "#E7CFE0" }}>sin inversión inicial.</span>
               </h1>
               <p style={{ fontSize: 19, lineHeight: 1.55, color: "rgba(255,255,255,0.75)", maxWidth: 520, marginTop: 20, marginBottom: 0 }}>
-                Plataforma argentina de reventa de productos digitales SaaS. Registrate, ofrecé los productos y cobrá comisiones recurrentes durante cuatro meses por cada cliente.
+                Plataforma argentina de reventa de productos digitales SaaS. Registrate, ofrecé los productos y cobrá comisiones recurrentes durante {comisionMeses} meses por cada cliente.
               </p>
               <div style={{ display: "flex", gap: 14, marginTop: 38, flexWrap: "wrap" }}>
                 <Link href="/registro" style={{ fontWeight: 700, fontSize: 16, background: "#fff", color: "#1E3AA8", borderRadius: 999, padding: "16px 28px", textDecoration: "none" }}>
@@ -255,7 +255,7 @@ export default async function LandingPage() {
       <section className="section-pad" style={{ background: "#F6F6FA" }}>
         <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
-            Tu código de ventas te espera
+            Tu link de referido te espera
           </h2>
           <p style={{ fontSize: 18, color: "#5B648E", lineHeight: 1.6, margin: "0 0 36px" }}>
             Registrate gratis hoy y empezá a generar ingresos recurrentes esta misma semana.
