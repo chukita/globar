@@ -76,6 +76,7 @@ export function LiquidacionesClient({
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [comprobantes, setComprobantes] = useState<Record<string, string>>({});
   const comprobanteRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const incluibles = preview.filter((r) => r.incluible);
@@ -210,8 +211,19 @@ export function LiquidacionesClient({
                     type="file"
                     accept="application/pdf,image/png,image/jpeg,image/webp"
                     ref={(el) => { comprobanteRefs.current[r.revendedorId] = el; }}
-                    className="text-[12.5px]"
+                    className="hidden"
+                    onChange={(e) => setComprobantes((c) => ({ ...c, [r.revendedorId]: e.target.files?.[0]?.name ?? "" }))}
                   />
+                  <button
+                    type="button"
+                    onClick={() => comprobanteRefs.current[r.revendedorId]?.click()}
+                    className="font-semibold text-[13px] bg-white text-[#0C2A45] border border-[#DCE0E5] rounded-xl px-3.5 py-2.5 cursor-pointer"
+                  >
+                    {comprobantes[r.revendedorId] ? "Cambiar comprobante" : "Adjuntar comprobante (opcional)"}
+                  </button>
+                  {comprobantes[r.revendedorId] && (
+                    <span className="text-[12px] text-[#5B6577] truncate max-w-[180px]">📎 {comprobantes[r.revendedorId]}</span>
+                  )}
                   <button
                     type="button"
                     disabled={busy !== null}
@@ -220,8 +232,10 @@ export function LiquidacionesClient({
                   >
                     {busy === r.revendedorId ? "Confirmando…" : `Confirmar pago de ${fmtARS(r.monto)}`}
                   </button>
-                  <span className="text-[12px] text-[#9AA3B2]">Comprobante opcional</span>
                 </div>
+                <p className="text-[11.5px] text-[#9AA3B2] mt-1.5 mb-0">
+                  El comprobante de la transferencia es opcional; si no lo adjuntás ahora, podés subirlo después desde el historial.
+                </p>
               </div>
             ))}
 
