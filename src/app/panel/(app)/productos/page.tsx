@@ -68,8 +68,9 @@ export default async function ProductosPage() {
               <div className="flex gap-2">
                 <CopyButton
                   text={linkGeneral}
-                  label="Copiar link"
+                  label="Compartir link"
                   labelDone="¡Copiado!"
+                  shareTitle="Mi link de glob.ar"
                   className="flex-1 font-semibold text-[13.5px] bg-[#0E6BA8] text-white border-0 rounded-xl py-2.5 cursor-pointer"
                 />
                 <a href={linkGeneral} target="_blank" rel="noreferrer"
@@ -193,8 +194,9 @@ function ProductCard({
             <div className="flex gap-2">
               <CopyButton
                 text={link}
-                label="Copiar link"
+                label="Compartir link"
                 labelDone="¡Copiado!"
+                shareTitle={`${producto.nombre} — mi link de glob.ar`}
                 className="flex-1 font-semibold text-[13.5px] bg-[#0E6BA8] text-white border-0 rounded-xl py-2.5 cursor-pointer"
               />
               <a href={link} target="_blank" rel="noreferrer"
