@@ -137,8 +137,8 @@ export function emailFacturaVencidaBloqueo(monto: number, periodoLabel: string) 
   return {
     subject: `Quedás excluido de la próxima liquidación — falta tu factura de ${periodoLabel}`,
     html: wrapHtml("Factura vencida: liquidación en pausa", `
-      <p>Pasaron más de los meses de gracia desde que te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y seguimos sin tu factura.</p>
-      <p>Mientras siga pendiente, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
+      <p>Ya venció el plazo para enviar la factura de la liquidación de <strong>${periodoLabel}</strong> (<strong>${fmtARS(monto)}</strong> que te transferimos) y seguimos sin recibirla.</p>
+      <p>Hasta que la subas, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
       <p>Subí la factura que falta desde tu panel, sección Facturas, para destrabar el cobro.</p>
       ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
@@ -152,7 +152,7 @@ export function emailAdminResellersBloqueados(items: { nombre: string; codigo: s
   return {
     subject: `${items.length} revendedor${items.length !== 1 ? "es" : ""} en bloqueo por factura vencida`,
     html: wrapHtml("Revendedores bloqueados por factura vencida", `
-      <p>Estos revendedores pasaron el plazo de gracia sin enviar su factura y quedan excluidos de la próxima liquidación:</p>
+      <p>Estos revendedores no enviaron la factura dentro del plazo y quedan excluidos de la próxima liquidación hasta que la suban:</p>
       <ul>${filas}</ul>
       ${ctaButton("Ver Liquidaciones", "/admin/liquidaciones")}
     `),

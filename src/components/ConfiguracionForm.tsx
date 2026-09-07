@@ -97,7 +97,7 @@ export function ConfiguracionForm({
       </div>
 
       <label className="block mt-5">
-        <span className="text-[12.5px] text-[#5B6577] font-medium">Meses de gracia para enviar la factura</span>
+        <span className="text-[12.5px] text-[#5B6577] font-medium">Meses para enviar la factura después del pago</span>
         <input
           type="number"
           min={1}

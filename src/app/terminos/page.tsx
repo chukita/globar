@@ -79,7 +79,7 @@ export default function TerminosPage() {
           <section>
             <h2 className="text-[19px] font-bold text-[#0C2A45] mb-2">6. Cómo funciona el programa</h2>
             <p>
-              El monto por cuota, la cantidad de cuotas, el plazo de gracia para facturar y el
+              El monto por cuota, la cantidad de cuotas, el plazo para enviar la factura y el
               resto de las condiciones de la comisión son configurables y pueden cambiar en el
               tiempo — las cuotas ya generadas antes de un cambio no se recalculan. La comisión
               se genera cuando el producto le informa a glob.ar que el cliente referido pagó, y
