@@ -142,7 +142,7 @@ export default async function ComisionesPage() {
                 : `Tenés ${liqsPendientesFactura.length} liquidaciones cobradas y falta que subas la factura`}
             </strong>
             <br />
-            Vencimiento más próximo: {liqsPendientesFactura[0].facturaVenceEn.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}. En Facturas tenés la guía paso a paso para hacerla en AFIP.
+            Subila antes de la próxima liquidación o no vas a entrar en ese pago hasta enviarla. En Facturas tenés la guía paso a paso para hacerla en AFIP.
           </div>
           <Link href="/panel/facturas"
             className="font-semibold text-[13px] bg-[#0E6BA8] text-white rounded-xl px-4 py-2.5 no-underline whitespace-nowrap">
