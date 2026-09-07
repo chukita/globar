@@ -2,7 +2,7 @@
 
 import { signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, ventas, registros, users, contactos, productos } from "@/db/schema";
+import { revendedores, habilitaciones, facturas, cuotas, cuotasFacturas, liquidaciones, ventas, registros, users, contactos, productos } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail, emailCuentaActivada, emailCuentaDesactivada, emailRespuestaContacto, emailMensajeRevendedor } from "@/lib/email";
@@ -135,10 +135,10 @@ export async function toggleHabilitacionAction(revendedorId: string, productoId:
 }
 
 /**
- * Borra un revendedor y todo lo asociado: cuotas, facturas, ventas,
- * registros (leads), habilitaciones, y el usuario (users → cascade a
- * accounts/sessions/revendedores/habilitaciones). cuotas/ventas/facturas/
- * registros no tienen onDelete cascade desde revendedores (a propósito,
+ * Borra un revendedor y todo lo asociado: cuotas, facturas, liquidaciones,
+ * ventas, registros (leads), habilitaciones, y el usuario (users → cascade a
+ * accounts/sessions/revendedores/habilitaciones). cuotas/liquidaciones/ventas/
+ * facturas/registros no tienen onDelete cascade desde revendedores (a propósito,
  * para no perder historial de plata ni de leads por accidente en el uso
  * normal) así que hay que borrarlas a mano, en orden, antes de borrar el
  * usuario.
@@ -162,6 +162,10 @@ async function borrarRevendedorPorId(revendedorId: string) {
 
     await tx.delete(facturas).where(eq(facturas.revendedorId, revendedorId));
     await tx.delete(cuotas).where(eq(cuotas.revendedorId, revendedorId));
+    // `liquidaciones` va después de `cuotas` (cuotas.liquidacionId la referencia
+    // sin cascade) y antes de borrar el usuario (revendedores.id la referencia
+    // sin cascade — si quedan filas, la cascada de users → revendedores explota).
+    await tx.delete(liquidaciones).where(eq(liquidaciones.revendedorId, revendedorId));
     await tx.delete(ventas).where(eq(ventas.revendedorId, revendedorId));
     await tx.delete(registros).where(eq(registros.revendedorId, revendedorId));
 
