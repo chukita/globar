@@ -38,17 +38,16 @@ export function FacturasClient({
 }) {
   const router = useRouter();
   const [subiendo, setSubiendo] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [exito, setExito] = useState("");
+  const [msg, setMsg] = useState<{ id: string; type: "error" | "ok"; text: string } | null>(null);
+  const [archivos, setArchivos] = useState<Record<string, string>>({});
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function subir(liq: Pendiente) {
     const file = fileRefs.current[liq.id]?.files?.[0];
-    setError("");
-    setExito("");
-    if (!file) { setError("Adjuntá el PDF de la factura."); return; }
-    if (!file.type.includes("pdf")) { setError("Solo se aceptan archivos PDF."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("El archivo no puede superar 5 MB."); return; }
+    setMsg(null);
+    if (!file) { setMsg({ id: liq.id, type: "error", text: "Primero adjuntá el PDF de la factura." }); return; }
+    if (!file.type.includes("pdf")) { setMsg({ id: liq.id, type: "error", text: "El archivo tiene que ser un PDF." }); return; }
+    if (file.size > 5 * 1024 * 1024) { setMsg({ id: liq.id, type: "error", text: "El archivo no puede superar 5 MB." }); return; }
 
     setSubiendo(liq.id);
     try {
@@ -57,11 +56,11 @@ export function FacturasClient({
       form.append("liquidacionId", liq.id);
       const res = await fetch("/api/panel/facturas", { method: "POST", body: form });
       const data = await res.json().catch(() => null);
-      if (!res.ok) { setError(data?.error ?? "Error al subir la factura."); return; }
-      setExito(`Factura de ${liq.periodo} enviada. ¡Gracias!`);
+      if (!res.ok) { setMsg({ id: liq.id, type: "error", text: data?.error ?? "Error al subir la factura." }); return; }
+      setMsg({ id: liq.id, type: "ok", text: `Factura de ${liq.periodo} enviada — queda en revisión.` });
       router.refresh();
     } catch {
-      setError("Error de conexión. Intentá de nuevo.");
+      setMsg({ id: liq.id, type: "error", text: "Error de conexión. Intentá de nuevo." });
     } finally {
       setSubiendo(null);
     }
@@ -110,31 +109,41 @@ export function FacturasClient({
                       type="file"
                       accept="application/pdf"
                       ref={(el) => { fileRefs.current[l.id] = el; }}
-                      className="text-[12.5px]"
+                      className="hidden"
+                      onChange={(e) => { setMsg(null); setArchivos((a) => ({ ...a, [l.id]: e.target.files?.[0]?.name ?? "" })); }}
                     />
                     <button
                       type="button"
-                      disabled={subiendo !== null}
-                      onClick={() => subir(l)}
-                      className="font-semibold text-[13.5px] bg-[#0E6BA8] text-white border-0 rounded-xl px-4 py-2.5 cursor-pointer disabled:opacity-50"
+                      onClick={() => fileRefs.current[l.id]?.click()}
+                      className="font-semibold text-[13.5px] bg-white text-[#0C2A45] border border-[#DCE0E5] rounded-xl px-4 py-2.5 cursor-pointer"
                     >
-                      {subiendo === l.id ? "Enviando…" : "Enviar factura en PDF"}
+                      {archivos[l.id] ? "Cambiar archivo" : "Adjuntar factura (PDF)"}
                     </button>
+                    {archivos[l.id] && (
+                      <span className="text-[12.5px] text-[#5B6577] truncate max-w-[220px]">📎 {archivos[l.id]}</span>
+                    )}
+                    {archivos[l.id] && (
+                      <button
+                        type="button"
+                        disabled={subiendo !== null}
+                        onClick={() => subir(l)}
+                        className="font-semibold text-[13.5px] bg-[#0E6BA8] text-white border-0 rounded-xl px-4 py-2.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {subiendo === l.id ? "Enviando…" : "Enviar factura"}
+                      </button>
+                    )}
                   </div>
+
+                  {msg?.id === l.id && (
+                    <p className={`text-[13px] font-medium mt-2.5 rounded-lg px-3 py-2 ${msg.type === "error" ? "bg-[#FCE6E9] border border-[#E7A9B3] text-[#9B4A57]" : "bg-[#E7F5EE] border border-[#9BD3B6] text-[#0B6B47]"}`}>
+                      {msg.type === "ok" ? "✓ " : ""}{msg.text}
+                    </p>
+                  )}
 
                   <FacturaGuia periodoMes={l.periodoMes} periodoAnio={l.periodoAnio} monto={l.monto} />
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-[#FCE6E9] border border-[#E7A9B3] rounded-xl px-4 py-3 text-[13.5px] text-[#9B4A57] font-medium mt-4">{error}</div>
-        )}
-        {exito && (
-          <div className="bg-[#E7F5EE] border border-[#9BD3B6] rounded-xl px-4 py-3 text-[13.5px] text-[#0B6B47] font-medium mt-4 flex items-center gap-2">
-            <span className="font-bold">✓</span> {exito}
           </div>
         )}
       </div>
