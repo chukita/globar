@@ -120,15 +120,15 @@ export default function TerminosPage() {
             </p>
             <p>
               <strong>Factura.</strong> Recibida la transferencia, el revendedor debe emitir y
-              subir al panel, <strong>dentro del mes posterior al pago</strong>, la factura
-              electrónica correspondiente: <strong>Factura C</strong>, a nombre de{" "}
+              subir al panel, <strong>antes de la liquidación mensual siguiente</strong>, la
+              factura electrónica correspondiente: <strong>Factura C</strong>, a nombre de{" "}
               <strong>Carlos Hugo Costantino</strong> (CUIT 20-29739072-5, IVA Responsable
               Monotributo), por el monto exacto de esa liquidación. El panel muestra todos los
               datos y un instructivo paso a paso para emitirla. Cada factura queda en revisión
               hasta que glob.ar la apruebe; si no cumple los requisitos (monto, datos o tipo de
               comprobante), glob.ar puede rechazarla indicando el motivo, y el revendedor debe
-              subir una corregida dentro del mismo plazo, que no se reinicia. glob.ar envía
-              recordatorios por email mientras la factura esté pendiente.
+              subir una corregida. glob.ar envía recordatorios por email mientras la factura
+              esté pendiente.
             </p>
             <p>
               <strong>Retención por factura pendiente.</strong> Si al cierre de un mes el

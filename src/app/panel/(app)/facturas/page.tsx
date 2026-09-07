@@ -79,9 +79,9 @@ export default async function FacturasPage() {
         </dl>
         <p className="text-[12px] text-[#7A8CA0] leading-relaxed mt-3 mb-0">
           Al cargar el CUIT en ARCA, el nombre lo completa el sistema. &quot;{DATOS_FISCALES.nombreComercial}&quot; es
-          el nombre comercial. La factura la hacés con tu mismo CUIT/CUIL y CBU/alias de cobro. Si no la enviás
-          antes de la fecha límite, quedás excluido de la liquidación del mes siguiente hasta ponerte al día —
-          las comisiones se te siguen acumulando igual.
+          el nombre comercial. La factura la hacés con tu mismo CUIT/CUIL y CBU/alias de cobro. Subí cada factura
+          antes de la liquidación del mes siguiente: si quedan facturas pendientes, no entrás en ese pago hasta
+          enviarlas — las comisiones se te siguen acumulando igual y las cobrás todas juntas al ponerte al día.
         </p>
       </div>
 

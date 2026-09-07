@@ -105,7 +105,7 @@ export async function procesarRecordatoriosLiquidacion(opts: {
 
     const { subject, html } = etapa === "bloqueo"
       ? emailFacturaVencidaBloqueo(monto, label)
-      : emailRecordatorioFacturaPendiente(monto, label, f.facturaVenceEn);
+      : emailRecordatorioFacturaPendiente(monto, label);
     await sendEmail({ to: f.email, toName: f.nombre ?? undefined, subject, html });
 
     await db

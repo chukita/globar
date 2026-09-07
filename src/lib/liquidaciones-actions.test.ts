@@ -127,14 +127,15 @@ describe("confirmarLiquidacionAction", () => {
     await expect(confirmarLiquidacionAction(rev.id, AHORA)).rejects.toThrow(/CUIT/);
   });
 
-  it("tira si el revendedor tiene una liquidación con factura vencida", async () => {
+  it("tira si el revendedor tiene una liquidación anterior sin factura — aunque no esté vencida", async () => {
     const rev = await seedRevendedor();
     await db.insert(schema.liquidaciones).values({
       revendedorId: rev.id, periodoMes: 6, periodoAnio: 2026, monto: "5000", cantidadCuotas: 1,
-      status: "pagada", facturaVenceEn: new Date("2026-08-01T12:00:00Z"), // vencida a la fecha AHORA
+      // facturaVenceEn en el FUTURO: igual bloquea, el gate no mira la fecha
+      status: "pagada", facturaVenceEn: new Date("2026-12-01T12:00:00Z"),
     });
     await seedCuota(rev.id, new Date("2026-08-20T12:00:00Z"));
-    await expect(confirmarLiquidacionAction(rev.id, AHORA)).rejects.toThrow(/vencida/i);
+    await expect(confirmarLiquidacionAction(rev.id, AHORA)).rejects.toThrow(/pendiente/i);
   });
 
   it("no permite liquidar dos veces el mismo mes", async () => {
@@ -260,11 +261,11 @@ describe("aprobar / rechazar factura de liquidación", () => {
     await expect(rechazarFacturaLiquidacionAction(liq.id, "  ")).rejects.toThrow(/motivo/i);
   });
 
-  it("confirmarLiquidacion: bloquea si hay una factura en revisión vencida", async () => {
+  it("confirmarLiquidacion: bloquea si hay una factura en revisión sin aprobar", async () => {
     const rev = await seedRevendedor();
     await db.insert(schema.liquidaciones).values({
       revendedorId: rev.id, periodoMes: 6, periodoAnio: 2026, monto: "5000", cantidadCuotas: 1,
-      status: "en_revision", facturaUrl: "f.pdf", facturaVenceEn: new Date("2026-08-01T12:00:00Z"),
+      status: "en_revision", facturaUrl: "f.pdf", facturaVenceEn: new Date("2026-12-01T12:00:00Z"),
     });
     await seedCuota(rev.id, new Date("2026-08-20T12:00:00Z"));
     await expect(confirmarLiquidacionAction(rev.id, AHORA)).rejects.toThrow(/aprobaci/i);

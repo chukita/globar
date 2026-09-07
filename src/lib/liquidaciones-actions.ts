@@ -57,26 +57,6 @@ export async function confirmarLiquidacionAction(
       throw new Error(`No se puede liquidar: al revendedor le falta ${faltantes.join(", ")}.`);
     }
 
-    // Bloquea cualquier liquidación vencida cuya factura todavía no esté
-    // aprobada: "pagada" (no subió nada) o "en_revision" (subió pero falta
-    // aprobarla). Solo una factura aprobada destraba.
-    const [bloqueo] = await tx
-      .select({ id: liquidaciones.id, status: liquidaciones.status })
-      .from(liquidaciones)
-      .where(and(
-        eq(liquidaciones.revendedorId, revendedorId),
-        inArray(liquidaciones.status, ["pagada", "en_revision"]),
-        lt(liquidaciones.facturaVenceEn, ahora),
-      ))
-      .limit(1);
-    if (bloqueo) {
-      throw new Error(
-        bloqueo.status === "en_revision"
-          ? "No se puede liquidar: el revendedor tiene una factura vencida esperando tu aprobación. Aprobala o rechazala y recién ahí entra."
-          : "No se puede liquidar: el revendedor tiene una factura vencida sin enviar. Se pone al día y recién ahí entra.",
-      );
-    }
-
     const [yaLiquidado] = await tx
       .select({ id: liquidaciones.id })
       .from(liquidaciones)
@@ -88,6 +68,27 @@ export async function confirmarLiquidacionAction(
       .limit(1);
     if (yaLiquidado) {
       throw new Error(`Ya se liquidó ${periodoLabel(mes, anio)} para este revendedor.`);
+    }
+
+    // Bloquea si hay CUALQUIER liquidación anterior cuya factura no esté
+    // aprobada: "pagada" (no subió nada) o "en_revision" (subió pero falta
+    // aprobarla). No importa la fecha de vencimiento — el pago es mensual y no
+    // debe quedar ninguna factura pendiente para habilitar el siguiente. Solo
+    // una factura aprobada destraba; al destrabarse se paga todo lo acumulado.
+    const [bloqueo] = await tx
+      .select({ id: liquidaciones.id, status: liquidaciones.status })
+      .from(liquidaciones)
+      .where(and(
+        eq(liquidaciones.revendedorId, revendedorId),
+        inArray(liquidaciones.status, ["pagada", "en_revision"]),
+      ))
+      .limit(1);
+    if (bloqueo) {
+      throw new Error(
+        bloqueo.status === "en_revision"
+          ? "No se puede liquidar: el revendedor tiene una factura esperando tu aprobación. Aprobala o rechazala y recién ahí entra."
+          : "No se puede liquidar: el revendedor tiene una factura pendiente sin enviar. Se pone al día y recién ahí entra.",
+      );
     }
 
     const monto = cuotasAliquidar.reduce((s, c) => s + Number(c.monto), 0);
@@ -117,7 +118,7 @@ export async function confirmarLiquidacionAction(
     if (rev.notifFacturaPagada) {
       const [u] = await tx.select({ email: users.email, nombre: users.name }).from(users).where(eq(users.id, rev.userId));
       if (u) {
-        const { subject, html } = emailLiquidacionPagada(monto, periodoLabel(mes, anio), facturaVenceEn);
+        const { subject, html } = emailLiquidacionPagada(monto, periodoLabel(mes, anio));
         await sendEmail({ to: u.email, toName: u.nombre ?? undefined, subject, html });
       }
     }

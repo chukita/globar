@@ -91,8 +91,8 @@ export function FacturasClient({
                       </div>
                       <div className={`text-[12.5px] mt-0.5 font-medium ${vencida ? "text-[#9B4A57]" : "text-[#5B6577]"}`}>
                         {vencida
-                          ? `Venció el ${fmtFecha(l.facturaVenceEn)} — estás excluido de la próxima liquidación hasta enviarla`
-                          : `Tenés tiempo hasta el ${fmtFecha(l.facturaVenceEn)}`}
+                          ? "Ya te está frenando el próximo pago — subila para destrabar el cobro."
+                          : "Subila antes de la próxima liquidación (primeros días del mes) para no demorar tu pago."}
                       </div>
                       {l.rechazoMotivo && (
                         <div className="text-[12.5px] mt-2 bg-[#FCE6E9] border border-[#E7A9B3] text-[#9B4A57] rounded-lg px-3 py-2">

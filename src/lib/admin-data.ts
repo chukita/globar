@@ -173,16 +173,15 @@ export async function getPreviewLiquidacionMesAnterior(ahora = new Date()) {
     .where(and(eq(cuotas.status, "generada"), lt(cuotas.generadoEn, corte)))
     .groupBy(cuotas.revendedorId, revendedores.id, users.id);
 
-  // Bloqueados: tienen al menos una liquidación vencida cuya factura todavía no
-  // está aprobada — "pagada" (no subió nada) o "en_revision" (subió, falta
-  // aprobarla). Solo una factura aprobada ("facturada") destraba.
+  // Bloqueados: tienen al menos una liquidación anterior cuya factura todavía
+  // no está aprobada — "pagada" (no subió nada) o "en_revision" (subió, falta
+  // aprobarla). No importa la fecha de vencimiento: el pago es mensual y no
+  // debe quedar ninguna factura pendiente para habilitar el siguiente. Solo
+  // una factura aprobada ("facturada") destraba.
   const bloqueados = await db
     .select({ revendedorId: liquidaciones.revendedorId, status: liquidaciones.status })
     .from(liquidaciones)
-    .where(and(
-      inArray(liquidaciones.status, ["pagada", "en_revision"]),
-      lt(liquidaciones.facturaVenceEn, ahora),
-    ))
+    .where(inArray(liquidaciones.status, ["pagada", "en_revision"]))
     .groupBy(liquidaciones.revendedorId, liquidaciones.status);
   // revendedorId → true si el bloqueo es por una factura en revisión sin aprobar
   // (aunque tenga también una "pagada" vencida, priorizamos avisar que hay algo
@@ -211,7 +210,7 @@ export async function getPreviewLiquidacionMesAnterior(ahora = new Date()) {
         camposFaltantes: faltantes,
         bloqueado,
         bloqueoMotivo: bloqueado
-          ? (bloqueoRevisionSet.has(f.revendedorId) ? "factura en revisión sin aprobar" : "factura vencida sin enviar")
+          ? (bloqueoRevisionSet.has(f.revendedorId) ? "factura en revisión sin aprobar" : "factura pendiente sin enviar")
           : null,
         incluible: faltantes.length === 0 && !bloqueado,
       };

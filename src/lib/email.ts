@@ -69,9 +69,6 @@ export async function notifyAdmins(subject: string, html: string, tipo: "revende
   await Promise.all(destinatarios.map((to) => sendEmail({ to, subject, html })));
 }
 
-const fmtFecha = (d: Date) =>
-  new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
-
 // Base del panel/admin para los botones de las notificaciones. En
 // producción/self-hosted `AUTH_URL` es imprescindible (ver CLAUDE.md).
 const PANEL_URL = process.env.AUTH_URL || "http://localhost:3000";
@@ -108,25 +105,25 @@ export function emailComisionGenerada(monto: number, numeroCuota: number, comisi
   };
 }
 
-export function emailLiquidacionPagada(monto: number, periodoLabel: string, facturaVenceEn: Date) {
+export function emailLiquidacionPagada(monto: number, periodoLabel: string) {
   return {
     subject: `Te transferimos tu liquidación de ${periodoLabel}`,
     html: wrapHtml("Recibiste tu liquidación mensual", `
       <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong>.</p>
-      <p>Ahora necesitamos que subas tu factura desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>, con estos datos:</p>
+      <p>Ahora necesitamos tu factura para poder pagarte lo que acumules el mes que viene. Subila desde tu panel, sección Facturas, <strong>cuanto antes</strong> — antes de que corramos la próxima liquidación (suele ser en los primeros días del mes). Datos para hacerla:</p>
       ${datosFacturaHtml(monto)}
-      <p style="font-size:13px; color:#5B6577;">Si no la enviás antes de esa fecha, vas a quedar excluido de la liquidación del mes siguiente hasta ponerte al día — tus comisiones se siguen acumulando igual.</p>
+      <p style="font-size:13px; color:#5B6577;">Si no está subida y aprobada para ese momento, no vas a entrar en ese pago hasta que la mandes — tus comisiones se siguen acumulando igual y las cobrás todas juntas apenas te pongas al día.</p>
       ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
   };
 }
 
-export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: string, facturaVenceEn: Date) {
+export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: string) {
   return {
     subject: `Nos falta tu factura de ${periodoLabel}`,
     html: wrapHtml("Todavía no recibimos tu factura", `
       <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y todavía no nos llegó tu factura.</p>
-      <p>Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>. Pasada esa fecha vas a quedar excluido de la liquidación del mes siguiente hasta enviarla.</p>
+      <p>Subila cuanto antes desde tu panel, sección Facturas — si no está subida y aprobada para la próxima liquidación, no vas a entrar en ese pago hasta enviarla.</p>
       ${datosFacturaHtml(monto)}
       ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
@@ -135,10 +132,10 @@ export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: s
 
 export function emailFacturaVencidaBloqueo(monto: number, periodoLabel: string) {
   return {
-    subject: `Quedás excluido de la próxima liquidación — falta tu factura de ${periodoLabel}`,
-    html: wrapHtml("Factura vencida: liquidación en pausa", `
-      <p>Ya venció el plazo para enviar la factura de la liquidación de <strong>${periodoLabel}</strong> (<strong>${fmtARS(monto)}</strong> que te transferimos) y seguimos sin recibirla.</p>
-      <p>Hasta que la subas, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
+    subject: `Falta tu factura de ${periodoLabel} — te frena el próximo pago`,
+    html: wrapHtml("Factura pendiente: liquidación en pausa", `
+      <p>Seguimos sin recibir tu factura por la liquidación de <strong>${periodoLabel}</strong> (<strong>${fmtARS(monto)}</strong> que te transferimos).</p>
+      <p>Hasta que la subas y la aprobemos, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
       <p>Subí la factura que falta desde tu panel, sección Facturas, para destrabar el cobro.</p>
       ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
