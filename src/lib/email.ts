@@ -72,6 +72,17 @@ export async function notifyAdmins(subject: string, html: string, tipo: "revende
 const fmtFecha = (d: Date) =>
   new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
 
+// Base del panel/admin para los botones de las notificaciones. En
+// producción/self-hosted `AUTH_URL` es imprescindible (ver CLAUDE.md).
+const PANEL_URL = process.env.AUTH_URL || "http://localhost:3000";
+
+/** Botón azul centrado que lleva a una sección del panel o del admin. */
+function ctaButton(label: string, path: string): string {
+  return `<p style="text-align:center; margin: 22px 0 4px;">
+    <a href="${PANEL_URL}${path}" style="display:inline-block; background:#0E6BA8; color:#fff; text-decoration:none; font-weight:700; font-size:14.5px; padding:12px 28px; border-radius:10px;">${label}</a>
+  </p>`;
+}
+
 /** Bloque con los datos del receptor para la factura del revendedor. */
 function datosFacturaHtml(monto: number): string {
   return `
@@ -91,7 +102,8 @@ export function emailComisionGenerada(monto: number, numeroCuota: number, comisi
     subject: "Se generó una nueva cuota de comisión",
     html: wrapHtml("Nueva cuota de comisión", `
       <p>Se generó la cuota <strong>${numeroCuota} de ${comisionMeses}</strong> de una de tus comisiones, por <strong>${fmtARS(monto)}</strong>.</p>
-      <p>La vas a cobrar en la próxima liquidación mensual, junto con el resto de lo que acumules este mes. Podés seguir el detalle en tu panel, sección Comisiones.</p>
+      <p>La vas a cobrar en la próxima liquidación mensual, junto con el resto de lo que acumules este mes.</p>
+      ${ctaButton("Ver mis comisiones", "/panel/comisiones")}
     `),
   };
 }
@@ -104,6 +116,7 @@ export function emailLiquidacionPagada(monto: number, periodoLabel: string, fact
       <p>Ahora necesitamos que subas tu factura desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>, con estos datos:</p>
       ${datosFacturaHtml(monto)}
       <p style="font-size:13px; color:#5B6577;">Si no la enviás antes de esa fecha, vas a quedar excluido de la liquidación del mes siguiente hasta ponerte al día — tus comisiones se siguen acumulando igual.</p>
+      ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
   };
 }
@@ -115,6 +128,7 @@ export function emailRecordatorioFacturaPendiente(monto: number, periodoLabel: s
       <p>Te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y todavía no nos llegó tu factura.</p>
       <p>Subila desde tu panel, sección Facturas, <strong>antes del ${fmtFecha(facturaVenceEn)}</strong>. Pasada esa fecha vas a quedar excluido de la liquidación del mes siguiente hasta enviarla.</p>
       ${datosFacturaHtml(monto)}
+      ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
   };
 }
@@ -126,6 +140,7 @@ export function emailFacturaVencidaBloqueo(monto: number, periodoLabel: string) 
       <p>Pasaron más de los meses de gracia desde que te transferimos <strong>${fmtARS(monto)}</strong> por tus comisiones de <strong>${periodoLabel}</strong> y seguimos sin tu factura.</p>
       <p>Mientras siga pendiente, <strong>no vas a entrar en la liquidación mensual</strong> — tus comisiones se acumulan igual y las cobrás todas juntas apenas te pongas al día.</p>
       <p>Subí la factura que falta desde tu panel, sección Facturas, para destrabar el cobro.</p>
+      ${ctaButton("Subir mi factura", "/panel/facturas")}
     `),
   };
 }
@@ -139,7 +154,7 @@ export function emailAdminResellersBloqueados(items: { nombre: string; codigo: s
     html: wrapHtml("Revendedores bloqueados por factura vencida", `
       <p>Estos revendedores pasaron el plazo de gracia sin enviar su factura y quedan excluidos de la próxima liquidación:</p>
       <ul>${filas}</ul>
-      <p>Podés ver el detalle en el panel de superadmin, sección Liquidaciones.</p>
+      ${ctaButton("Ver Liquidaciones", "/admin/liquidaciones")}
     `),
   };
 }
@@ -150,6 +165,7 @@ export function emailFacturaLiquidacionSubida(revendedorNombre: string, codigoVe
     html: wrapHtml("Factura de liquidación para revisar", `
       <p><strong>${revendedorNombre}</strong> (${codigoVentas}) subió la factura de su liquidación por <strong>${fmtARS(monto)}</strong>.</p>
       <p>Revisala y aprobala (o rechazala) en el panel de superadmin, sección Liquidaciones. Hasta que la apruebes, el revendedor sigue contando como deuda de factura.</p>
+      ${ctaButton("Revisar en Liquidaciones", "/admin/liquidaciones")}
     `),
   };
 }
@@ -159,6 +175,7 @@ export function emailFacturaLiquidacionAprobada(periodoLabel: string, monto: num
     subject: `Aprobamos tu factura de ${periodoLabel}`,
     html: wrapHtml("Factura aprobada", `
       <p>Revisamos y <strong>aprobamos</strong> tu factura de <strong>${periodoLabel}</strong> por <strong>${fmtARS(monto)}</strong>. No tenés que hacer nada más.</p>
+      ${ctaButton("Ver mis facturas", "/panel/facturas")}
     `),
   };
 }
@@ -171,6 +188,7 @@ export function emailFacturaLiquidacionRechazada(periodoLabel: string, monto: nu
       <p><strong>Motivo:</strong> ${motivo}</p>
       <p>Subí una factura corregida desde tu panel, sección Facturas. El plazo de vencimiento sigue corriendo, así que no la dejes pasar. Datos para la factura:</p>
       ${datosFacturaHtml(monto)}
+      ${ctaButton("Subir factura corregida", "/panel/facturas")}
     `),
   };
 }
@@ -185,7 +203,8 @@ export function emailBienvenida(nombre?: string) {
         <li style="margin-bottom:8px;"><strong>Hacé la capacitación de glob.ar</strong> desde tu panel — es un video corto y un cuestionario. Recién ahí se te habilita el panel completo.</li>
         <li><strong>Completá tus datos personales y de cobro</strong> (DNI, provincia, localidad, teléfono, CBU o alias, titular de la cuenta y CUIT/CUIL) en <strong>Perfil → Datos de cobro</strong>. No son obligatorios para arrancar, pero los necesitás cargados para entrar en la liquidación mensual y cobrar tus comisiones.</li>
       </ol>
-      <p>Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
+      ${ctaButton("Ir a mi panel", "/panel")}
+      <p style="font-size:13px; color:#5B6577;">Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
     `),
   };
 }
@@ -195,7 +214,7 @@ export function emailRevendedorNuevo(nombre: string, email: string) {
     subject: "Se registró un nuevo revendedor",
     html: wrapHtml("Nuevo revendedor en glob.ar", `
       <p><strong>${nombre}</strong> (${email}) confirmó su email y se registró como revendedor.</p>
-      <p>Podés ver sus datos en el panel de superadmin, sección Revendedores.</p>
+      ${ctaButton("Ver revendedores", "/admin/revendedores")}
     `),
   };
 }
@@ -221,7 +240,8 @@ export function emailFacturaSubida(revendedorNombre: string, codigoVentas: strin
     subject: "Nueva factura subida por un revendedor",
     html: wrapHtml("Nueva factura para revisar", `
       <p><strong>${revendedorNombre}</strong> (${codigoVentas}) subió una factura por <strong>${fmtARS(monto)}</strong>.</p>
-      <p>Podés revisarla y marcarla como pagada desde el panel de superadmin, sección Facturas.</p>
+      <p>Podés revisarla desde el panel de superadmin, sección Liquidaciones.</p>
+      ${ctaButton("Ver Liquidaciones", "/admin/liquidaciones")}
     `),
   };
 }
@@ -231,7 +251,8 @@ export function emailCuentaActivada() {
     subject: "Tu cuenta de revendedor está activa",
     html: wrapHtml("¡Tu cuenta está activa!", `
       <p>Tu cuenta de revendedor en glob.ar fue activada — ya podés generar ventas y cobrar comisiones con normalidad.</p>
-      <p>Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
+      ${ctaButton("Ir a mi panel", "/panel")}
+      <p style="font-size:13px; color:#5B6577;">Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
     `),
   };
 }
@@ -261,6 +282,7 @@ export function emailMensajeRevendedor(asunto: string, mensaje: string) {
     subject: asunto,
     html: wrapHtml(asunto, `
       <p style="white-space:pre-wrap;">${mensaje}</p>
+      ${ctaButton("Ir a mi panel", "/panel")}
       <p style="margin-top:20px;">— Equipo glob.ar</p>
     `),
   };
@@ -272,6 +294,7 @@ export function emailContacto(nombre: string, email: string, mensaje: string) {
     html: wrapHtml("Nuevo mensaje desde la landing", `
       <p><strong>${nombre}</strong> (${email}) escribió desde el formulario de contacto:</p>
       <p style="background:#F7F8FA; border-radius:10px; padding:14px 16px; white-space:pre-wrap;">${mensaje}</p>
+      ${ctaButton("Ver consultas", "/admin/contacto")}
     `),
   };
 }
