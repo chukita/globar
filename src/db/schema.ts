@@ -203,6 +203,19 @@ export const verificacionesEmail = pgTable("verificaciones_email", {
   creadoEn:      timestamp("creado_en").defaultNow().notNull(),
 });
 
+// ─── Recuperación de contraseña ───────────────────────────────────────────────
+// Una fila por usuario con un pedido de reseteo pendiente. El token viaja en el
+// link del mail; acá se guarda hasheado. Vence en 1 h y se consume una sola vez
+// (al setear la contraseña nueva).
+
+export const resetsPassword = pgTable("resets_password", {
+  id:            text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:        text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash:     text("token_hash").notNull(),
+  expiraEn:      timestamp("expira_en").notNull(),
+  creadoEn:      timestamp("creado_en").defaultNow().notNull(),
+});
+
 // ─── Cuotas de comisión ───────────────────────────────────────────────────────
 // La cantidad de cuotas por venta y el monto de cada una salen de la tabla
 // `configuracion` (no están hardcodeados acá). Cada mes, si el cliente pagó,

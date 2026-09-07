@@ -232,6 +232,20 @@ export function emailVerificarCuenta(codigo: string, verifyUrl: string) {
   };
 }
 
+export function emailRecuperarPassword(resetUrl: string) {
+  return {
+    subject: "Recuperá tu contraseña — glob.ar",
+    html: wrapHtml("Recuperá tu contraseña", `
+      <p>Pediste restablecer la contraseña de tu cuenta de revendedor. Entrá al siguiente enlace para elegir una nueva:</p>
+      <p style="text-align:center; margin: 24px 0;">
+        <a href="${resetUrl}" style="display:inline-block; background:#0E6BA8; color:#fff; text-decoration:none; font-weight:700; font-size:14.5px; padding:12px 28px; border-radius:10px;">Elegir nueva contraseña</a>
+      </p>
+      <p style="font-size:13px; color:#5B6577;">Si el botón no funciona, entrá a <a href="${resetUrl}" style="color:#0E6BA8;">este enlace</a>.</p>
+      <p style="font-size:12px; color:#9AA3B2; margin-top:20px;">El enlace vence en 1 hora. Si no pediste esto, ignorá este mensaje: tu contraseña no cambia hasta que uses el enlace.</p>
+    `),
+  };
+}
+
 export function emailFacturaSubida(revendedorNombre: string, codigoVentas: string, monto: number) {
   return {
     subject: "Nueva factura subida por un revendedor",

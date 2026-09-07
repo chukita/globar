@@ -39,6 +39,10 @@ El alta por email+contraseña además requiere **verificar el email** antes de p
 4. Lockout: 6 códigos incorrectos seguidos borran la verificación pendiente (hay que pedir un reenvío). Rate limiting liviano en memoria en los 3 endpoints de registro (`lib/rateLimit.ts`) — no hay Turnstile/captcha en este flujo.
 5. **Cuentas creadas antes de este cambio no quedan bloqueadas**: la migración que agregó `verificaciones_email` incluyó un backfill (`UPDATE users SET email_verified = created_at WHERE email_verified IS NULL`).
 
+### Recuperación de contraseña
+
+`/login` → "¿Olvidaste tu contraseña?" lleva a `/recuperar`. El usuario escribe su email; `POST /api/recuperar` responde siempre `{ ok: true }` (anti-enumeración) y, **solo si existe un `users` con `password` no nulo** (las cuentas de solo-Google no tienen), crea una fila en `resets_password` (una por usuario, `onConflictDoUpdate`) con un token de link hasheado que vence en **1 h**, y manda `emailRecuperarPassword` (`lib/email.ts`) con el link `/recuperar/nueva?token=…`. Esa página postea `{ token, password }` al mismo endpoint; `resetearPasswordConToken` (`lib/passwordReset.ts`) escanea las filas vigentes, matchea el token con bcrypt, setea `users.password` y además `users.emailVerified` (el usuario probó que controla la casilla), y borra la fila — un solo uso. Mínimo 8 caracteres. Rate limiting en memoria (`lib/rateLimit.ts`): 5 pedidos y 20 intentos de seteo por IP cada 15 min.
+
 ### Reglas de negocio configurables
 
 Monto por cuota y cantidad de cuotas **no están hardcodeados** — viven en la tabla singleton `configuracion` (`id` fijo = 1, con `CHECK` constraint), editable desde `/admin/configuracion` (solo superadmin). Default: $5.000 × 4 meses. El webhook de pagos (`src/app/api/webhooks/pago/route.ts`) lee esto en cada request, no cachea.

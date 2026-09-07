@@ -90,6 +90,11 @@ export default function LoginPage() {
                 Contraseña
               </label>
               <PasswordInput value={password} onChange={setPassword} required />
+              <div className="text-right mt-1.5">
+                <Link href="/recuperar" className="text-[12.5px] text-[#0E6BA8] font-semibold">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
             </div>
 
             {error && (
