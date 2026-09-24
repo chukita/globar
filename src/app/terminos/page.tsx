@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Términos y condiciones",
+  alternates: { canonical: "/terminos" },
+};
 
 /**
  * Draft escrito sin asistencia legal — cubre los puntos básicos de la

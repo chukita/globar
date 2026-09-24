@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { cookies } from "next/headers";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
@@ -8,7 +9,21 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { ensureRevendedor } from "./revendedor";
+import { FIRST_TOUCH_COOKIE, parseSignupSourceCookie, type SignupSource } from "./signupSource";
 import { verifyImpersonationToken, verifyEmailVerificadoToken } from "./impersonar";
+
+/**
+ * Origen del alta (first touch) desde la cookie que deja components/FirstTouch.
+ * Corre dentro del callback del OAuth de Google, que es un request del
+ * navegador, así que la cookie llega. Nunca rompe el login.
+ */
+async function leerOrigenAlta(): Promise<SignupSource | undefined> {
+  try {
+    return parseSignupSourceCookie((await cookies()).get(FIRST_TOUCH_COOKIE)?.value);
+  } catch {
+    return undefined;
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -28,7 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // con nuestro id real, así que es acá donde hay que asegurar el alta.
     async jwt(params) {
       if (params.user?.id && params.account?.provider === "google") {
-        await ensureRevendedor(params.user.id);
+        await ensureRevendedor(params.user.id, await leerOrigenAlta());
       }
       return authConfig.callbacks?.jwt
         ? authConfig.callbacks.jwt(params)

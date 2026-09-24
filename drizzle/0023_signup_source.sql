@@ -1,0 +1,1 @@
+ALTER TABLE "revendedores" ADD COLUMN "signup_source" jsonb;

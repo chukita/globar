@@ -144,6 +144,15 @@ El superadmin puede entrar al panel de un revendedor puntual sin conocer su cont
 
 **Trade-off asumido a propósito**: la cookie de sesión de NextAuth es una sola por navegador, no por pestaña — así que "Entrar como" reemplaza la sesión del superadmin en *todas* las pestañas del navegador hasta que se cierra esa vista. Por eso `/panel` muestra un banner fijo (`ImpersonandoBanner`) cuando `session.user.impersonated` es `true`, con un botón que llama `salirDeImpersonacionAction` (`signOut` + redirect a `/admin/login`, sin mirar el rol de la sesión actual porque es `revendedor`). Evitar tener `/admin` abierto en otra pestaña mientras se usa esto.
 
+## SEO, asistentes de IA y origen de las altas
+
+Muchas altas (en agendaonline, y probablemente acá) llegan recomendadas por ChatGPT, así que el sitio se optimiza también para modelos:
+
+- `src/app/robots.ts` habilita explícitamente a los bots de IA (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, etc.). Un bot con grupo propio ignora el de `*`: los `disallow` van en los dos grupos. Ojo con los prefijos: `/r` a secas bloquearía también `/revendedores` y `/registro`, por eso es `/r/`.
+- `src/app/llms.txt/route.ts` ([llmstxt.org](https://llmstxt.org)): resumen del programa en Markdown, con comisión y productos leídos de la DB. Si cambian requisitos o el flujo de cobro, actualizarlo.
+- `src/app/sitemap.ts`, metadata por página (`title.template` en el layout raíz, canonical en cada página; las client pages la toman de un `layout.tsx` propio) y JSON-LD en la home (`Organization` + `WebSite` + `FAQPage`). Las preguntas del `FAQPage` salen de la misma función `faqs()` que la sección visible `#preguntas`.
+- **Origen de las altas** (dashboard de `/admin`): `components/FirstTouch.tsx` guarda en la cookie `globar_ft` la página de entrada, el host del referer y los UTM de la primera visita (30 días). El alta la lee del lado del servidor — `/api/registro` por email y `ensureRevendedor` (desde el callback `jwt` de Google) — y la guarda en `revendedores.signup_source`. Clasificación en `lib/signupSource.ts`, mismo criterio que agendaonline y nume. Los revendedores anteriores figuran como "Sin dato".
+
 ## Estado actual (2026-08-08)
 
 Ya no queda contenido de ejemplo en el panel ni en el admin — todo consulta la base real. Lo que **sigue siendo estático a propósito** (marketing/onboarding, no toca plata, no se tocó todavía):

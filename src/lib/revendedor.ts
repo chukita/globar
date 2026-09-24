@@ -2,9 +2,14 @@ import { db } from "@/db";
 import { revendedores, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generarCodigoVendedor } from "./codigoVendedor";
+import type { SignupSource } from "./signupSource";
 
-/** Devuelve la fila `revendedores` del usuario, creándola si es la primera vez que se loguea. */
-export async function ensureRevendedor(userId: string) {
+/**
+ * Devuelve la fila `revendedores` del usuario, creándola si es la primera vez
+ * que se loguea. `signupSource` (origen del alta, ver lib/signupSource.ts)
+ * solo se usa si la fila se crea acá.
+ */
+export async function ensureRevendedor(userId: string, signupSource?: SignupSource) {
   const [existing] = await db.select().from(revendedores).where(eq(revendedores.userId, userId)).limit(1);
   if (existing) return existing;
 
@@ -23,7 +28,7 @@ export async function ensureRevendedor(userId: string) {
 
   const [created] = await db
     .insert(revendedores)
-    .values({ userId, codigoVentas })
+    .values({ userId, codigoVentas, signupSource })
     .onConflictDoNothing()
     .returning();
   if (created) return created;

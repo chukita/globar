@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardStats, getLiquidacionesEsperandoFacturaResumen, getUltimasVentas, periodoLabel } from "@/lib/admin-data";
+import { getDashboardStats, getLiquidacionesEsperandoFacturaResumen, getOrigenAltas, getUltimasVentas, periodoLabel } from "@/lib/admin-data";
 import { fmtARS } from "@/lib/constants";
 import { esSuscripcionActiva } from "@/lib/estadoSuscripcion";
 
@@ -15,10 +15,11 @@ function conEstadoSuscripcion<T extends { ultimoPagoEn: Date }>(rows: T[]) {
 }
 
 export default async function AdminDashboard() {
-  const [stats, esperandoFactura, ultimasVentasRaw] = await Promise.all([
+  const [stats, esperandoFactura, ultimasVentasRaw, origen] = await Promise.all([
     getDashboardStats(),
     getLiquidacionesEsperandoFacturaResumen(),
     getUltimasVentas(),
+    getOrigenAltas(),
   ]);
   const ultimasVentas = conEstadoSuscripcion(ultimasVentasRaw);
 
@@ -100,6 +101,58 @@ export default async function AdminDashboard() {
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      <div className="bg-white border border-[#E9ECEF] rounded-[18px] overflow-hidden mt-5">
+        <div className="px-6 py-4 border-b border-[#EEF0F2]">
+          <div className="font-semibold text-[17px]">Origen de las altas</div>
+          <div className="text-[12.5px] text-[#9AA3B2] mt-0.5">
+            De dónde llegaron los revendedores y por qué página entraron. El origen se guarda desde ahora:{" "}
+            {origen.conDato} de {origen.total} revendedores tienen el dato (el resto figura como “Sin dato”).
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 px-6 py-4">
+          <table className="w-full text-[14px]">
+            <thead>
+              <tr className="text-[12px] text-[#9AA3B2] border-b border-[#EEF0F2]">
+                <th className="text-left font-medium pb-2">Canal</th>
+                <th className="text-right font-medium pb-2">Altas</th>
+                <th className="text-right font-medium pb-2">Con ventas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {origen.canales.map((c) => (
+                <tr key={c.canal} className="border-t border-[#F1F3F5] first:border-t-0">
+                  <td className="py-2.5">{c.canal}</td>
+                  <td className="py-2.5 text-right tabular-nums font-semibold">{c.altas}</td>
+                  <td className="py-2.5 text-right tabular-nums text-[#9AA3B2]">{c.conVentas}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <table className="w-full text-[14px] mt-4 lg:mt-0">
+            <thead>
+              <tr className="text-[12px] text-[#9AA3B2] border-b border-[#EEF0F2]">
+                <th className="text-left font-medium pb-2">Página de entrada</th>
+                <th className="text-right font-medium pb-2">Altas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {origen.landings.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="py-2.5 text-[#9AA3B2]">Todavía no hay altas con página de entrada registrada.</td>
+                </tr>
+              ) : (
+                origen.landings.map((l) => (
+                  <tr key={l.landing} className="border-t border-[#F1F3F5] first:border-t-0">
+                    <td className="py-2.5 font-mono text-[12.5px]">{l.landing}</td>
+                    <td className="py-2.5 text-right tabular-nums font-semibold">{l.altas}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

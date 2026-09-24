@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { revendedores, users, productos, habilitaciones, ventas, cuotas, liquidaciones, contactos } from "@/db/schema";
 import { eq, and, lt, inArray, sql, desc, asc } from "drizzle-orm";
 import { inicioDeMesArgentina, mesAnteriorArgentina, periodoLabel } from "@/lib/fecha";
+import { classifySignupChannel } from "@/lib/signupSource";
 
 export { periodoLabel };
 
@@ -376,5 +377,43 @@ export async function getRevendedorDetalle(id: string) {
       nombre: p.nombre,
       habilitado: habilitadosSet.has(p.id),
     })),
+  };
+}
+
+/**
+ * "Origen de las altas" del dashboard: de dónde llegaron los revendedores
+ * (canal) y por qué página entraron. Mismo cuadro que el panel de sistema de
+ * agendaonline; acá "Con ventas" = revendedores con al menos una venta.
+ */
+export async function getOrigenAltas() {
+  const rows = await db
+    .select({
+      signupSource: revendedores.signupSource,
+      conVentas: sql<boolean>`exists (select 1 from ${ventas} where ${ventas.revendedorId} = ${revendedores.id})`,
+    })
+    .from(revendedores);
+
+  const canales = new Map<string, { altas: number; conVentas: number }>();
+  const landings = new Map<string, number>();
+  let conDato = 0;
+  for (const r of rows) {
+    const canal = classifySignupChannel(r.signupSource);
+    const agg = canales.get(canal) ?? { altas: 0, conVentas: 0 };
+    agg.altas += 1;
+    if (r.conVentas) agg.conVentas += 1;
+    canales.set(canal, agg);
+    if (r.signupSource) conDato += 1;
+    const landing = r.signupSource?.landing;
+    if (landing) landings.set(landing, (landings.get(landing) ?? 0) + 1);
+  }
+
+  return {
+    conDato,
+    total: rows.length,
+    canales: [...canales.entries()].map(([canal, a]) => ({ canal, ...a })).sort((a, b) => b.altas - a.altas),
+    landings: [...landings.entries()]
+      .map(([landing, altas]) => ({ landing, altas }))
+      .sort((a, b) => b.altas - a.altas)
+      .slice(0, 20),
   };
 }

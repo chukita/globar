@@ -8,6 +8,7 @@ import { crearVerificacion } from "@/lib/verificacionEmail";
 import { sendEmail, emailVerificarCuenta } from "@/lib/email";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 import { esMayorDeEdad } from "@/lib/validacion";
+import { FIRST_TOUCH_COOKIE, parseSignupSourceCookie } from "@/lib/signupSource";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const hash = await bcrypt.hash(password, 12);
+    const signupSource = parseSignupSourceCookie(req.cookies.get(FIRST_TOUCH_COOKIE)?.value);
     const userId = crypto.randomUUID();
 
     await db.transaction(async (tx) => {
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
       // no para usar el panel. El "puede emitir factura" sí es obligatorio en
       // el alta (checkbox en /registro).
       const codigoVentas = await generarCodigoVendedor(nombre);
-      await tx.insert(revendedores).values({ userId, codigoVentas, fechaNacimiento, puedeFacturar: true });
+      await tx.insert(revendedores).values({ userId, codigoVentas, fechaNacimiento, puedeFacturar: true, signupSource });
     });
 
     const { codigo, token } = await crearVerificacion(userId);

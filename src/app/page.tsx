@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
@@ -14,6 +15,45 @@ import { waLink } from "@/lib/telefono";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
+/**
+ * Preguntas frecuentes: se muestran en la sección #preguntas y se publican
+ * como FAQPage en el JSON-LD (Google exige que coincidan). Es además lo que
+ * mejor citan ChatGPT y otros asistentes: respuestas cortas y con números.
+ */
+function faqs(comisionMonto: number, comisionMeses: number) {
+  const total = comisionMonto * comisionMeses;
+  return [
+    {
+      q: "¿Qué es glob.ar?",
+      a: "Es el programa de revendedores de dos productos de software argentinos: Agenda Online (turnos y reservas online) y NuMe (menú digital con QR). Te registrás gratis, compartís tu link y cobrás una comisión mensual por cada cliente que se suscribe.",
+    },
+    {
+      q: "¿Cuánto se gana por cada venta?",
+      a: `${fmtARS(comisionMonto)} por mes durante ${comisionMeses} meses por cada cliente que se suscribe con tu link: ${fmtARS(total)} por venta. Es la misma comisión para los dos productos y no hay tope de clientes.`,
+    },
+    {
+      q: "¿Tiene algún costo registrarse?",
+      a: "No. Registrarse es gratis y no hay inversión inicial, cuota ni stock. Solo compartís tu link de referido.",
+    },
+    {
+      q: "¿Qué requisitos hay para ser revendedor?",
+      a: "Ser mayor de 18 años, vivir en Argentina y poder emitir factura por tus comisiones (Monotributo u otro régimen). Para cobrar necesitás además DNI y un CBU o alias a tu nombre.",
+    },
+    {
+      q: "¿Cómo y cuándo cobro las comisiones?",
+      a: "Las comisiones del mes se transfieren a tu CBU o alias a principio del mes siguiente. Después subís la factura por ese monto desde tu panel.",
+    },
+    {
+      q: "¿Necesito experiencia en ventas?",
+      a: "No. En el panel tenés una capacitación en video, una guía de ventas y tu link o QR listo para compartir por WhatsApp o redes. Los productos tienen plan gratis, así que el cliente puede probarlos antes de pagar.",
+    },
+  ];
+}
+
 export default async function LandingPage() {
   const lista = await db
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, descripcion: productos.descripcion, precioMensual: productos.precioMensual })
@@ -24,6 +64,39 @@ export default async function LandingPage() {
   const comisionMonto = parseFloat(String(config.comisionMonto));
   const comisionMeses = config.comisionMeses;
   const comisionTotalPorVenta = comisionMonto * comisionMeses;
+
+  const preguntas = faqs(comisionMonto, comisionMeses);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://glob.ar/#organization",
+        name: "glob.ar",
+        url: "https://glob.ar/",
+        logo: "https://glob.ar/logo-glob.png",
+        email: "hola@glob.ar",
+        areaServed: { "@type": "Country", name: "Argentina" },
+        sameAs: ["https://www.youtube.com/@Globar-z9k"],
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://glob.ar/#website",
+        name: "glob.ar",
+        url: "https://glob.ar/",
+        inLanguage: "es-AR",
+        publisher: { "@id": "https://glob.ar/#organization" },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: preguntas.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+    ],
+  };
 
   const agendaonline = lista.find(p => p.nombre === "agendaonline");
   const nume         = lista.find(p => p.nombre === "nume");
@@ -70,6 +143,12 @@ export default async function LandingPage() {
         @media (max-width: 767px) { #top { padding-top: 60px !important; } }
         @media (max-width: 767px) { #top .hero-inner { padding: 0 20px !important; } }
       `}</style>
+
+      <script
+        type="application/ld+json"
+        // `<` escapado para no romper el <script> si algún texto lo trae.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
 
       {/* ── NAV ── */}
       <PublicNav variant="dark" />
@@ -250,6 +329,26 @@ export default async function LandingPage() {
         comisionMonto={comisionMonto}
         comisionMeses={comisionMeses}
       />
+
+      {/* ── PREGUNTAS FRECUENTES ── (en sync con el FAQPage del JSON-LD) */}
+      <section id="preguntas" className="section-pad" style={{ background: "#F7F8FB" }}>
+        <div className="section-inner" style={{ maxWidth: 860 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#3B4FB8" }}>
+            Preguntas frecuentes
+          </div>
+          <h2 style={{ fontSize: "clamp(30px, 3.6vw, 42px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "12px 0 0" }}>
+            Lo que más nos preguntan
+          </h2>
+          <div style={{ display: "grid", gap: 12, marginTop: 36 }}>
+            {preguntas.map((f) => (
+              <details key={f.q} style={{ background: "#fff", border: "1px solid #E3E7F0", borderRadius: 16, padding: "18px 22px" }}>
+                <summary style={{ fontWeight: 700, fontSize: 17, cursor: "pointer" }}>{f.q}</summary>
+                <p style={{ fontSize: 15.5, lineHeight: 1.6, color: "#4A5578", margin: "12px 0 0" }}>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── CTA FINAL ── */}
       <section className="section-pad" style={{ background: "#F6F6FA" }}>

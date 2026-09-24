@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Política de privacidad",
+  alternates: { canonical: "/privacidad" },
+};
 
 /**
  * Cumple los puntos básicos exigidos por la Ley 25.326 de Protección de

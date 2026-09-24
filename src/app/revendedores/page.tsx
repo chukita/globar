@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Requisitos para ser revendedor",
+  description: "Qué necesitás para sumarte al programa de revendedores de glob.ar: ser mayor de 18, vivir en Argentina, poder facturar y tener un CBU a tu nombre. Sin inversión inicial.",
+  alternates: { canonical: "/revendedores" },
+};
 
 const REQUISITOS = [
   {

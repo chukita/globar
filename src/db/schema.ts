@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { SignupSource } from "@/lib/signupSource";
 import {
   pgTable,
   text,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   check,
   unique,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -124,6 +126,9 @@ export const revendedores = pgTable("revendedores", {
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
   notifFacturaPagada:    boolean("notif_factura_pagada").notNull().default(true),
   notifComisionGenerada: boolean("notif_comision_generada").notNull().default(true),
+  // Origen del alta (first touch): página de entrada, host del referer y UTM.
+  // NULL en las altas anteriores a esta columna ("Sin dato"). Ver lib/signupSource.ts.
+  signupSource:   jsonb("signup_source").$type<SignupSource>(),
   creadoEn:       timestamp("creado_en").defaultNow().notNull(),
 });
 
