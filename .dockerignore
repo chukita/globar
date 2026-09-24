@@ -9,3 +9,10 @@ uploads
 npm-debug.log*
 *.tsbuildinfo
 .DS_Store
+# E2E (Playwright): no van a la imagen de producción
+e2e
+playwright.config.ts
+playwright-report
+test-results
+.next-e2e
+.e2e-uploads

@@ -76,6 +76,15 @@ npm run seed:admin         # crea usuario admin inicial (rol superadmin ligado a
 npm run seed:productos      # siembra agendaonline/nume en la tabla productos (idempotente)
 ```
 
+### Tests E2E (Playwright)
+
+`npm run test:e2e` (con el Postgres de `docker compose` levantado). Corren en CI (job `e2e`) y **la imagen y el deploy a producción dependen de que pasen**.
+
+- Playwright levanta su propio Next en `:3100` contra una base aparte, `globar_e2e` (`e2e/prepare-db.mjs` la crea, migra y siembra los productos). En CI usa `next build` + `next start`; en local, `next dev` con `distDir` `.next-e2e` para no chocar con el `npm run dev` normal.
+- En local corre con `NODE_ENV=test` para que Next **no cargue `.env.local`**: si lo carga, además de mezclar credenciales reales, expande los `$` de las variables ya definidas y el hash bcrypt de `SUPERADMIN_PASSWORD_HASH` llega vacío. Consecuencia: `CI=1 npx playwright test` en local falla en los tests del superadmin (en el CI de verdad no hay `.env.local`).
+- Specs: `publico` (home, landing `/r/`, SEO), `alta` (registro → verificación → onboarding con quiz), `ventas` (webhooks de registro y pago, cuotas, idempotencia, tope de meses), `liquidacion` (pago, factura, aprobación/rechazo, bloqueo), `acceso` (logins y permisos). Los revendedores de prueba se crean directo en la base (`e2e/helpers.ts` → `crearRevendedor`); el alta por la UI se prueba una sola vez (el registro tiene rate limit de 5/hora por IP).
+- Si cambiás textos o flujos de esas pantallas, actualizá los specs en el mismo commit: si no, el CI frena el deploy.
+
 > Nota: `seed:admin` crea un usuario con rol `superadmin` en la tabla `users` (login por email+password), pero **ya no es necesario para entrar al panel de superadmin** — ahora se entra por `/admin/login` con `SUPERADMIN_PASSWORD_HASH` únicamente. Se mantiene el script por compatibilidad.
 
 ## Variables de entorno
