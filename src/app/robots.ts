@@ -13,7 +13,14 @@ const AI_BOTS = [
   "Google-Extended", "Applebot-Extended", "Bingbot",
 ];
 
+// Se evalúa en cada request (no en el build): la misma imagen corre en
+// producción y en test.glob.ar, y test no tiene que indexarse.
+export const dynamic = "force-dynamic";
+
 export default function robots(): MetadataRoute.Robots {
+  const esProduccion = (process.env.AUTH_URL ?? "https://glob.ar").replace(//$/, "") === "https://glob.ar";
+  if (!esProduccion) return { rules: [{ userAgent: "*", disallow: "/" }] };
+
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: DISALLOW },

@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Pulling latest changes..."
-git fetch origin main
-git reset --hard origin/main
+# Rama a desplegar: main en producción (globar-vm), test en el ambiente de
+# test (globar-test). Cada VM la fija en DEPLOY_BRANCH de su .env; el job de CI
+# solo corre este script.
+DEPLOY_BRANCH=$(grep -E '^DEPLOY_BRANCH=' .env 2>/dev/null | cut -d= -f2- | tr -d '"\r' || true)
+DEPLOY_BRANCH=${DEPLOY_BRANCH:-main}
+
+echo "==> Pulling latest changes ($DEPLOY_BRANCH)..."
+git fetch origin "$DEPLOY_BRANCH"
+git reset --hard "origin/$DEPLOY_BRANCH"
 
 # Este script hace `git reset --hard` sobre sí mismo (deploy/deploy.sh).
 # Sin el re-exec de abajo, bash sigue interpretando el contenido viejo que
@@ -15,7 +21,8 @@ if [ -z "${DEPLOY_REEXECED:-}" ]; then
 fi
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
-HEALTH_URL="https://glob.ar/api/health"
+PUBLIC_HOST=$(grep -E '^PUBLIC_HOST=' .env | cut -d= -f2- | tr -d '"\r')
+HEALTH_URL="https://${PUBLIC_HOST:-glob.ar}/api/health"
 
 # Un deploy anterior que cortó por el timeout de SSH de GitHub Actions deja el
 # `docker compose pull` corriendo huérfano en la VM; ese proceso mantiene tomado

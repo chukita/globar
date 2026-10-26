@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, test]
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -93,7 +93,7 @@ jobs:
     name: Build & push image
     runs-on: ubuntu-latest
     needs: [build, e2e]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test')
     permissions:
       contents: read
       packages: write
@@ -107,16 +107,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # main → :latest (producción), test → :test (ambiente de test, ver
+      # deploy-test). La VM de cada ambiente elige su tag con IMAGE en su .env.
       - name: Build and push
         run: |
-          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
-          docker push "$IMAGE:latest"
+          TAG=${{ github.ref == 'refs/heads/main' && 'latest' || 'test' }}
+          docker build -t "$IMAGE:$TAG" -t "$IMAGE:${{ github.sha }}" .
+          docker push "$IMAGE:$TAG"
           docker push "$IMAGE:${{ github.sha }}"
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-and-push
+    if: github.ref == 'refs/heads/main'
     environment: production
     # Un solo deploy a la vez sobre la VM: si se pushea de nuevo mientras uno
     # está corriendo, se cancela el viejo (siempre se despliega `latest`, así
@@ -136,6 +140,31 @@ jobs:
           # está bajo carga; con el default de 10min el paso corta a la mitad y
           # deja un pull huérfano que traba el siguiente deploy. deploy.sh mata
           # esos huérfanos al arrancar; acá le damos aire para que termine.
+          command_timeout: 25m
+          script: |
+            cd ~/globar
+            bash deploy/deploy.sh
+
+  # Ambiente de test: VM aparte (globar-test, free tier de Oracle, mismo setup
+  # que producción) en https://test.glob.ar, con su propia base. Se despliega
+  # con cada push a la rama `test`; recién después se mergea a main.
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/test'
+    concurrency:
+      group: deploy-test
+      cancel-in-progress: true
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          # Público por DNS (registro A en Cloudflare, sin proxy); la clave es
+          # la misma que la de producción.
+          host: test.glob.ar
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
           command_timeout: 25m
           script: |
             cd ~/globar

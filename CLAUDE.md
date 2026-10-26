@@ -45,7 +45,7 @@ El alta por email+contraseña además requiere **verificar el email** antes de p
 
 ### Reglas de negocio configurables
 
-Monto por cuota y cantidad de cuotas **no están hardcodeados** — viven en la tabla singleton `configuracion` (`id` fijo = 1, con `CHECK` constraint), editable desde `/admin/configuracion` (solo superadmin). Default: $5.000 × 4 meses. El webhook de pagos (`src/app/api/webhooks/pago/route.ts`) lee esto en cada request, no cachea.
+Monto por cuota y cantidad de cuotas **no están hardcodeados** — viven en la tabla singleton `configuracion` (`id` fijo = 1, con `CHECK` constraint), editable desde `/admin/configuracion` (solo superadmin). Default: $6.000 × 4 meses ($24.000 por cliente; subió de $5.000 en oct. 2026, migración `0024_comision_6000` actualiza la fila si seguía en 5000). El webhook de pagos (`src/app/api/webhooks/pago/route.ts`) lee esto en cada request, no cachea.
 
 (Hasta agosto de 2026 existió también `diasLiquidacionMp`, una ventana de espera antes de que una cuota fuera facturable — se sacó porque dejó de tener sentido una vez que el reembolso por derecho de arrepentimiento pasó a ser manual del lado de agendaonline: ya no hay riesgo de pagarle comisión al revendedor por una venta que se cae, así que una cuota "generada" es facturable de inmediato.)
 
@@ -173,7 +173,7 @@ Pendiente: **integrar nume** para que capture `?vendedor=` y llame al webhook de
 
 ## Flujo de trabajo en equipo
 
-> **Temporal (desde 2026-08-07, hasta que Carlos diga lo contrario):** el sitio está en producción pero todavía sin clientes reales, así que por ahora los cambios se pushean directo a `main` (sin PR) y eso dispara el deploy automático a producción — no pedir confirmación para esto salvo que algo se vea riesgoso. Cuando esté todo más asentado, van a clonar producción a un ambiente de test para deployar ahí automáticamente en vez de production directo; cuando eso exista, retomar el flujo de PR de abajo (o el que corresponda al nuevo ambiente).
+> **Temporal (desde 2026-08-07, hasta que Carlos diga lo contrario):** el sitio está en producción pero todavía sin clientes reales, así que los cambios se pushean directo (sin PR). **Desde 2026-10-26 existe el ambiente de test** (ver "Ambiente de test" abajo): los cambios van primero a la rama `test` (deploy a test.glob.ar) y, una vez probados, se mergean a `main` (deploy a producción).
 >
 > **Desde 2026-08-09**: después de pushear a `main`, Carlos prueba él mismo que el deploy haya salido bien (entra al sitio, prueba el flujo). No hace falta quedarse verificando el deploy contra la VM (logs, contenedor recreado, etc.) salvo que él lo pida explícitamente — con confirmar que el push disparó el pipeline alcanza.
 
@@ -198,3 +198,11 @@ Convención de prefijos de rama (igual que en el resto de los proyectos de Cynth
 - VM: alias SSH `globar-vm` (`~/.ssh/config`), Ubuntu, Docker Compose (`docker-compose.prod.yml`) con servicios `app`, `db` (Postgres 16), `db_backup`, `caddy` (reverse proxy + TLS, `deploy/Caddyfile`, dominio via `PUBLIC_HOST`).
 - CI/CD: `.github/workflows/ci.yml` — build+lint+test en cada push/PR; en push a `main`, build de imagen Docker → push a GHCR (`ghcr.io/chukita/globar`) → deploy por SSH (`deploy/deploy.sh`, hace `docker compose pull` + recreate). La imagen se compila en el runner de GitHub porque la VM tiene 1GB de RAM (no le alcanza para `next build`).
 - El `.env` de la VM no está en git (`deploy.sh` hace `git reset --hard`, que no lo toca) — cualquier variable nueva hay que agregarla ahí a mano además de documentarla en `deploy/env.production.example`.
+
+## Ambiente de test (desde 2026-10-26)
+
+- **https://test.glob.ar**, VM aparte: alias SSH `globar-test` (`163.176.241.29`), `VM.Standard.E2.1.Micro` del free tier de Oracle (la segunda micro gratis de la cuenta, misma subnet que `globar-vm`), mismo `docker-compose.prod.yml` + Caddy. **Base propia y vacía**: no comparte datos con producción.
+- **Deploy automático desde la rama `test`**: push a `test` → CI (lint, unit, E2E) → imagen `ghcr.io/chukita/globar:test` → job `deploy-test` (SSH a `test.glob.ar`, misma clave `ORACLE_SSH_KEY`) → `deploy/deploy.sh`. Cada VM elige rama e imagen con `DEPLOY_BRANCH` e `IMAGE` en su `.env` (en prod no están y valen `main` / `:latest`).
+- Flujo: cambios a `test`, se prueban en test.glob.ar, y después se mergea `test` → `main` para producción.
+- `robots.txt` bloquea todo fuera de `https://glob.ar` (se decide por `AUTH_URL` en runtime).
+- Clave de superadmin de test: en `~/CREDENCIALES-TEST.txt` de la VM (generada ahí, no está en git). `GOOGLE_*` y `BREVO_API_KEY` arrancaron vacíos: sin Brevo no salen mails (tampoco el código de verificación del alta por email); sin Google no anda ese login.
