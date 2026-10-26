@@ -78,7 +78,7 @@ export default async function CapacitacionPage() {
     <div className="p-10 max-w-[860px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Capacitación</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-        Materiales para conocer cada producto y venderlos mejor. Son opcionales: ya podés compartir todos tus productos desde &quot;Mis productos&quot;.
+        Materiales para conocer cada producto y venderlos mejor. Las capacitaciones de los productos son opcionales: ya podés compartir todos desde &quot;Mis productos&quot;.
       </p>
       <CapacitacionClient productos={productosConMateriales} />
     </div>

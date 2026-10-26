@@ -225,7 +225,7 @@ export function emailBienvenida(nombre: string | undefined, links: LinksRevended
       ${linksHtml(links)}
       <p>Cuando alguien se registra con tu link y se suscribe a un plan pago, ganás ${comisionTexto(comision.monto, comision.meses)}.</p>
       <p style="margin-top:16px;"><strong>Para cobrar</strong>, completá tus datos personales y de cobro (DNI, provincia, localidad, teléfono, CBU o alias, titular de la cuenta y CUIT/CUIL) en <strong>Perfil → Datos de cobro</strong>. No hacen falta para arrancar, pero sí para entrar en la liquidación mensual.</p>
-      <p>En la sección <strong>Capacitación</strong> de tu panel tenés videos y guías de venta de cada producto (opcionales, pero te ayudan a vender más).</p>
+      <p>La primera vez que entres a tu panel vas a ver un <strong>video corto sobre cómo funciona glob.ar</strong> con unas preguntas — es el único paso obligatorio. Las capacitaciones de cada producto (en la sección <strong>Capacitación</strong>) son opcionales, pero te ayudan a vender más.</p>
       ${ctaButton("Ir a mi panel", "/panel/productos")}
       <p style="font-size:13px; color:#5B6577;">Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
     `),

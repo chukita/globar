@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
         Bienvenido a glob.ar
       </h1>
       <p className="text-[14px] text-[#5B6577] mb-6">
-        Antes de entrar a tu panel, mirá este video corto y respondé unas preguntas sobre cómo funciona glob.ar.
+        Antes de entrar a tu panel, mirá este video corto y respondé unas preguntas sobre cómo funciona glob.ar. Es el único paso: después ya podés compartir todos los productos.
       </p>
       <OnboardingClient quiz={quiz} />
     </div>

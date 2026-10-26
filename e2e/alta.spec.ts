@@ -1,14 +1,33 @@
 import { expect, test } from "@playwright/test";
 import bcrypt from "bcryptjs";
+import { getOnboardingQuizPublico, validarOnboardingQuiz } from "../src/lib/onboardingQuiz";
 import { db, esperarFormularioListo, esperarPanel, uniq } from "./helpers";
 
 /**
  * Alta completa de un revendedor por email, como la hace una persona:
- * registro → código por mail → panel con su código (sin capacitación obligatoria)
- * → links de todos los productos listos para compartir.
+ * registro → código por mail → onboarding de glob.ar (video + quiz) → panel
+ * con los links de todos los productos (sin capacitación por producto).
  */
 
-test("un revendedor se registra por email, verifica y ya puede compartir sus links", async ({ page }) => {
+/** Combinación de respuestas que aprueba el quiz (se busca, no se hardcodea). */
+function respuestasCorrectas(): number[] {
+  const quiz = getOnboardingQuizPublico(4);
+  const combo = quiz.map(() => 0);
+  const total = quiz.reduce((acc, q) => acc * q.options.length, 1);
+  for (let n = 0; n < total; n++) {
+    let rest = n;
+    const answers: Record<string, number> = {};
+    quiz.forEach((q, i) => {
+      combo[i] = rest % q.options.length;
+      rest = Math.floor(rest / q.options.length);
+      answers[q.id] = combo[i]!;
+    });
+    if (validarOnboardingQuiz(answers)) return [...combo];
+  }
+  throw new Error("ninguna combinación aprueba el quiz de onboarding");
+}
+
+test("un revendedor se registra por email, aprueba el onboarding de glob.ar y ya comparte todos los productos", async ({ page }) => {
   const u = uniq();
   const email = `alta-${u}@example.test`;
 
@@ -42,9 +61,25 @@ test("un revendedor se registra por email, verifica y ya puede compartir sus lin
   await page.getByPlaceholder("123456").fill("246810");
   await page.getByRole("button", { name: "Confirmar" }).click();
 
-  // Sin capacitación obligatoria: entra directo al panel.
+  // Único paso obligatorio: el onboarding de glob.ar (video + quiz).
+  await expect(page).toHaveURL(/\/panel\/onboarding/, { timeout: 30_000 });
+  // El Chromium de Playwright no reproduce mp4: se simula que el video terminó.
+  await page.locator("video").evaluate((v) => v.dispatchEvent(new Event("ended")));
+  await page.getByRole("button", { name: "Continuar a la evaluación" }).click();
+
+  const quiz = getOnboardingQuizPublico(4);
+  const correctas = respuestasCorrectas();
+  for (const [i, q] of quiz.entries()) {
+    await page.getByText(q.options[correctas[i]!]!.slice(0, 40)).first().click();
+  }
+  await page.getByRole("button", { name: "Enviar respuestas" }).click();
+  // Al aprobar, el revalidatePath("/panel") de la acción re-renderiza la página
+  // y la manda al panel (a veces antes de ver el "¡Listo!").
+  const listo = page.getByText("¡Listo, ya sos parte de glob.ar!");
+  const panel = page.getByRole("heading", { name: "Mis productos" });
+  await expect(listo.or(panel)).toBeVisible({ timeout: 30_000 });
+  if (await listo.isVisible()) await page.getByRole("button", { name: "Ir a mi panel" }).click();
   await esperarPanel(page);
-  await expect(page).not.toHaveURL(/\/panel\/onboarding/);
 
   // En el panel ve su código de ventas.
   const rev = await db().query<{ codigo_ventas: string; signup_source: { utmSource?: string } | null }>(

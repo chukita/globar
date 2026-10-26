@@ -16,10 +16,10 @@ export function OnboardingClient({ quiz }: { quiz: QuizQuestion[] }) {
       successTitle="¡Listo, ya sos parte de glob.ar!"
       successBody={
         <>
-          Ya podés entrar a tu panel.
+          Ya podés compartir tus links de todos los productos desde tu panel.
           <br />
           <button
-            onClick={() => router.push("/panel")}
+            onClick={() => router.push("/panel/productos")}
             className="mt-4 font-semibold text-[13.5px] bg-[#0C2A45] text-white border-0 rounded-xl px-5 py-2.5 cursor-pointer"
           >
             Ir a mi panel

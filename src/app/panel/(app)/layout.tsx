@@ -16,10 +16,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const role = session?.user?.role ?? undefined;
 
   // Encadenado: cuenta desactivada → falta fecha de nacimiento o el check de
-  // "puedo facturar" (confirmar-facturacion). Ni el onboarding general ni la
-  // capacitación por producto bloquean nada desde oct. 2026: el revendedor
-  // puede compartir sus links apenas se registra, y los videos/quizzes quedan
-  // disponibles (opcionales) en /panel/capacitacion. El resto de los datos
+  // "puedo facturar" (confirmar-facturacion) → onboarding general de glob.ar
+  // no aprobado (onboarding: video + quiz). La capacitación de cada producto
+  // (agendaonline, NuMe) NO bloquea nada desde oct. 2026: aprobado el
+  // onboarding, el revendedor ya comparte los links de todos los productos, y
+  // esos videos/quizzes quedan opcionales en /panel/capacitacion. El resto de los datos
   // personales (DNI, teléfono, etc.) tampoco bloquean el panel — son
   // opcionales y hacen falta recién para cobrar. Quien
   // se registra por email ya cargó fecha de nacimiento y el check en /registro;
@@ -36,6 +37,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     }
     if (!rev || !rev.puedeFacturar || !rev.fechaNacimiento) {
       redirect("/panel/confirmar-facturacion");
+    }
+    if (!rev.onboardingCompletedAt) {
+      redirect("/panel/onboarding");
     }
   }
 
