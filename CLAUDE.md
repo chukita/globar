@@ -204,5 +204,5 @@ Convención de prefijos de rama (igual que en el resto de los proyectos de Cynth
 - **https://test.glob.ar**, VM aparte: alias SSH `globar-test` (`163.176.241.29`), `VM.Standard.E2.1.Micro` del free tier de Oracle (la segunda micro gratis de la cuenta, misma subnet que `globar-vm`), mismo `docker-compose.prod.yml` + Caddy. **Base propia y vacía**: no comparte datos con producción.
 - **Deploy automático desde la rama `test`**: push a `test` → CI (lint, unit, E2E) → imagen `ghcr.io/chukita/globar:test` → job `deploy-test` (SSH a `test.glob.ar`, misma clave `ORACLE_SSH_KEY`) → `deploy/deploy.sh`. Cada VM elige rama e imagen con `DEPLOY_BRANCH` e `IMAGE` en su `.env` (en prod no están y valen `main` / `:latest`).
 - Flujo: cambios a `test`, se prueban en test.glob.ar, y después se mergea `test` → `main` para producción.
-- `robots.txt` bloquea todo fuera de `https://glob.ar` (se decide por `AUTH_URL` en runtime).
+- `robots.txt` bloquea todo cuando `NOINDEX=true` (solo está en el `.env` de test; se evalúa en runtime).
 - Clave de superadmin de test: en `~/CREDENCIALES-TEST.txt` de la VM (generada ahí, no está en git). `GOOGLE_*` y `BREVO_API_KEY` arrancaron vacíos: sin Brevo no salen mails (tampoco el código de verificación del alta por email); sin Google no anda ese login.
