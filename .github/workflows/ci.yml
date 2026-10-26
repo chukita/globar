@@ -155,6 +155,10 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build-and-push
     if: github.ref == 'refs/heads/test'
+    # La clave SSH válida (ORACLE_SSH_KEY) es secret del environment
+    # `production`; la de nivel repo es vieja. Las dos VMs autorizan la misma
+    # clave, así que se reusa ese environment (no tiene reglas de protección).
+    environment: production
     concurrency:
       group: deploy-test
       cancel-in-progress: true
