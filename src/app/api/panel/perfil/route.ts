@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { esDniValido, esCbuOAliasValido, esCuitValido, normalizarCuit, esMayorDeEdad } from "@/lib/validacion";
-import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida } from "@/lib/email";
+import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida, datosParaCompartir } from "@/lib/email";
 
 interface PerfilPatchBody {
   dni?: string;
@@ -79,7 +79,8 @@ export async function PATCH(req: NextRequest) {
   if (puedeFacturar === true && !rev.puedeFacturar) {
     const nuevo = emailRevendedorNuevo(user.name ?? session.user.email, session.user.email);
     await notifyAdmins(nuevo.subject, nuevo.html, "revendedorNuevo");
-    const bienvenida = emailBienvenida(user.name ?? undefined);
+    const { links, comision } = await datosParaCompartir(rev.codigoVentas);
+    const bienvenida = emailBienvenida(user.name ?? undefined, links, comision);
     await sendEmail({ to: session.user.email, toName: user.name ?? undefined, subject: bienvenida.subject, html: bienvenida.html });
   }
 

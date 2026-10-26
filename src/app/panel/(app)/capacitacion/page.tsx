@@ -39,31 +39,29 @@ export default async function CapacitacionPage() {
 
   const { comisionMeses } = await getConfiguracion();
 
+  // `habilitaciones` ya no destraba productos (todos se venden desde el alta,
+  // oct. 2026): acá solo marca que el revendedor aprobó el quiz opcional.
   let habilitadosSet = new Set<string>();
-  let onboardingCompletado = false;
   if (session?.user?.id) {
     const rev = await getRevendedorByUserId(session.user.id);
     if (rev) {
-      onboardingCompletado = !!rev.onboardingCompletedAt;
       const conHabilitacion = await getProductosConHabilitacion(rev.id);
       habilitadosSet = new Set(conHabilitacion.filter(p => p.habilitado).map(p => p.id));
     }
   }
 
   const productosConMateriales = [
-    ...(onboardingCompletado
-      ? [{
-          id: "onboarding-globar",
-          nombre: "Capacitación glob.ar",
-          descripcion: "Cómo funciona glob.ar como revendedor",
-          dominio: "glob.ar",
-          materiales: MATERIALES_ONBOARDING,
-          habilitado: true,
-          requiereEvaluacion: false,
-          quiz: null as QuizQuestion[] | null,
-          esOnboardingGeneral: true,
-        }]
-      : []),
+    {
+      id: "onboarding-globar",
+      nombre: "Capacitación glob.ar",
+      descripcion: "Cómo funciona glob.ar como revendedor",
+      dominio: "glob.ar",
+      materiales: MATERIALES_ONBOARDING,
+      habilitado: true,
+      requiereEvaluacion: false,
+      quiz: null as QuizQuestion[] | null,
+      esOnboardingGeneral: true,
+    },
     ...lista.map(p => ({
       id:               p.id,
       nombre:           p.nombre,
@@ -80,7 +78,7 @@ export default async function CapacitacionPage() {
     <div className="p-10 max-w-[860px]">
       <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Capacitación</h1>
       <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-        Materiales para conocer cada producto y venderlos mejor. Para agendaonline y NuMe, mirar el video y aprobar la evaluación activa el producto en tu cuenta.
+        Materiales para conocer cada producto y venderlos mejor. Son opcionales: ya podés compartir todos tus productos desde &quot;Mis productos&quot;.
       </p>
       <CapacitacionClient productos={productosConMateriales} />
     </div>

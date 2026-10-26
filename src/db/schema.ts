@@ -317,7 +317,7 @@ export const contactos = pgTable("contactos", {
 
 export const configuracion = pgTable("configuracion", {
   id:            integer("id").primaryKey().default(1),
-  comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("5000"),
+  comisionMonto: numeric("comision_monto", { precision: 12, scale: 2 }).notNull().default("6000"),
   comisionMeses: integer("comision_meses").notNull().default(4),
   // Meses que tiene el revendedor, desde que se le liquidó (pagó), para subir la
   // factura. Pasado ese plazo se lo excluye de la liquidación siguiente hasta que

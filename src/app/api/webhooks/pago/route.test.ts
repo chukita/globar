@@ -158,7 +158,7 @@ describe("POST /api/webhooks/pago", () => {
     expect(cuota.status).toBe("generada");
     expect(cuota.revendedorId).toBe(rev.id);
     // El monto de la cuota sale de la configuración vigente, no del montoAbonado del payload.
-    expect(Number(cuota.monto)).toBe(5000);
+    expect(Number(cuota.monto)).toBe(6000);
   });
 
   it("es idempotente: reenviar el mismo pagoId no crea una segunda cuota", async () => {

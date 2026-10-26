@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, revendedores } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validarCodigo, validarToken, marcarEmailVerificado } from "@/lib/verificacionEmail";
-import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida } from "@/lib/email";
+import { sendEmail, notifyAdmins, emailRevendedorNuevo, emailBienvenida, datosParaCompartir } from "@/lib/email";
 import { signEmailVerificadoToken } from "@/lib/impersonar";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 
@@ -32,11 +32,15 @@ export async function POST(req: NextRequest) {
     await marcarEmailVerificado(resultado.userId);
 
     const [user] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, resultado.userId)).limit(1);
+    const [rev] = await db.select({ codigoVentas: revendedores.codigoVentas }).from(revendedores).where(eq(revendedores.userId, resultado.userId)).limit(1);
     if (user) {
       const nuevo = emailRevendedorNuevo(user.name ?? user.email, user.email);
       await notifyAdmins(nuevo.subject, nuevo.html, "revendedorNuevo");
-      const bienvenida = emailBienvenida(user.name ?? undefined);
-      await sendEmail({ to: user.email, toName: user.name ?? undefined, subject: bienvenida.subject, html: bienvenida.html });
+      if (rev) {
+        const { links, comision } = await datosParaCompartir(rev.codigoVentas);
+        const bienvenida = emailBienvenida(user.name ?? undefined, links, comision);
+        await sendEmail({ to: user.email, toName: user.name ?? undefined, subject: bienvenida.subject, html: bienvenida.html });
+      }
     }
 
     const signInToken = signEmailVerificadoToken(resultado.userId);

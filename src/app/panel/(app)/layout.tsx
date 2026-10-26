@@ -16,9 +16,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const role = session?.user?.role ?? undefined;
 
   // Encadenado: cuenta desactivada → falta fecha de nacimiento o el check de
-  // "puedo facturar" (confirmar-facturacion) → onboarding general no aprobado
-  // (onboarding). El resto de los datos personales (DNI, teléfono, etc.) YA NO
-  // bloquean el panel — son opcionales y hacen falta recién para cobrar. Quien
+  // "puedo facturar" (confirmar-facturacion). Ni el onboarding general ni la
+  // capacitación por producto bloquean nada desde oct. 2026: el revendedor
+  // puede compartir sus links apenas se registra, y los videos/quizzes quedan
+  // disponibles (opcionales) en /panel/capacitacion. El resto de los datos
+  // personales (DNI, teléfono, etc.) tampoco bloquean el panel — son
+  // opcionales y hacen falta recién para cobrar. Quien
   // se registra por email ya cargó fecha de nacimiento y el check en /registro;
   // quien entra con Google no pasó por ese form y lo completa en
   // /panel/confirmar-facturacion. Todas estas páginas viven afuera de este
@@ -33,9 +36,6 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     }
     if (!rev || !rev.puedeFacturar || !rev.fechaNacimiento) {
       redirect("/panel/confirmar-facturacion");
-    }
-    if (!rev.onboardingCompletedAt) {
-      redirect("/panel/onboarding");
     }
   }
 

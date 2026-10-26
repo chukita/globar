@@ -86,7 +86,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
         <div>
           <h1 className="font-extrabold text-[30px] m-0" style={{ letterSpacing: "-0.025em" }}>Revendedores</h1>
           <p className="text-[14.5px] text-[#5B6577] mt-1.5 mb-0">
-            Se dan de alta solos al loguearse por primera vez. Acá los activás y les habilitás productos.
+            Se dan de alta solos al loguearse por primera vez y pueden vender todos los productos desde el alta. En verde, los productos cuya capacitación (opcional) aprobaron.
           </p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function RevendedoresAdminClient({ revendedoresIniciales }: { revendedore
                       background: p.habilitado ? "#E7F5EE" : "#F0F2F5",
                       color: p.habilitado ? "#0B6B47" : "#9AA3B2",
                     }}
-                    title={p.habilitado ? "Click para deshabilitar" : "Click para habilitar"}
+                    title={p.habilitado ? "Capacitación aprobada — click para desmarcar" : "Capacitación no aprobada — click para marcarla"}
                   >
                     {p.nombre}
                   </button>

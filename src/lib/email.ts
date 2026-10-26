@@ -1,5 +1,6 @@
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS, DATOS_FISCALES } from "@/lib/constants";
+import { getLinksRevendedor, type LinksRevendedor } from "@/lib/linksRevendedor";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const SENDER = { name: "glob.ar", email: "notificaciones@glob.ar" };
@@ -190,17 +191,56 @@ export function emailFacturaLiquidacionRechazada(periodoLabel: string, monto: nu
   };
 }
 
-export function emailBienvenida(nombre?: string) {
+/** Bloque con los links de referido del revendedor, listos para copiar y compartir. */
+function linksHtml(links: LinksRevendedor): string {
+  const fila = (titulo: string, sub: string, url: string) => `
+    <div style="background:#F7F8FA; border:1px solid #E9ECEF; border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+      <div style="font-weight:700; color:#0C2A45;">${titulo}</div>
+      <div style="font-size:12.5px; color:#5B6577; margin-bottom:4px;">${sub}</div>
+      <a href="${url}" style="font-size:13.5px; color:#0E6BA8; word-break:break-all;">${url}</a>
+    </div>`;
+  return `
+    <div style="margin:14px 0;">
+      ${links.productos.map((p) => fila(p.nombre, p.dominio, p.url)).join("")}
+      ${fila("Link general", "Todos tus productos en una sola página — el cliente elige", links.general)}
+    </div>`;
+}
+
+/** Links del revendedor + comisión vigente, lo que necesitan los mails con links para compartir. */
+export async function datosParaCompartir(codigoVentas: string) {
+  const [links, config] = await Promise.all([getLinksRevendedor(codigoVentas), getConfiguracion()]);
+  return { links, comision: { monto: Number(config.comisionMonto), meses: config.comisionMeses } };
+}
+
+function comisionTexto(monto: number, meses: number): string {
+  return `<strong>${fmtARS(monto)} por mes durante ${meses} meses</strong> (${fmtARS(monto * meses)} en total por cada cliente)`;
+}
+
+export function emailBienvenida(nombre: string | undefined, links: LinksRevendedor, comision: { monto: number; meses: number }) {
   const saludo = nombre ? `¡Hola ${nombre}!` : "¡Bienvenido/a a glob.ar!";
   return {
-    subject: "Tu cuenta de revendedor está lista — próximos pasos",
+    subject: "Tu cuenta de revendedor está lista — ya podés empezar a vender",
     html: wrapHtml("¡Tu cuenta ya está creada!", `
-      <p>${saludo} Ya sos revendedor de glob.ar. Dos cosas para dejar todo listo:</p>
-      <ol style="padding-left:18px; margin:12px 0;">
-        <li style="margin-bottom:8px;"><strong>Hacé la capacitación de glob.ar</strong> desde tu panel — es un video corto y un cuestionario. Recién ahí se te habilita el panel completo.</li>
-        <li><strong>Completá tus datos personales y de cobro</strong> (DNI, provincia, localidad, teléfono, CBU o alias, titular de la cuenta y CUIT/CUIL) en <strong>Perfil → Datos de cobro</strong>. No son obligatorios para arrancar, pero los necesitás cargados para entrar en la liquidación mensual y cobrar tus comisiones.</li>
-      </ol>
-      ${ctaButton("Ir a mi panel", "/panel")}
+      <p>${saludo} Ya sos revendedor de glob.ar y <strong>podés empezar a vender hoy mismo</strong>. Estos son tus links personales — compartilos por WhatsApp, redes o donde quieras:</p>
+      ${linksHtml(links)}
+      <p>Cuando alguien se registra con tu link y se suscribe a un plan pago, ganás ${comisionTexto(comision.monto, comision.meses)}.</p>
+      <p style="margin-top:16px;"><strong>Para cobrar</strong>, completá tus datos personales y de cobro (DNI, provincia, localidad, teléfono, CBU o alias, titular de la cuenta y CUIT/CUIL) en <strong>Perfil → Datos de cobro</strong>. No hacen falta para arrancar, pero sí para entrar en la liquidación mensual.</p>
+      <p>En la sección <strong>Capacitación</strong> de tu panel tenés videos y guías de venta de cada producto (opcionales, pero te ayudan a vender más).</p>
+      ${ctaButton("Ir a mi panel", "/panel/productos")}
+      <p style="font-size:13px; color:#5B6577;">Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
+    `),
+  };
+}
+
+export function emailAumentoComision(nombre: string | undefined, links: LinksRevendedor, comision: { monto: number; meses: number }) {
+  const saludo = nombre ? `¡Hola ${nombre}!` : "¡Hola!";
+  return {
+    subject: `Aumentamos tu comisión: ahora ${fmtARS(comision.monto)} por mes`,
+    html: wrapHtml("¡Aumentamos tu comisión!", `
+      <p>${saludo} Tenemos una buena noticia: desde hoy, por cada cliente que se suscribe a un plan pago con tu link ganás ${comisionTexto(comision.monto, comision.meses)}.</p>
+      <p>Además, ya no hace falta aprobar ninguna capacitación para vender: <strong>todos los productos están habilitados</strong> en tu cuenta. Estos son tus links personales para compartir:</p>
+      ${linksHtml(links)}
+      ${ctaButton("Ir a mis productos", "/panel/productos")}
       <p style="font-size:13px; color:#5B6577;">Cualquier duda, escribinos a <strong>hola@glob.ar</strong>.</p>
     `),
   };

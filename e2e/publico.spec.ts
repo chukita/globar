@@ -34,17 +34,11 @@ test.describe("Sitio público", () => {
     }
   });
 
-  test("la landing personal del revendedor muestra solo los productos habilitados, con su código", async ({ page }) => {
+  test("la landing personal del revendedor muestra todos los productos con su código, sin capacitación previa", async ({ page }) => {
     const linksDeProductos = () =>
       page.locator('a[href*="?vendedor="]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
 
-    // Sin la capacitación aprobada, no se le ofrece ningún producto al cliente.
-    const nuevo = await crearRevendedor();
-    await page.goto(`/r/${nuevo.codigo}`);
-    await expect(page.getByText(/glob\.ar/).first()).toBeVisible();
-    expect(await linksDeProductos()).toEqual([]);
-
-    const rev = await crearRevendedor({ habilitadoEnTodo: true });
+    const rev = await crearRevendedor();
     await page.goto(`/r/${rev.codigo}`);
     const links = await linksDeProductos();
     const conCodigo = `vendedor=${rev.codigo}`;

@@ -99,20 +99,15 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                   <path d="M4.5 6.75L9 11.25l4.5-4.5" stroke="#9AA3B2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:order-1">
-                  {p.esOnboardingGeneral ? (
-                    <span className="text-[11.5px] font-bold text-[#1B9462] bg-[#E7F5EE] border border-[#9BD3B6] rounded-full px-3 py-1 flex items-center gap-1.5">
-                      <span className="w-[6px] h-[6px] rounded-full bg-[#1B9462]" />
-                      Completado
-                    </span>
-                  ) : p.requiereEvaluacion && (
+                  {!p.esOnboardingGeneral && p.requiereEvaluacion && (
                     p.habilitado ? (
                       <span className="text-[11.5px] font-bold text-[#1B9462] bg-[#E7F5EE] border border-[#9BD3B6] rounded-full px-3 py-1 flex items-center gap-1.5">
                         <span className="w-[6px] h-[6px] rounded-full bg-[#1B9462]" />
-                        Activado
+                        Aprobada
                       </span>
                     ) : (
                       <span className="text-[12px] font-semibold text-[#7B4FA6] bg-[#F0E8F8] border border-[#D4B8F0] rounded-full px-3 py-1">
-                        Requiere capacitación
+                        Evaluación opcional
                       </span>
                     )
                   )}
@@ -130,7 +125,7 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                       quiz={p.quiz}
                       onSubmit={(respuestas) => completarCapacitacionAction(p.nombre, respuestas)}
                       successTitle="¡Aprobaste la capacitación!"
-                      successBody={<>{p.nombre} ya está activado en tu cuenta — recargá la página para ver tu link en <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.</>}
+                      successBody={<>Ya conocés {p.nombre} a fondo. Compartí tu link desde <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.</>}
                     />
                   ) : (
                     <>
@@ -160,9 +155,9 @@ export function CapacitacionClient({ productos }: { productos: Producto[] }) {
                       {/* Evaluación */}
                       {p.esOnboardingGeneral ? null : p.requiereEvaluacion && p.habilitado ? (
                         <div className="mt-5 bg-[#E7F5EE] border border-[#9BD3B6] rounded-[14px] px-5 py-4">
-                          <div className="font-bold text-[14.5px] text-[#0B6B47]">Producto activado</div>
+                          <div className="font-bold text-[14.5px] text-[#0B6B47]">Capacitación aprobada</div>
                           <div className="text-[13px] text-[#3F7A5E] mt-0.5">
-                            Ya aprobaste la capacitación de {p.nombre}. Podés compartir tu link de ventas desde <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.
+                            Ya aprobaste la capacitación de {p.nombre}. Compartí tu link de ventas desde <Link href="/panel/productos" className="font-semibold underline">&quot;Mis productos&quot;</Link>.
                           </div>
                         </div>
                       ) : !p.requiereEvaluacion ? (

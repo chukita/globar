@@ -38,7 +38,7 @@ export type Revendedor = {
  * "puede facturar" y onboarding aprobado (lo que deja el alta completa).
  */
 export async function crearRevendedor(
-  opts: { onboarding?: boolean; habilitadoEnTodo?: boolean } = {},
+  opts: { onboarding?: boolean } = {},
 ): Promise<Revendedor> {
   const u = uniq();
   const email = `rev-${u}@example.test`;
@@ -56,14 +56,6 @@ export async function crearRevendedor(
      values (gen_random_uuid()::text, $1, $2, '1990-05-10', true, $3) returning id`,
     [user.rows[0]!.id, codigo, opts.onboarding === false ? null : new Date()],
   );
-  if (opts.habilitadoEnTodo) {
-    // Como si ya hubiera aprobado la capacitación de cada producto.
-    await db().query(
-      `insert into habilitaciones (id, revendedor_id, producto_id)
-       select gen_random_uuid()::text, $1, id from productos where status = 'activo'`,
-      [rev.rows[0]!.id],
-    );
-  }
   return { userId: user.rows[0]!.id, revendedorId: rev.rows[0]!.id, email, password, nombre, codigo };
 }
 
@@ -112,9 +104,9 @@ export async function configuracion(): Promise<{ monto: number; meses: number }>
   const r = await db().query<{ comision_monto: string; comision_meses: number }>(
     `select comision_monto, comision_meses from configuracion where id = 1`,
   );
-  // Sin fila todavía: los defaults de la app ($5.000 × 4).
+  // Sin fila todavía: los defaults de la app ($6.000 × 4).
   const row = r.rows[0];
-  return { monto: row ? Number(row.comision_monto) : 5000, meses: row ? row.comision_meses : 4 };
+  return { monto: row ? Number(row.comision_monto) : 6000, meses: row ? row.comision_meses : 4 };
 }
 
 /** "$5.000" como lo muestra la app (fmtARS). */

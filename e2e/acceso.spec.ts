@@ -51,12 +51,13 @@ test.describe("Acceso y permisos", () => {
     await expect(page).toHaveURL(/\/panel\/cuenta-desactivada$/);
   });
 
-  test("sin aprobar el onboarding, el panel lleva al video y al quiz", async ({ page }) => {
+  test("sin onboarding ni capacitación aprobados, igual accede al panel y a sus links", async ({ page }) => {
     const rev = await crearRevendedor({ onboarding: false });
     await loginRevendedor(page, rev.email, rev.password);
     // Esperar a que el login termine (sale de /login) antes de navegar.
     await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
-    await page.goto("/panel/comisiones");
-    await expect(page).toHaveURL(/\/panel\/onboarding$/);
+    await page.goto("/panel/productos");
+    await expect(page).toHaveURL(/\/panel\/productos$/);
+    await expect(page.getByText(`?vendedor=${rev.codigo}`, { exact: false }).first()).toBeVisible();
   });
 });

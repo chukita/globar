@@ -10,8 +10,6 @@ import { QrToggle } from "@/components/QrToggle";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
 import { getRevendedorByUserId } from "@/lib/revendedor";
-import { getProductosConHabilitacion } from "@/lib/panel-data";
-import { PRODUCTOS_CON_EVALUACION } from "@/lib/capacitacionQuiz";
 
 export default async function ProductosPage() {
   const session = await auth();
@@ -29,17 +27,13 @@ export default async function ProductosPage() {
   const comisionTexto = `${fmtARS(Number(comisionMonto))} × ${comisionMeses} cuota${comisionMeses !== 1 ? "s" : ""}`;
 
   const codigo = rev?.codigoVentas ?? null;
-  const habilitadosSet = rev
-    ? new Set((await getProductosConHabilitacion(rev.id)).filter(p => p.habilitado).map(p => p.id))
-    : new Set<string>();
 
+  // Sin gate de capacitación (oct. 2026): todos los productos activos se
+  // pueden compartir apenas el revendedor se registra.
   const items = await Promise.all(lista.map(async (p) => {
-    const bloqueado = PRODUCTOS_CON_EVALUACION.has(p.nombre) && !habilitadosSet.has(p.id);
-    if (bloqueado) return { producto: p, link: null, qrSvg: null, bloqueado };
-
     const link = codigo ? `${p.urlRegistro}?vendedor=${codigo}` : p.urlRegistro;
     const qrSvg = codigo ? await QRCode.toString(link, { type: "svg", margin: 1, width: 160 }) : null;
-    return { producto: p, link, qrSvg, bloqueado };
+    return { producto: p, link, qrSvg };
   }));
 
   const linkGeneral = codigo ? `${process.env.AUTH_URL || "http://localhost:3000"}/r/${codigo}` : null;
@@ -92,8 +86,8 @@ export default async function ProductosPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {items.map(({ producto: p, link, qrSvg, bloqueado }) => (
-            <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} qrSvg={qrSvg} comisionTexto={comisionTexto} bloqueado={bloqueado} />
+          {items.map(({ producto: p, link, qrSvg }) => (
+            <ProductCard key={p.id} producto={p} link={link} tienecodigo={!!codigo} qrSvg={qrSvg} comisionTexto={comisionTexto} />
           ))}
         </div>
       )}
@@ -114,14 +108,12 @@ function ProductCard({
   tienecodigo,
   qrSvg,
   comisionTexto,
-  bloqueado,
 }: {
   producto: typeof import("@/db/schema").productos.$inferSelect;
   link: string | null;
   tienecodigo: boolean;
   qrSvg: string | null;
   comisionTexto: string;
-  bloqueado: boolean;
 }) {
   const inicial = producto.nombre[0].toLowerCase();
   const colors: Record<string, { bg: string; text: string; glow: string }> = {
@@ -141,16 +133,10 @@ function ProductCard({
             style={{ background: c.bg, color: c.text }}>
             {inicial}
           </div>
-          {bloqueado ? (
-            <span className="text-[11.5px] font-bold text-[#7B4FA6] bg-[#F0E8F8] border border-[#D4B8F0] rounded-full px-3 py-1.5">
-              Pendiente de activar
-            </span>
-          ) : (
-            <span className="text-[11.5px] font-bold text-[#1B9462] bg-[#E7F5EE] border border-[#9BD3B6] rounded-full px-3 py-1.5 flex items-center gap-1.5">
-              <span className="w-[6px] h-[6px] rounded-full bg-[#1B9462]" />
-              Disponible
-            </span>
-          )}
+          <span className="text-[11.5px] font-bold text-[#1B9462] bg-[#E7F5EE] border border-[#9BD3B6] rounded-full px-3 py-1.5 flex items-center gap-1.5">
+            <span className="w-[6px] h-[6px] rounded-full bg-[#1B9462]" />
+            Disponible
+          </span>
         </div>
 
         <h2 className="font-extrabold text-[21px] mb-0.5" style={{ letterSpacing: "-0.02em" }}>{producto.nombre}</h2>
@@ -169,22 +155,7 @@ function ProductCard({
         </div>
 
         {/* Link */}
-        {bloqueado ? (
-          <div className="bg-[#F0E8F8] border border-[#D4B8F0] rounded-xl px-4 py-4">
-            <div className="text-[13px] text-[#5B3D75] leading-[1.5] mb-3">
-              Mirá el video y aprobá la evaluación para activar este producto.
-            </div>
-            <Link
-              href={`/panel/capacitacion#${producto.nombre}`}
-              className="flex items-center justify-center gap-1.5 w-full font-bold text-[13.5px] bg-[#7B4FA6] text-white no-underline rounded-xl py-2.5 px-4 hover:bg-[#6B4393] transition-colors"
-            >
-              Ir a Capacitación
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-          </div>
-        ) : tienecodigo && link ? (
+        {tienecodigo && link ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 bg-[#F7F8FA] border border-[#E9ECEF] rounded-xl px-3 py-2.5">
               <span className="text-[12.5px] text-[#0C2A45] font-medium overflow-hidden text-ellipsis whitespace-nowrap flex-1">
