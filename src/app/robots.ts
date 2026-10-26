@@ -18,7 +18,7 @@ const AI_BOTS = [
 export const dynamic = "force-dynamic";
 
 export default function robots(): MetadataRoute.Robots {
-  const esProduccion = (process.env.AUTH_URL ?? "https://glob.ar").replace(//$/, "") === "https://glob.ar";
+  const esProduccion = (process.env.AUTH_URL ?? "https://glob.ar").replace(/\/$/, "") === "https://glob.ar";
   if (!esProduccion) return { rules: [{ userAgent: "*", disallow: "/" }] };
 
   return {

@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -40,8 +40,10 @@ jobs:
   # y levanta `next start`. Cubre alta de revendedores, webhooks de pago y
   # comisiones, liquidación y facturas, y permisos. La imagen y el deploy
   # dependen de que pasen.
+  # Ubuntu fijo: `ubuntu-latest` pasó a 26.04 (oct. 2026) y Playwright 1.58 no
+  # tiene dependencias de chromium para esa versión. Fijado en todos los jobs.
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -91,7 +93,7 @@ jobs:
   # solo hace `docker compose pull` (ver deploy/deploy.sh).
   build-and-push:
     name: Build & push image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build, e2e]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test')
     permissions:
@@ -118,7 +120,7 @@ jobs:
 
   deploy-production:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-push
     if: github.ref == 'refs/heads/main'
     environment: production
@@ -150,7 +152,7 @@ jobs:
   # con cada push a la rama `test`; recién después se mergea a main.
   deploy-test:
     name: Deploy to Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-push
     if: github.ref == 'refs/heads/test'
     concurrency:
