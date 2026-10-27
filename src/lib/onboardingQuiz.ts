@@ -36,11 +36,13 @@ const ONBOARDING_QUIZ: QuizInterno[] = [
   },
   {
     id: "q3",
+    // Desde oct. 2026 la capacitación por producto es opcional (antes era la
+    // respuesta correcta y destrababa el producto).
     q: "¿Qué tenés que hacer para poder vender un producto específico (por ejemplo agendaonline)?",
     options: [
-      "Nada, todos los productos están habilitados desde el día uno",
+      "Aprobar sí o sí la evaluación de ese producto antes de poder compartir su link",
       "Pagar una suscripción propia a ese producto",
-      "Mirar su video de capacitación y aprobar su evaluación, desde \"Capacitación\"",
+      "Nada más: con este onboarding aprobado ya podés compartir todos los productos. Las capacitaciones de cada producto son opcionales, para venderlos mejor",
     ],
     correct: 2,
   },
