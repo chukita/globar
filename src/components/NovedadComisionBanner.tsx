@@ -47,7 +47,7 @@ export function NovedadComisionBanner({ monto, meses }: { monto: number; meses: 
         <div className="font-bold text-[15px]">Aumentamos tu comisión: ahora {fmtARS(monto)} por mes</div>
         <div className="text-[#3D4A5C]">
           Por cada cliente nuevo que se suscriba con tu link cobrás {fmtARS(monto)} durante {meses} meses
-          ({fmtARS(monto * meses)} en total). Los clientes que ya venían pagando siguen con su monto original.
+          ({fmtARS(monto * meses)} en total).
         </div>
         <Link href="/panel/productos" className="inline-block mt-2 font-semibold text-[#0E7A45] underline">
           Ver mis links para compartir
