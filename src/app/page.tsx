@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { productos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getConfiguracion } from "@/lib/configuracion";
+import { mostrarNovedadComision } from "@/lib/novedades";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
@@ -174,8 +175,17 @@ export default async function LandingPage() {
           <div className="hero-grid" style={{ paddingBottom: 120 }}>
             {/* columna izquierda */}
             <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9FC6F0", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "7px 14px" }}>
-                Programa de revendedores
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9FC6F0", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "7px 14px" }}>
+                  Programa de revendedores
+                </div>
+                {/* Aumento de comisión oct. 2026: vence solo (src/lib/novedades.ts). */}
+                {mostrarNovedadComision() && (
+                  <Link href="/registro" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "#0C2A45", background: "#7EE2B0", borderRadius: 999, padding: "7px 14px", textDecoration: "none" }}>
+                    <span style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", background: "#0C2A45", color: "#7EE2B0", borderRadius: 999, padding: "2px 8px" }}>Nuevo</span>
+                    Subimos la comisión a {fmtARS(comisionMonto)}/mes
+                  </Link>
+                )}
               </div>
               <h1 style={{ fontSize: "clamp(40px, 5vw, 60px)", fontWeight: 800, lineHeight: 1.03, letterSpacing: "-0.035em", color: "#fff", margin: "20px 0 0", textWrap: "balance" } as React.CSSProperties}>
                 Vendé herramientas digitales y cobrá comisiones{" "}
