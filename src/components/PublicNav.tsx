@@ -31,6 +31,7 @@ export function PublicNav({ activeLink, variant = "light" }: PublicNavProps) {
             { href: "/#como-funciona", label: "Cómo funciona" },
             { href: "/#productos",     label: "Productos" },
             { href: "/#calculadora",   label: "Calculadora" },
+            { href: "/guias",          label: "Guías" },
             { href: "/#contacto",      label: "Contacto" },
           ].map(({ href, label }) => (
             <Link key={href} href={href}
@@ -80,6 +81,7 @@ export function PublicNav({ activeLink, variant = "light" }: PublicNavProps) {
             { href: "/#como-funciona", label: "Cómo funciona" },
             { href: "/#productos",     label: "Productos" },
             { href: "/#calculadora",   label: "Calculadora" },
+            { href: "/guias",          label: "Guías" },
             { href: "/#contacto",      label: "Contacto" },
           ].map(({ href, label }) => (
             <Link key={href} href={href} onClick={() => setOpen(false)}

@@ -34,6 +34,28 @@ test.describe("Sitio público", () => {
     }
   });
 
+  test("las páginas de contenido (preguntas, productos y guías) cargan con la comisión vigente", async ({ page, request }) => {
+    const { monto, meses } = await configuracion();
+    await page.goto("/preguntas");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("revendedor");
+    await page.getByText("¿Qué pasa si el cliente arranca con el plan gratis?").click();
+
+    for (const [path, nombre] of [["/revender/agendaonline", "Agenda Online"], ["/revender/nume", "NuMe"]] as const) {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(`${ars(monto * meses)} por cada negocio que se suscribe a ${nombre}`);
+    }
+    expect((await request.get("/revender/otro")).status()).toBe(404);
+
+    await page.goto("/guias");
+    await page.getByRole("link", { name: /Cómo ganar plata extra/ }).click();
+    await expect(page).toHaveURL(/\/guias\/ganar-plata-extra-recomendando-software$/);
+    await expect(page.getByText(`${ars(monto)} por mes durante ${meses} meses`).first()).toBeVisible();
+
+    // Imagen para compartir de 1200×630 en todas las páginas.
+    const og = await page.locator('meta[property="og:image"]').getAttribute("content");
+    expect(og).toContain("opengraph-image");
+  });
+
   test("la landing personal del revendedor muestra todos los productos con su código, sin capacitación previa", async ({ page }) => {
     const linksDeProductos = () =>
       page.locator('a[href*="?vendedor="]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
@@ -55,7 +77,10 @@ test.describe("Sitio público", () => {
 
     const sitemap = await request.get("/sitemap.xml");
     expect(sitemap.status()).toBe(200);
-    expect(await sitemap.text()).toContain("https://glob.ar/revendedores");
+    const mapa = await sitemap.text();
+    expect(mapa).toContain("https://glob.ar/revendedores");
+    expect(mapa).toContain("https://glob.ar/revender/agendaonline");
+    expect(mapa).toContain("https://glob.ar/guias/");
 
     const llms = await request.get("/llms.txt");
     expect(llms.status()).toBe(200);

@@ -8,6 +8,7 @@ import { productos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { mostrarNovedadComision } from "@/lib/novedades";
+import { preguntasFrecuentes } from "@/lib/contenidoPublico";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
@@ -20,41 +21,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-/**
- * Preguntas frecuentes: se muestran en la sección #preguntas y se publican
- * como FAQPage en el JSON-LD (Google exige que coincidan). Es además lo que
- * mejor citan ChatGPT y otros asistentes: respuestas cortas y con números.
- */
-function faqs(comisionMonto: number, comisionMeses: number) {
-  const total = comisionMonto * comisionMeses;
-  return [
-    {
-      q: "¿Qué es glob.ar?",
-      a: "Es el programa de revendedores de dos productos de software argentinos: Agenda Online (turnos y reservas online) y NuMe (menú digital con QR). Te registrás gratis, compartís tu link y cobrás una comisión mensual por cada cliente que se suscribe.",
-    },
-    {
-      q: "¿Cuánto se gana por cada venta?",
-      a: `${fmtARS(comisionMonto)} por mes durante ${comisionMeses} meses por cada cliente que se suscribe con tu link: ${fmtARS(total)} por venta. Es la misma comisión para los dos productos y no hay tope de clientes.`,
-    },
-    {
-      q: "¿Tiene algún costo registrarse?",
-      a: "No. Registrarse es gratis y no hay inversión inicial, cuota ni stock. Solo compartís tu link de referido.",
-    },
-    {
-      q: "¿Qué requisitos hay para ser revendedor?",
-      a: "Ser mayor de 18 años, vivir en Argentina y poder emitir factura por tus comisiones (Monotributo u otro régimen). Para cobrar necesitás además DNI y un CBU o alias a tu nombre.",
-    },
-    {
-      q: "¿Cómo y cuándo cobro las comisiones?",
-      a: "Las comisiones del mes se transfieren a tu CBU o alias a principio del mes siguiente. Después subís la factura por ese monto desde tu panel.",
-    },
-    {
-      q: "¿Necesito experiencia en ventas?",
-      a: "No. En el panel tenés una capacitación en video, una guía de ventas y tu link o QR listo para compartir por WhatsApp o redes. Los productos tienen plan gratis, así que el cliente puede probarlos antes de pagar.",
-    },
-  ];
-}
-
 export default async function LandingPage() {
   const lista = await db
     .select({ id: productos.id, nombre: productos.nombre, dominio: productos.dominio, descripcion: productos.descripcion, precioMensual: productos.precioMensual })
@@ -66,7 +32,8 @@ export default async function LandingPage() {
   const comisionMeses = config.comisionMeses;
   const comisionTotalPorVenta = comisionMonto * comisionMeses;
 
-  const preguntas = faqs(comisionMonto, comisionMeses);
+  // Las 6 primeras; /preguntas muestra todas.
+  const preguntas = preguntasFrecuentes({ monto: comisionMonto, meses: comisionMeses }).slice(0, 6);
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -357,6 +324,9 @@ export default async function LandingPage() {
               </details>
             ))}
           </div>
+          <Link href="/preguntas" style={{ display: "inline-block", marginTop: 22, fontWeight: 700, fontSize: 15, color: "#1E3AA8" }}>
+            Ver todas las preguntas →
+          </Link>
         </div>
       </section>
 
@@ -456,6 +426,9 @@ function ProductCard({
           style={{ fontWeight: 700, fontSize: 14, background: "#1E3AA8", color: "#fff", borderRadius: 999, padding: 15, textAlign: "center", textDecoration: "none", marginTop: "auto" }}>
           Ver {nombre} →
         </a>
+        <Link href={`/revender/${nombre}`} style={{ fontWeight: 700, fontSize: 14, color: "#1E3AA8", textAlign: "center" }}>
+          Cómo venderlo y a quién →
+        </Link>
       </div>
     </div>
   );

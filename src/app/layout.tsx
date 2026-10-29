@@ -42,10 +42,9 @@ export const metadata: Metadata = {
     url: "https://glob.ar/",
     title: "glob.ar — Revendé software y cobrá comisiones mensuales",
     description: DESCRIPTION,
-    images: [{ url: "/logo-glob.png" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "glob.ar — Revendé software y cobrá comisiones mensuales",
     description: DESCRIPTION,
   },

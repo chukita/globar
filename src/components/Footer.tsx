@@ -19,6 +19,8 @@ export function Footer() {
             <Link href="/#como-funciona" className="hover:text-white">Cómo funciona</Link>
             <Link href="/#productos" className="hover:text-white">Productos</Link>
             <Link href="/#calculadora" className="hover:text-white">Calculadora</Link>
+            <Link href="/revender/agendaonline" className="hover:text-white">Revendé Agenda Online</Link>
+            <Link href="/revender/nume" className="hover:text-white">Revendé NuMe</Link>
           </div>
         </div>
         <div>
@@ -26,6 +28,9 @@ export function Footer() {
           <div className="flex flex-col gap-2.5 text-[13.5px] text-[#8595A8]">
             <Link href="/registro" className="hover:text-white">Registrarse</Link>
             <Link href="/login" className="hover:text-white">Ingresar</Link>
+            <Link href="/revendedores" className="hover:text-white">Requisitos</Link>
+            <Link href="/preguntas" className="hover:text-white">Preguntas frecuentes</Link>
+            <Link href="/guias" className="hover:text-white">Guías</Link>
             <Link href="/panel/comisiones" className="hover:text-white">Comisiones</Link>
           </div>
         </div>

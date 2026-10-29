@@ -3,6 +3,7 @@ import { productos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getConfiguracion } from "@/lib/configuracion";
 import { fmtARS } from "@/lib/constants";
+import { GUIAS, PRODUCTOS_LANDING } from "@/lib/contenidoPublico";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,11 @@ export async function GET() {
       return `- [${p.nombre}](https://${p.dominio}/)${desc} Precio al cliente: ${fmtARS(parseFloat(String(p.precioMensual)))} por mes.`;
     })
     .join("\n");
+
+  const linksProductos = PRODUCTOS_LANDING
+    .map((p) => `- [Revendé ${p.nombre}](https://glob.ar/revender/${p.key}): a quién ofrecerlo y por qué se vende.`)
+    .join("\n");
+  const linksGuias = GUIAS.map((g) => `- [${g.titulo}](https://glob.ar/guias/${g.slug})`).join("\n");
 
   const body = `# glob.ar
 
@@ -63,6 +69,9 @@ ${productosMd}
 
 - [Inicio](https://glob.ar/): cómo funciona, productos y calculadora de comisiones.
 - [Requisitos para ser revendedor](https://glob.ar/revendedores)
+- [Preguntas frecuentes](https://glob.ar/preguntas): cuánto se gana, cómo se cobra, qué pasa si el cliente arranca con el plan gratis.
+${linksProductos}
+${linksGuias}
 - [Registrarse gratis](https://glob.ar/registro)
 - [Términos y condiciones](https://glob.ar/terminos)
 - [Política de privacidad](https://glob.ar/privacidad)

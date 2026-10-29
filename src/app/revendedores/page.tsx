@@ -2,11 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
+import { ogPagina } from "@/lib/contenidoPublico";
 
 export const metadata: Metadata = {
   title: "Requisitos para ser revendedor",
   description: "Qué necesitás para sumarte al programa de revendedores de glob.ar: ser mayor de 18, vivir en Argentina, poder facturar y tener un CBU a tu nombre. Sin inversión inicial.",
   alternates: { canonical: "/revendedores" },
+  openGraph: ogPagina({
+    titulo: "Requisitos para ser revendedor | glob.ar",
+    descripcion: "Qué necesitás para sumarte al programa de revendedores de glob.ar. Sin inversión inicial.",
+    path: "/revendedores",
+  }),
 };
 
 const REQUISITOS = [
