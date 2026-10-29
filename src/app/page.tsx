@@ -12,7 +12,7 @@ import { preguntasFrecuentes } from "@/lib/contenidoPublico";
 import { LandingCalculator } from "@/components/LandingCalculator";
 import { ContactoForm } from "@/components/ContactoForm";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
-import { SOPORTE_WHATSAPP } from "@/lib/constants";
+import { REDES, SOPORTE_WHATSAPP } from "@/lib/constants";
 import { waLink } from "@/lib/telefono";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function LandingPage() {
         logo: "https://glob.ar/logo-glob.png",
         email: "hola@glob.ar",
         areaServed: { "@type": "Country", name: "Argentina" },
-        sameAs: ["https://www.youtube.com/@Globar-z9k"],
+        sameAs: REDES.map((r) => r.url),
       },
       {
         "@type": "WebSite",

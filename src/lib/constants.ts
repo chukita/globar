@@ -25,6 +25,15 @@ export const DATOS_FISCALES = {
 // separado de los celulares personales del equipo).
 export const SOPORTE_WHATSAPP = "+54 9 11 7280-5803";
 
+// Perfiles oficiales de glob.ar. Los usa el footer y el `sameAs` del JSON-LD
+// de Organization (así los buscadores asocian las cuentas con el sitio).
+export const REDES = [
+  { nombre: "Instagram", url: "https://www.instagram.com/globarok" },
+  { nombre: "Facebook", url: "https://www.facebook.com/Globarok/" },
+  { nombre: "TikTok", url: "https://www.tiktok.com/@globarok" },
+  { nombre: "YouTube", url: "https://www.youtube.com/@Globar-z9k" },
+] as const;
+
 export const PRODUCTS = [
   {
     key: "agendaonline",

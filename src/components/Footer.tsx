@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { SOPORTE_WHATSAPP } from "@/lib/constants";
+import { REDES, SOPORTE_WHATSAPP } from "@/lib/constants";
 import { waLink } from "@/lib/telefono";
 
 export function Footer() {
@@ -41,7 +41,9 @@ export function Footer() {
             <Link href="/privacidad" className="hover:text-white">Privacidad</Link>
             <a href="mailto:hola@glob.ar" className="hover:text-white">Contacto</a>
             <a href={waLink(SOPORTE_WHATSAPP)} target="_blank" rel="noreferrer" className="hover:text-white">WhatsApp</a>
-            <a href="https://www.youtube.com/@Globar-z9k" target="_blank" rel="noreferrer" className="hover:text-white">YouTube</a>
+            {REDES.map((r) => (
+              <a key={r.nombre} href={r.url} target="_blank" rel="noreferrer" className="hover:text-white">{r.nombre}</a>
+            ))}
           </div>
         </div>
       </div>
