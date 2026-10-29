@@ -17,6 +17,31 @@ import { waLink } from "@/lib/telefono";
 
 export const dynamic = "force-dynamic";
 
+const ICONOS_REDES: Record<(typeof REDES)[number]["nombre"], React.ReactNode> = {
+  Instagram: (
+    <g fill="none" stroke="#E4405F" strokeWidth="2.2">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.3" cy="6.7" r="0.6" fill="#E4405F" />
+    </g>
+  ),
+  Facebook: (
+    <>
+      <circle cx="12" cy="12" r="12" fill="#1877F2" />
+      <path d="M13.4 20v-6.4h2.1l.3-2.5h-2.4V9.6c0-.7.2-1.2 1.2-1.2h1.3V6.2a17 17 0 0 0-1.9-.1c-1.9 0-3.1 1.1-3.1 3.2v1.8H8.8v2.5h2.1V20z" fill="#fff" />
+    </>
+  ),
+  TikTok: (
+    <>
+      <rect width="24" height="24" rx="6" fill="#000" />
+      <path d="M14.6 4.8c.3 1.8 1.4 3 3.3 3.2v2.3a5.6 5.6 0 0 1-3.3-1v5a4.2 4.2 0 1 1-4.2-4.2h.4v2.4a1.8 1.8 0 1 0 1.4 1.8V4.8z" fill="#fff" />
+    </>
+  ),
+  YouTube: (
+    <path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z" />
+  ),
+};
+
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
@@ -363,10 +388,12 @@ export default async function LandingPage() {
                 <a href={waLink(SOPORTE_WHATSAPP)} target="_blank" rel="noreferrer" style={{ color: "#0E6BA0", fontWeight: 600, fontSize: 15, textDecoration: "none" }}>
                   WhatsApp +54 9 11 7280 5803
                 </a>
-                <a href="https://www.youtube.com/@Globar-z9k" target="_blank" rel="noreferrer" style={{ color: "#0E6BA0", fontWeight: 600, fontSize: 15, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
-                  Canal de YouTube
-                </a>
+                {REDES.map((r) => (
+                  <a key={r.nombre} href={r.url} target="_blank" rel="noreferrer" style={{ color: "#0E6BA0", fontWeight: 600, fontSize: 15, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">{ICONOS_REDES[r.nombre]}</svg>
+                    {r.nombre === "YouTube" ? "Canal de YouTube" : `${r.nombre} @globarok`}
+                  </a>
+                ))}
               </div>
             </div>
             <ContactoForm />
