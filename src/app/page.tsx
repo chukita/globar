@@ -66,6 +66,8 @@ export default async function LandingPage() {
         "@type": "Organization",
         "@id": "https://glob.ar/#organization",
         name: "glob.ar",
+        alternateName: "Grupo Globaliza",
+        description: `Programa de revendedores de Agenda Online y NuMe, software argentino para negocios. Registro gratis y sin inversión: ${fmtARS(comisionMonto)} por mes durante ${comisionMeses} meses por cada cliente que se suscribe con tu link.`,
         url: "https://glob.ar/",
         logo: "https://glob.ar/logo-glob.png",
         email: "hola@glob.ar",

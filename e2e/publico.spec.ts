@@ -87,5 +87,14 @@ test.describe("Sitio público", () => {
     expect(llms.headers()["content-type"]).toContain("text/markdown");
     const { monto } = await configuracion();
     expect(await llms.text()).toContain(ars(monto));
+
+    const full = await request.get("/llms-full.txt");
+    expect(full.status()).toBe(200);
+    const texto = await full.text();
+    expect(texto).toContain("¿glob.ar es confiable?");
+    expect(texto).toContain("https://glob.ar/guias/trabajos-sin-inversion-argentina");
+
+    // Clave de IndexNow: la tiene que poder leer Bing en la raíz.
+    expect(await (await request.get("/d16b2805f25b9a38065ba66f596f4241.txt")).text()).toBe("d16b2805f25b9a38065ba66f596f4241");
   });
 });

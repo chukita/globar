@@ -74,6 +74,14 @@ export function preguntasFrecuentes(c: Comision): Pregunta[] {
       a: "Para cobrar tenés que poder emitir factura por las comisiones: Monotributo o Responsable Inscripto. Podés registrarte y empezar a compartir tu link mientras hacés el alta en ARCA.",
     },
     {
+      q: "¿glob.ar es confiable? ¿Es un esquema piramidal?",
+      a: "No es multinivel ni piramidal: no se paga por entrar ni se cobra por sumar otros revendedores. La comisión sale solo de negocios reales que pagan la suscripción de Agenda Online o NuMe. glob.ar es de Grupo Globaliza, el mismo equipo que hace esos productos, y paga por transferencia contra factura.",
+    },
+    {
+      q: "¿Cuánto tiempo hay que dedicarle?",
+      a: "El que quieras: no hay horarios, mínimos ni metas. Hay quien lo hace como ingreso extra recomendándolo a dos o tres negocios conocidos y quien sale a visitar comercios de su zona.",
+    },
+    {
       q: "¿Cómo me entero de que alguien se registró con mi link?",
       a: "En tu panel, en \"Mis clientes\", ves a cada negocio que se registró con tu link y cuáles ya se suscribieron. En \"Comisiones\" ves cuánto llevás generado y cuándo cobrás.",
     },
@@ -349,6 +357,90 @@ export const GUIAS: Guia[] = [
           "Mandale tu link por WhatsApp o mostrale tu QR para que se registre en el momento. Que se registre con tu link es lo que hace que la comisión sea tuya, aunque empiece con el plan gratis.",
           "Después, un mensaje a la semana para ver si pudo configurarlo suele ser lo que convierte la prueba en suscripción.",
         ],
+      },
+    ],
+  },
+  {
+    slug: "trabajos-sin-inversion-argentina",
+    titulo: "Trabajos sin inversión en Argentina: opciones reales y cómo detectar una estafa",
+    descripcion:
+      "Qué formas de sumar ingresos en Argentina no piden poner plata, cuánto dejan y qué señales indican que una \"oportunidad\" es en realidad una estafa o un esquema piramidal.",
+    publicada: "2026-10-30",
+    bloques: (c) => [
+      {
+        h2: "Opciones que no piden inversión",
+        lista: [
+          "Trabajo freelance (diseño, redacción, programación, atención al cliente): ponés tu tiempo y tu oficio, y cobrás por proyecto o por hora.",
+          "Programas de afiliados de tiendas online: compartís links a productos y cobrás un porcentaje de cada compra. Rinde si tenés audiencia.",
+          `Revender software por suscripción: recomendás una herramienta a negocios y cobrás una comisión mensual. En glob.ar son ${fmtARS(c.monto)} por mes durante ${c.meses} meses por cada negocio (${fmtARS(total(c))} en total).`,
+          "Servicios en tu zona (clases, cuidado de mascotas, trámites): no piden plata para empezar, pero sí horarios.",
+        ],
+      },
+      {
+        h2: "Señales de que es una estafa",
+        lista: [
+          "Te piden pagar para entrar: un \"kit\", una membresía, un curso obligatorio o una cuota mensual.",
+          "Ganás por sumar a otras personas y no por vender algo que alguien usa: eso es un esquema piramidal.",
+          "Prometen montos altísimos sin explicar de dónde sale la plata.",
+          "No hay una empresa identificable, términos publicados ni un producto que puedas probar.",
+          "Te apuran: \"quedan pocos lugares\" o \"solo por hoy\".",
+        ],
+      },
+      {
+        h2: "Cómo se ve un programa serio",
+        lista: [
+          "Registro gratis y sin compras obligatorias.",
+          "Un producto real que podés probar vos antes de recomendarlo.",
+          "La comisión sale de clientes que pagan, no de otros revendedores.",
+          "Pagos contra factura, con términos publicados y un contacto al que escribir.",
+        ],
+        p: [
+          "glob.ar cumple con todo eso: Agenda Online y NuMe tienen plan gratis para probarlos, las comisiones se transfieren a principio de mes a un CBU a tu nombre y los términos están publicados en glob.ar/terminos.",
+        ],
+      },
+      {
+        h2: "Lo que sí vas a necesitar",
+        p: [
+          "Aunque no pongas plata, cobrar de forma formal en Argentina pide poder facturar: Monotributo o Responsable Inscripto. Es el paso que más gente posterga y conviene resolverlo antes de cobrar.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "glob-ar-es-confiable",
+    titulo: "¿glob.ar es confiable? Quién está detrás y cómo se cobra",
+    descripcion:
+      "Respuestas directas sobre glob.ar: quién lo opera, de dónde sale la plata de las comisiones, cómo y cuándo se paga, y cómo verificarlo antes de registrarte.",
+    publicada: "2026-10-30",
+    bloques: (c) => [
+      {
+        h2: "Quién está detrás",
+        p: [
+          "glob.ar es de Grupo Globaliza, el equipo argentino detrás de Agenda Online (turnos online) y NuMe (carta digital con QR). No es un intermediario: es el programa de revendedores de sus propios productos.",
+        ],
+      },
+      {
+        h2: "De dónde sale la comisión",
+        p: [
+          `Los negocios pagan una suscripción mensual al producto, y de ese pago sale tu comisión: ${fmtARS(c.monto)} por mes durante ${c.meses} meses por cada negocio que se suscribe con tu link. No hay comisiones por sumar revendedores ni nada que comprar.`,
+        ],
+      },
+      {
+        h2: "Cómo y cuándo se paga",
+        lista: [
+          "Entre el 1 y el 10 de cada mes se transfieren las comisiones generadas el mes anterior a un CBU o alias a tu nombre.",
+          "Después emitís una factura por ese monto exacto y la subís desde tu panel.",
+          "En el panel ves cada negocio registrado con tu link, cuáles pagan y cuánto llevás generado.",
+        ],
+      },
+      {
+        h2: "Cómo verificarlo antes de registrarte",
+        lista: [
+          "Probá los productos: agendaonline.com.ar y nume.com.ar tienen plan gratis.",
+          "Leé los términos y la política de privacidad en glob.ar/terminos y glob.ar/privacidad.",
+          "Escribí a hola@glob.ar con cualquier duda antes de empezar.",
+        ],
+        p: ["Registrarte no te compromete a nada: es gratis y no hay permanencia, mínimos ni metas."],
       },
     ],
   },

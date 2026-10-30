@@ -147,6 +147,20 @@ jobs:
             cd ~/globar
             bash deploy/deploy.sh
 
+      # IndexNow: avisa a Bing (y Yandex, Seznam…) que hay páginas nuevas o
+      # cambiadas. La búsqueda de ChatGPT se apoya en el índice de Bing, así
+      # que esto acorta lo que tarda un cambio en llegar a sus respuestas. La
+      # clave es pública a propósito: vive en public/<clave>.txt. Si falla no
+      # frena nada (el deploy ya salió).
+      - name: Notify IndexNow
+        continue-on-error: true
+        run: |
+          KEY=d16b2805f25b9a38065ba66f596f4241
+          URLS=$(curl -fsS https://glob.ar/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g' | jq -R . | jq -sc .)
+          curl -sS -o /dev/null -w "IndexNow: %{http_code}\n" -X POST https://api.indexnow.org/indexnow \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "{\"host\":\"glob.ar\",\"key\":\"$KEY\",\"keyLocation\":\"https://glob.ar/$KEY.txt\",\"urlList\":$URLS}"
+
   # Ambiente de test: VM aparte (globar-test, free tier de Oracle, mismo setup
   # que producción) en https://test.glob.ar, con su propia base. Se despliega
   # con cada push a la rama `test`; recién después se mergea a main.

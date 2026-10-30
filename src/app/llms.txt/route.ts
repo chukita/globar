@@ -69,6 +69,7 @@ ${productosMd}
 
 - [Inicio](https://glob.ar/): cómo funciona, productos y calculadora de comisiones.
 - [Requisitos para ser revendedor](https://glob.ar/revendedores)
+- [Contenido completo en un solo archivo](https://glob.ar/llms-full.txt): todas las preguntas, productos y guías.
 - [Preguntas frecuentes](https://glob.ar/preguntas): cuánto se gana, cómo se cobra, qué pasa si el cliente arranca con el plan gratis.
 ${linksProductos}
 ${linksGuias}
