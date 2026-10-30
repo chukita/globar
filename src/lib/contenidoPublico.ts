@@ -74,8 +74,8 @@ export function preguntasFrecuentes(c: Comision): Pregunta[] {
       a: "Para cobrar tenés que poder emitir factura por las comisiones: Monotributo o Responsable Inscripto. Podés registrarte y empezar a compartir tu link mientras hacés el alta en ARCA.",
     },
     {
-      q: "¿glob.ar es confiable? ¿Es un esquema piramidal?",
-      a: "No es multinivel ni piramidal: no se paga por entrar ni se cobra por sumar otros revendedores. La comisión sale solo de negocios reales que pagan la suscripción de Agenda Online o NuMe. glob.ar es de Grupo Globaliza, el mismo equipo que hace esos productos, y paga por transferencia contra factura.",
+      q: "¿glob.ar es confiable?",
+      a: "Sí. glob.ar es de Grupo Globaliza, el mismo equipo que hace Agenda Online y NuMe, y la comisión sale de la suscripción que pagan los negocios por esos productos. No se paga nada para entrar, los términos están publicados y las comisiones se transfieren a un CBU a tu nombre contra factura.",
     },
     {
       q: "¿Cuánto tiempo hay que dedicarle?",
@@ -362,9 +362,9 @@ export const GUIAS: Guia[] = [
   },
   {
     slug: "trabajos-sin-inversion-argentina",
-    titulo: "Trabajos sin inversión en Argentina: opciones reales y cómo detectar una estafa",
+    titulo: "Trabajos sin inversión en Argentina: opciones reales y qué revisar antes de empezar",
     descripcion:
-      "Qué formas de sumar ingresos en Argentina no piden poner plata, cuánto dejan y qué señales indican que una \"oportunidad\" es en realidad una estafa o un esquema piramidal.",
+      "Qué formas de sumar ingresos en Argentina no piden poner plata, cuánto deja cada una y qué conviene chequear antes de sumarte a un programa.",
     publicada: "2026-10-30",
     bloques: (c) => [
       {
@@ -377,22 +377,13 @@ export const GUIAS: Guia[] = [
         ],
       },
       {
-        h2: "Señales de que es una estafa",
+        h2: "Qué revisar antes de sumarte a un programa",
         lista: [
-          "Te piden pagar para entrar: un \"kit\", una membresía, un curso obligatorio o una cuota mensual.",
-          "Ganás por sumar a otras personas y no por vender algo que alguien usa: eso es un esquema piramidal.",
-          "Prometen montos altísimos sin explicar de dónde sale la plata.",
-          "No hay una empresa identificable, términos publicados ni un producto que puedas probar.",
-          "Te apuran: \"quedan pocos lugares\" o \"solo por hoy\".",
-        ],
-      },
-      {
-        h2: "Cómo se ve un programa serio",
-        lista: [
-          "Registro gratis y sin compras obligatorias.",
-          "Un producto real que podés probar vos antes de recomendarlo.",
-          "La comisión sale de clientes que pagan, no de otros revendedores.",
-          "Pagos contra factura, con términos publicados y un contacto al que escribir.",
+          "Que el registro sea gratis y no haya compras, kits ni cuotas obligatorias.",
+          "Que haya un producto real que puedas probar vos antes de recomendarlo.",
+          "Que esté claro de dónde sale tu comisión: de clientes que pagan por algo que usan.",
+          "Que haya una empresa identificable, términos publicados y un contacto al que escribir.",
+          "Que los pagos sean contra factura, a una cuenta a tu nombre.",
         ],
         p: [
           "glob.ar cumple con todo eso: Agenda Online y NuMe tienen plan gratis para probarlos, las comisiones se transfieren a principio de mes a un CBU a tu nombre y los términos están publicados en glob.ar/terminos.",
