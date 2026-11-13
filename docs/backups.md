@@ -77,19 +77,65 @@ base es de prueba.
 docker compose -f docker-compose.prod.yml restart backup_sync
 ```
 
-## Restaurar
+## Restaurar paso a paso
 
-⚠️ Sobrescribe los datos actuales.
+⚠️ Restaurar **pisa** los datos actuales. Si la base todavía anda, primero forzá
+un dump de lo que hay (`docker compose -f docker-compose.prod.yml exec db_backup /backup.sh`)
+y bajalo a tu PC, por si hay que volver atrás.
+
+Todos los comandos, en la VM:
 
 ```bash
 cd ~/globar
-# base (desde la VM o bajando el .sql.gz de Drive):
-gunzip -c backups/last/globar-latest.sql.gz | \
-  docker compose -f docker-compose.prod.yml exec -T db psql -U globar -d globar
-# facturas (desde Drive, con el contenedor de backup_sync):
-docker compose -f docker-compose.prod.yml run --rm -v globar_uploads:/restore backup_sync \
-  'rclone copy "$DEST/uploads" /restore'
+C="docker compose -f docker-compose.prod.yml"
 ```
 
-Para la base, conviene restaurar sobre una base vacía (recrear el volumen
-`globar_db_data` o hacer `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` antes).
+### 1. Elegir el dump
+
+| Qué pasó | De dónde sale |
+| --- | --- |
+| Se borró o rompió algo, la VM anda | `~/globar/backups/last/` (último) o `daily/`, `weekly/`, `monthly/` |
+| Se perdió la VM | Google Drive → `globar-backups/db/` (misma estructura) |
+
+Desde Drive: bajalo de drive.google.com y subilo a la VM nueva con
+`scp globar-AAAAMMDD-000000.sql.gz globar-vm:~/globar/backups/`. Antes, en la
+VM nueva: clonar el repo, poner el `.env` (con `POSTGRES_PASSWORD`, `AUTH_SECRET`,
+etc. del gestor de contraseñas) y `docker login ghcr.io` (ver `deploy/setup-vm.sh`).
+
+Verificar que sea SQL válido: `gunzip -c backups/<archivo>.sql.gz | head -40`
+(tiene que mostrar `CREATE TABLE …`).
+
+### 2. Restaurar la base (siempre sobre una base vacía)
+
+```bash
+$C down                                 # frena todo
+docker volume rm globar_db_data         # borra la base vieja (en una VM nueva no existe)
+$C up -d db                             # base nueva, vacía; esperar healthy: $C ps db
+gunzip -c backups/<archivo>.sql.gz | $C exec -T db psql -U globar -d globar -q
+$C up -d                                # el resto
+```
+
+Tiene que cargar sin ningún `ERROR`.
+
+### 3. Restaurar las facturas (solo si se perdió el volumen `globar_uploads`)
+
+```bash
+$C run --rm -v globar_uploads:/restore backup_sync 'rclone copy "$DEST/uploads" /restore'
+```
+
+Requiere el `RCLONE_GDRIVE_TOKEN` en el `.env` (el mismo que usa la agenda).
+
+### 4. Comprobar
+
+```bash
+$C exec -T db psql -U globar -d globar -tAc \
+  "select (select count(*) from revendedores) revendedores, (select count(*) from registros) leads,
+          (select count(*) from ventas) ventas, (select count(*) from cuotas) cuotas,
+          (select count(*) from liquidaciones) liquidaciones"
+```
+
+Y entrar a https://glob.ar/admin y a un panel de revendedor.
+
+Probado el 2026-11-13: el dump de producción cargado en un `postgres:16`
+aparte dio cero errores y los mismos conteos que producción; las 6 facturas se
+bajaron de Drive completas a un volumen de prueba.
