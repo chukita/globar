@@ -196,7 +196,7 @@ Convención de prefijos de rama (igual que en el resto de los proyectos de Cynth
 
 ## Infraestructura de producción
 
-- VM: alias SSH `globar-vm` (`~/.ssh/config`), Ubuntu, Docker Compose (`docker-compose.prod.yml`) con servicios `app`, `db` (Postgres 16), `db_backup`, `caddy` (reverse proxy + TLS, `deploy/Caddyfile`, dominio via `PUBLIC_HOST`).
+- VM: alias SSH `globar-vm` (`~/.ssh/config`), Ubuntu, Docker Compose (`docker-compose.prod.yml`) con servicios `app`, `db` (Postgres 16), `db_backup`, `backup_sync` (copia a Google Drive de dumps y facturas, ver `docs/backups.md`), `caddy` (reverse proxy + TLS, `deploy/Caddyfile`, dominio via `PUBLIC_HOST`).
 - CI/CD: `.github/workflows/ci.yml` — build+lint+test en cada push/PR; en push a `main`, build de imagen Docker → push a GHCR (`ghcr.io/chukita/globar`) → deploy por SSH (`deploy/deploy.sh`, hace `docker compose pull` + recreate). La imagen se compila en el runner de GitHub porque la VM tiene 1GB de RAM (no le alcanza para `next build`).
 - El `.env` de la VM no está en git (`deploy.sh` hace `git reset --hard`, que no lo toca) — cualquier variable nueva hay que agregarla ahí a mano además de documentarla en `deploy/env.production.example`.
 

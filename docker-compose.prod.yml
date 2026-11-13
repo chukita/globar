@@ -46,6 +46,41 @@ services:
         condition: service_healthy
     networks: [app]
 
+  # Copia off-site a Google Drive (rclone) de los dumps de la base Y de las
+  # facturas/comprobantes subidos (volumen uploads, que db_backup no cubre).
+  # Sin esto todo vive solo en el disco de la VM: si se pierde la instancia,
+  # se pierden la base y sus backups juntos.
+  # INACTIVO por defecto: solo arranca si en .env definís
+  #   COMPOSE_PROFILES=backup-sync  y  RCLONE_GDRIVE_TOKEN=...
+  # Cómo obtener el token y activarlo: ver docs/backups.md.
+  # `copy` y no `sync`: nunca borra en Drive, así un dump rotado o una factura
+  # reemplazada siguen estando allá.
+  backup_sync:
+    image: rclone/rclone:1.68
+    profiles: [backup-sync]
+    restart: unless-stopped
+    environment:
+      RCLONE_CONFIG_GDRIVE_TYPE: drive
+      RCLONE_CONFIG_GDRIVE_SCOPE: drive.file
+      RCLONE_CONFIG_GDRIVE_TOKEN: ${RCLONE_GDRIVE_TOKEN:-}
+      DEST: gdrive:${RCLONE_GDRIVE_FOLDER:-globar-backups}
+      INTERVAL: ${BACKUP_SYNC_INTERVAL:-21600}
+    volumes:
+      - ./backups:/data/backups:ro
+      - uploads:/data/uploads:ro
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        while true; do
+          echo "[backup_sync] copiando a Google Drive ($$DEST)..."
+          ok=1
+          rclone copy /data/backups "$$DEST/db" --copy-links --transfers 2 --retries 3 || ok=0
+          rclone copy /data/uploads "$$DEST/uploads" --transfers 2 --retries 3 || ok=0
+          if [ "$$ok" = 1 ]; then echo "[backup_sync] OK"; else echo "[backup_sync] ERROR en rclone (revisá RCLONE_GDRIVE_TOKEN)"; fi
+          sleep "$$INTERVAL"
+        done
+    networks: [app]
+
   app:
     image: ${IMAGE:-ghcr.io/chukita/globar:latest}
     restart: unless-stopped
